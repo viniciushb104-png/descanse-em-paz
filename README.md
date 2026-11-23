@@ -4,25 +4,23 @@
 
 Jogo de comédia gótica e administração funerária, criado por **Vinicius Diniz — Asas do Medo Games**, em Godot 4.7.2.
 
-## Primeira versão 0.1
+## Protótipo 0.1
 - Explore o cemitério de Santa Mortalha em perspectiva superior;
-- converse com o coveiro Seu Osvaldo e com Baltazar, o contador fantasma;
-- confira a documentação de um atendimento, reserve um jazigo, registre a receita e cuide da manutenção;
-- administre caixa, reputação, conformidade e horário.
+- converse com Seu Osvaldo e com Baltazar, o contador fantasma;
+- confira documentação, reserve um jazigo, registre o atendimento e faça manutenção;
+- gerencie caixa, reputação, conformidade, horário e salvamento automático.
 
-## Testar no navegador
-O GitHub Actions exporta automaticamente para a Web. Após habilitar **Settings → Pages → Build and deployment → Source: GitHub Actions**, o endereço será:
+## Jogar online
+Quando o GitHub Pages estiver ativado em **Settings → Pages → Build and deployment → Source: GitHub Actions**, cada atualização em `main` gera um novo jogo para Web. Endereço esperado, **apenas depois da primeira implantação bem-sucedida**:
 https://viniciushb104-png.github.io/descanse-em-paz/
 
-O link só funcionará depois que o Pages estiver ativado e o build for concluído com sucesso.
+## Controles
+**Computador:** WASD/setas = mover, **E** = interagir, **Esc** = fechar. **Toque:** botões direcionais e Interagir na tela.
 
-## Jogar
-**PC:** WASD/setas para andar, **E** para interagir, **Esc** para fechar. A interface inclui botões na tela para testes por toque.
+## Rodar na Godot
+Abra `project.godot` na Godot **4.7.2** e pressione F5.
 
-## Editar
-Abra `project.godot` no Godot 4.7.2 e pressione F5. O fluxo principal de edição e versionamento será sempre via GitHub.
-
-## Nota educativa
-Preços e indicadores são fictícios; as rotinas administrativas e exigências de documentos são simplificadas e variam conforme a localidade. Este protótipo não é manual jurídico, sanitário ou profissional. Consulte `docs/REFERENCIAS.md`.
+## Importante
+Valores monetários fictícios; documentação e processos simplificados. Legislação, tarifas, prazos e normas específicas mudam por local e tipo de serviço. Não use o jogo como manual jurídico, contábil, sanitário ou profissional. Referências em `docs/REFERENCIAS.md`.
 
 Código e arte originais reservados ao autor até definição de licença.
