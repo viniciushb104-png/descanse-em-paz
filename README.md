@@ -54,3 +54,11 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Painéis interativos **Como Jogar** e **Créditos**.
 - No cemitério, **Esc** sem diálogo ou botão **MENU** permite salvar e voltar à abertura.
 - Testes da Godot agora validam o menu e a preservação do jogo. Detalhes em `docs/MENU_V08.md`.
+
+## Versão 0.9 — Distrito dos Eternos
+- Mapa ampliado para 2432 x 1408 pixels; camera acompanha o protagonista com limites do terreno.
+- Novos setores: hospital, sala de conservacao, crematório, garagem, carros funerarios, posto de fiscalizacao e Arquivo Legal.
+- Nova campanha de sete etapas depois da primeira missao; cartorio, translado, biosseguranca, cremacao, ambiente e orcamento.
+- Fontes oficiais e ressalvas em `docs/DISTRITO_V09.md` e `scripts/systems/legal_lessons.gd`.
+- Primeiras construcoes do distrito sao **arte provisoria modular**, para substituir depois por sprites independentes.
+- Antigos salvamentos ate a etapa 5 continuam validos; o proximo objetivo passa a ser o hospital.

@@ -51,6 +51,7 @@ func _physics_process(delta: float) -> void:
     else:
         walk_clock = 0.0
     velocity = direction * SPEED
+    # Movimento continua com correcoes de colisao no distrito novo.
     # Se um salvamento antigo estiver perto de uma parede, deixar sair:
     # bloquear somente movimentos para DENTRO de uma area invalida.
     var next_position := global_position + velocity * delta

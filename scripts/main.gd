@@ -6,6 +6,7 @@ const WORLD := Vector2(2432.0, 1408.0)
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
+const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
@@ -24,7 +25,14 @@ const OBJECTIVES := [
     "Verifique e reserve o jazigo B-13.",
     "Volte ao escritorio e registre o atendimento.",
     "Autorize a manutencao da quadra leste.",
-    "Missao concluida! Explore Santa Mortalha."
+    "Visite o hospital e descubra quem emite a Declaracao de Obito.",
+    "Volte ao escritorio e confira o papel do Registro Civil.",
+    "Inspecione a garagem e os carros funerarios.",
+    "Converse com Clotilde sobre conservacao e biosseguranca.",
+    "Visite o crematorio e confira os requisitos legais.",
+    "Procure o posto de fiscalizacao ambiental.",
+    "Volte ao escritorio e prepare um orcamento transparente.",
+    "Distrito dos Eternos concluido! Explore e consulte o Arquivo Legal."
 ]
 @onready var player: CharacterBody2D = $Player
 var stage: int = 0
@@ -114,6 +122,10 @@ func _interact(id: String) -> void:
         "office":
             if stage == 1:
                 _show("Atendimento: documentacao", "Uma familia chegou com apenas a Declaracao de Obito. Qual deve ser a conduta do administrador?", [{"text": "Conferir os requisitos e orientar a familia", "action": "docs_ok"}, {"text": "Ignorar o problema e prosseguir", "action": "docs_bad"}, {"text": "Voltar", "action": "close"}])
+            elif stage == 6:
+                _show("Cartorio e Certidao de Obito", "Dra. Penelope informou que o hospital forneceu a Declaracao de Obito. Como conduzir o processo?", [{"text":"Orientar o registro civil e conferir certidao", "action":"cartorio_certo"}, {"text":"Tratar a DO como certidao pronta", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            elif stage == 11:
+                _show("Orcamento transparente", "Exemplo ficticio: servico R$ 1.200, custos diretos R$ 800. O que entregar a familia?", [{"text":"Detalhar custos e obter concordancia", "action":"orcamento_certo"}, {"text":"Cobrar extras sem explicar", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             elif stage == 3:
                 _show("Registro financeiro", "Documentos conferidos e jazigo reservado. Valores ficticios: receita R$ 720, custo operacional direto R$ 250. Registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
             else:
@@ -128,10 +140,44 @@ func _interact(id: String) -> void:
                 _show("Manutencao preventiva", "Revisar caminhos, vegetacao e drenagem reduz riscos. Investimento didatico: R$ 160. Deseja autorizar?", [{"text": "Autorizar R$ 160", "action": "maintain"}, {"text": "Deixar para depois", "action": "close"}])
             else:
                 _show("Area de manutencao", "Visitas e trabalho seguros exigem caminhos, drenagem, sinalizacao e vegetacao bem cuidados.", [{"text": "Fechar", "action": "close"}])
+        "hospital":
+            if stage == 5:
+                _show("Dra. Penelope Alvorada", "A familia precisa entender o que o hospital pode emitir. Eu sou medica, nao cartorio, apesar da minha pilha de papeis parecer um!", [{"text":"Conferir a Declaracao de Obito", "action":"hospital_certo"}, {"text":"Pedir ao hospital que invente certidao", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            else:
+                _show("Hospital Santa Ultima Hora", "O hospital presta assistencia em saude. Em contexto apropriado, a Declaracao de Obito e emitida por medico; a certidao e providenciada no Registro Civil.", [{"text":"Ler referencia", "action":"legal_registro"}, {"text":"Voltar", "action":"close"}])
+        "garagem":
+            if stage == 7:
+                _show("Arquimedes Ossario", "A limousine preta esta pronta. Mas antes: registro de rota, condicoes do veiculo, documentacao e normas de transporte. Fantasma sem carteira nao dirige!", [{"text":"Inspecionar frota (R$ 80)", "action":"garagem_certo"}, {"text":"Ignorar os requisitos", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            else:
+                _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+        "carro":
+            _show("O Carro da Ultima Viagem", "Este veiculo e especial: nao tem banco para passageiro fantasma. Antes de qualquer deslocamento, confira registros, seguranca e permissoes cabiveis.", [{"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+        "preparo":
+            if stage == 8:
+                _show("Dona Clotilde Eternelia", "Aqui nao existe formula milagrosa! Conservacao e tanatopraxia exigem condicoes sanitarias, pessoal competente, licencas aplicaveis e residuos sob controle.", [{"text":"Conferir estrutura e equipe (R$ 90)", "action":"preparo_certo"}, {"text":"Trabalhar sem controle sanitario", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            else:
+                _show("Sala de Conservacao", "Area tecnica ficticia e sem procedimentos graficos. Verifique sempre vigilancia sanitaria e profissionais habilitados.", [{"text":"Ler a referencia", "action":"legal_preparo"}, {"text":"Voltar", "action":"close"}])
+        "crematorio":
+            if stage == 9:
+                _show("Seu Cinerio Brasa", "Cremar nao e simplesmente apertar um botao! A Lei 6.015/1973 estabelece requisitos, inclusive vontade e atestado medico especifico.", [{"text":"Validar condicoes legais", "action":"crematorio_certo"}, {"text":"Crema sem verificacao", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            else:
+                _show("Crematorio Cinzas & Cia", "Nosso fornalha esta desligada enquanto a documentacao nao esta em ordem. Uma longa fila de papeis espera por voce.", [{"text":"Estudar lei de cremacao", "action":"legal_cremacao"}, {"text":"Voltar", "action":"close"}])
+        "fiscalizacao":
+            if stage == 10:
+                _show("Marcela Meia-Noite, Fiscal", "Licenciamento ambiental do cemiterio e gerenciamento de residuos nao sao aderecos goticos. Vamos conferir o plano e as exigencias!", [{"text":"Regularizar plano (R$ 140)", "action":"ambiente_certo"}, {"text":"Ignorar o licenciamento", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+            else:
+                _show("Posto de Fiscalizacao", "O cemiterio tem impactos ambientais; setores tecnicos exigem gerenciamento de residuos. Regras locais variam.", [{"text":"Consultar normas", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
+        "biblioteca":
+            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Escolha a estante!", [{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}])
         "ghost":
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action.begins_with("legal_"):
+        var key: String = action.trim_prefix("legal_")
+        var item: Dictionary = LEGAL.ITEMS.get(key,{})
+        _show(str(item.get("title","Arquivo Legal")), LEGAL.info(key), [{"text":"Fechar", "action":"close"}])
+        return
     if action == "menu_return":
         _save_game()
         get_tree().change_scene_to_file("res://scenes/menu/main_menu.tscn")
@@ -172,6 +218,72 @@ func _on_choice(action: String) -> void:
             reputation = mini(100, reputation + 5)
             stage = 5
             _show("Parabens, administrador!", "Voce concluiu a primeira missao! Conferiu documentos, reservou um jazigo, registrou receitas e custos e autorizou manutencao. Santa Mortalha ainda tem muito trabalho!", [{"text": "Explorar", "action": "close"}])
+        "arquivo_p1":
+            _show("Estante do Cartorio", "As duas perguntas que a familia mais precisa compreender:", [{"text":"Declaracao e certidao", "action":"legal_registro"}, {"text":"Requisitos de cremacao", "action":"legal_cremacao"}, {"text":"Voltar", "action":"close"}])
+        "arquivo_p2":
+            _show("Estante da Vigilancia", "Saude e ambiente exigem cuidados muito alem de uma boa lapide.", [{"text":"Residuos e biosseguranca", "action":"legal_residuos"}, {"text":"Licenciamento ambiental", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
+        "arquivo_p3":
+            _show("Estante de Operacoes", "Conferir as regras antes de acionar a frota ou a sala tecnica.", [{"text":"Transporte e translado", "action":"legal_transporte"}, {"text":"Conservacao e preparo", "action":"legal_preparo"}, {"text":"Voltar", "action":"close"}])
+        "distrito_erro":
+            compliance = maxi(0, compliance - 8)
+            reputation = maxi(0, reputation - 3)
+            _show("Atalho reprovado!", "A familia precisa de informacao e seguranca, nao improviso. Conformidade -8 e reputacao -3. Confira a fonte e tente outra vez.", [{"text":"Entendi", "action":"close"}])
+        "hospital_certo":
+            if stage != 5:
+                return
+            stage = 6
+            compliance = mini(100, compliance+4)
+            _show("Licao: papel do hospital", "A Declaracao de Obito e documento do ambito da saude, enquanto a Certidao de Obito e expedida pelo registro civil. Fonte: Ministerio da Saude, SIM e Lei 6.015/1973.", [{"text":"Voltar ao escritorio", "action":"close"}])
+        "cartorio_certo":
+            if stage != 6:
+                return
+            stage = 7
+            compliance = mini(100, compliance+4)
+            _show("Licao: registro civil", "Boa escolha! A Lei 6.015/1973, art. 77, trata da documentacao para sepultamento, com as excecoes previstas em lei. Agora a frota precisa de cuidados.", [{"text":"Visitar garagem", "action":"close"}])
+        "garagem_certo":
+            if stage != 7:
+                return
+            if money < 80:
+                _show("Caixa insuficiente", "Reserve recursos antes de autorizar a revisao da frota.", [{"text":"Voltar", "action":"close"}])
+                return
+            money -= 80
+            stage = 8
+            reputation = mini(100,reputation+3)
+            _show("Frota revisada", "Custo ficticio: R$ 80. Confira autorizacoes e regras locais. A RDC 33/2011 aborda controle sanitario em portos, aeroportos e fronteiras em hipoteses especificas.", [{"text":"Ir para conservacao", "action":"close"}])
+        "preparo_certo":
+            if stage != 8:
+                return
+            if money < 90:
+                _show("Caixa insuficiente", "A sala tecnica precisa de orcamento para adequacoes.", [{"text":"Voltar", "action":"close"}])
+                return
+            money -= 90
+            stage = 9
+            compliance = mini(100,compliance+5)
+            _show("Equipe habilitada", "Simulacao sem tecnicas clinicas: confira licencas, competencia profissional, biosseguranca e PGRSS, conforme a atividade e a jurisdicao.", [{"text":"Ir ao crematorio", "action":"close"}])
+        "crematorio_certo":
+            if stage != 9:
+                return
+            stage = 10
+            compliance = mini(100,compliance+5)
+            _show("Licao: requisitos da cremacao", "Art. 77, paragrafo 2: vontade manifestada ou interesse de saude publica, assinaturas medicas exigidas e, em morte violenta, autorizacao judicial. Nenhuma cremacao foi executada nesta missao.", [{"text":"Conferir ambiente", "action":"close"}])
+        "ambiente_certo":
+            if stage != 10:
+                return
+            if money < 140:
+                _show("Caixa insuficiente", "O plano ambiental exige recursos e planejamento financeiro.", [{"text":"Voltar", "action":"close"}])
+                return
+            money -= 140
+            compliance = mini(100,compliance+6)
+            stage = 11
+            _show("Gestao ambiental", "Despesa ficticia R$ 140. CONAMA 335/2003 aborda licenciamento ambiental de cemiterios; RDC 222/2018 aborda residuos dos servicos incluidos em seu alcance.", [{"text":"Preparar orcamento", "action":"close"}])
+        "orcamento_certo":
+            if stage != 11:
+                return
+            stage = 12
+            money += 400
+            reputation = mini(100,reputation+10)
+            compliance = mini(100,compliance+4)
+            _show("Distrito em funcionamento!", "Orcamento ficticio detalhado: receita R$ 1.200 e custo direto R$ 800, margem R$ 400 antes dos custos fixos. A familia aceitou o servico sem adicionais impostos. Missao concluida!", [{"text":"Continuar explorando", "action":"close"}])
         "learn":
             _show("Nota educativa", "Simulacao inspirada em procedimentos brasileiros. Normas variam por municipio, tipo de cemiterio e servico. Nao use esta demo como manual juridico ou sanitario.", [{"text": "Fechar", "action": "close"}])
     _save_game()
@@ -201,7 +313,7 @@ func _load_game() -> void:
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg") != OK:
         return
-    stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 5)
+    stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 12)
     day = maxi(1, int(cfg.get_value("save", "day", 1)))
     money = int(cfg.get_value("save", "money", 3500))
     reputation = clampi(int(cfg.get_value("save", "reputation", 55)), 0, 100)
