@@ -1,0 +1,3 @@
+# Recursos visuais V0.2
+
+Estes sprites SVG originais em pixel-vetor foram construidos para servir como recursos leves e versionaveis que a Godot importa diretamente. Sao uma **primeira adaptacao vetorial** da direcao artistica definida pelo concept e pelas sprite sheets criadas para o projeto, e nao um recorte pixel-a-pixel das imagens de referencia. O pacote de imagens de referencia em PNG existe separadamente para refinamento posterior.\n\nEstrutura: piso/terreno, caminhos, muro, portao, tumulos, jazigos, cerca, capela, oficina, arvores, fonte e personagens em quatro direcoes com dois quadros cada. Todas as texturas sao posicionadas por scripts/map_art.gd.\n
