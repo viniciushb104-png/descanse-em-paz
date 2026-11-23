@@ -3,6 +3,7 @@ extends Node2D
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
 const WORLD := Vector2(1536.0, 960.0)
+const MAP_ART = preload("res://scripts/map_art.gd")
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
 const GOLD := Color("#deb57c")
@@ -11,7 +12,7 @@ const STATIONS := [
     {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(725, 670)},
     {"id": "office", "name": "Escritorio", "p": Vector2(430, 490)},
     {"id": "plot", "name": "Jazigo B-13", "p": Vector2(1110, 365)},
-    {"id": "maintenance", "name": "Manutencao", "p": Vector2(1225, 775)},
+    {"id": "maintenance", "name": "Manutencao", "p": Vector2(1255, 870)},
     {"id": "ghost", "name": "Baltazar", "p": Vector2(365, 560)}
 ]
 const OBJECTIVES := [
@@ -31,6 +32,7 @@ var reputation: int = 55
 var compliance: int = 65
 var reserved_plot: bool = false
 var dialogue_open: bool = false
+var visual_animation_elapsed: float = 0.0
 var status_label: Label
 var objective_label: Label
 var prompt_label: Label
@@ -50,6 +52,10 @@ func _ready() -> void:
         _show("Bem-vindo de volta!", "Seu progresso foi recuperado. A morte pode esperar; a burocracia, jamais.", [{"text": "Continuar", "action": "close"}])
 
 func _process(delta: float) -> void:
+    visual_animation_elapsed += delta
+    if visual_animation_elapsed >= 0.35:
+        visual_animation_elapsed = 0.0
+        queue_redraw()
     if not dialogue_open:
         clock_minutes += delta * 1.8
         if clock_minutes >= 1080.0:
@@ -323,77 +329,14 @@ func _refresh_ui() -> void:
         var near := _near_station()
         prompt_label.text = ("[E] " + str(near["name"])) if not near.is_empty() else "Aproxime-se de um marcador para interagir"
 
+func is_walkable(world_position: Vector2) -> bool:
+    # Os edificios possuem solidez basica. O escritorio e acessivel pela frente.
+    if Rect2(224, 155, 435, 293).has_point(world_position):
+        return false
+    if Rect2(1136, 669, 266, 168).has_point(world_position):
+        return false
+    # Fora dos limites do cemitério
+    return world_position.x >= 65.0 and world_position.x <= 1465.0 and world_position.y >= 100.0 and world_position.y <= 882.0
+
 func _draw() -> void:
-    draw_rect(Rect2(Vector2.ZERO, WORLD), Color("#35493e"))
-    for y in range(0, 960, 48):
-        for x in range(0, 1536, 48):
-            if (int(x / 48) + int(y / 48)) % 3 == 0:
-                draw_rect(Rect2(x + 7, y + 6, 34, 35), Color("#3b5044"))
-    draw_rect(Rect2(125, 572, 1280, 104), Color("#837b6a"))
-    draw_rect(Rect2(412, 425, 104, 440), Color("#918775"))
-    draw_rect(Rect2(1049, 195, 94, 570), Color("#918775"))
-    draw_rect(Rect2(25, 24, 1484, 16), Color("#24242c"))
-    draw_rect(Rect2(25, 922, 1484, 16), Color("#24242c"))
-    draw_rect(Rect2(25, 24, 16, 914), Color("#24242c"))
-    draw_rect(Rect2(1493, 24, 16, 914), Color("#24242c"))
-    _write(Vector2(80, 90), "JARDIM DO ULTIMO SUSPIRO", 24, PAPER)
-
-    # Edificio administrativo.
-    draw_rect(Rect2(192, 175, 460, 275), Color("#251c30"))
-    draw_rect(Rect2(204, 194, 436, 240), Color("#6a5670"))
-    draw_rect(Rect2(196, 176, 450, 54), Color("#33243e"))
-    draw_rect(Rect2(389, 399, 84, 52), Color("#403039"))
-    draw_rect(Rect2(246, 278, 80, 70), Color("#b9c9bd"))
-    draw_rect(Rect2(521, 278, 80, 70), Color("#b9c9bd"))
-    _write(Vector2(302, 218), "ADMINISTRACAO", 20, PAPER)
-    _marker(Vector2(430, 490), GOLD)
-
-    # Jazigos da quadra B.
-    _write(Vector2(766, 199), "QUADRA B", 23, PAPER)
-    for row in range(3):
-        for col in range(6):
-            var p := Vector2(795 + col * 105, 265 + row * 100)
-            if row == 1 and col == 3:
-                draw_rect(Rect2(p - Vector2(39, 37), Vector2(78, 74)), Color("#375967") if not reserved_plot else Color("#6d543c"))
-                _write(p + Vector2(-23, 6), "B-13", 17, PAPER)
-            else:
-                draw_rect(Rect2(p - Vector2(34, 11), Vector2(70, 45)), Color("#575c58"))
-                draw_rect(Rect2(p - Vector2(29, 36), Vector2(60, 37)), Color("#bbc0b6"))
-                draw_rect(Rect2(p - Vector2(3, 29), Vector2(6, 26)), Color("#797d77"))
-                draw_rect(Rect2(p - Vector2(12, 22), Vector2(24, 6)), Color("#797d77"))
-    _marker(Vector2(1110, 365), BLUE if not reserved_plot else GOLD)
-
-    # Area de manutencao.
-    draw_rect(Rect2(1127, 727, 302, 150), Color("#634e42"))
-    draw_rect(Rect2(1142, 744, 275, 119), Color("#7d715b"))
-    _write(Vector2(1153, 833), "MANUTENCAO", 20, PAPER)
-    _marker(Vector2(1225, 775), GOLD)
-
-    # Coveiro e contador fantasma.
-    _person(Vector2(725, 670), Color("#c6a589"), Color("#4c5d52"), "OSVALDO")
-    var ghost := Vector2(365, 560)
-    draw_circle(ghost, 29, Color("#aabdda", 0.9))
-    draw_rect(Rect2(ghost - Vector2(29, 0), Vector2(58, 27)), Color("#aabdda", 0.85))
-    draw_circle(ghost + Vector2(-10, -5), 4, NIGHT)
-    draw_circle(ghost + Vector2(10, -5), 4, NIGHT)
-    _write(ghost - Vector2(41, 48), "BALTAZAR", 14, PAPER)
-    _marker(ghost, GOLD)
-
-    for p in [Vector2(80, 180), Vector2(90, 438), Vector2(700, 165), Vector2(1450, 180), Vector2(1450, 708), Vector2(645, 837)]:
-        draw_rect(Rect2(p - Vector2(7, -4), Vector2(14, 42)), Color("#634d3d"))
-        draw_circle(p - Vector2(0, 17), 32, Color("#223b32"))
-        draw_circle(p - Vector2(14, 25), 20, Color("#3a5845"))
-
-func _write(pos: Vector2, content: String, size_px: int, color: Color) -> void:
-    draw_string(ThemeDB.fallback_font, pos, content, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px, color)
-
-func _marker(pos: Vector2, color: Color) -> void:
-    draw_circle(pos - Vector2(0, 43), 11, color)
-    draw_circle(pos - Vector2(0, 43), 5, Color("#302136"))
-
-func _person(pos: Vector2, skin: Color, outfit: Color, caption: String) -> void:
-    draw_rect(Rect2(pos - Vector2(15, 14), Vector2(30, 36)), outfit)
-    draw_circle(pos - Vector2(0, 18), 15, skin)
-    draw_rect(Rect2(pos - Vector2(18, 36), Vector2(36, 7)), NIGHT)
-    _write(pos - Vector2(39, 47), caption, 14, PAPER)
-    _marker(pos, GOLD)
+    MAP_ART.paint(self, reserved_plot, clock_minutes)

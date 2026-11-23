@@ -1,11 +1,19 @@
 extends CharacterBody2D
-## Protagonista de oito direcoes. Desenho provisório: sera substituido por sprites.
-
+## Personagem jogavel em quatro direcoes, animacao 2 quadros e colisao simples.
 const SPEED: float = 210.0
 const WORLD_SIZE := Vector2(1536.0, 960.0)
+const FRAMES = [
+    [preload("res://assets/sprites/protagonist_down_0.svg"), preload("res://assets/sprites/protagonist_down_1.svg")],
+    [preload("res://assets/sprites/protagonist_left_0.svg"), preload("res://assets/sprites/protagonist_left_1.svg")],
+    [preload("res://assets/sprites/protagonist_right_0.svg"), preload("res://assets/sprites/protagonist_right_1.svg")],
+    [preload("res://assets/sprites/protagonist_up_0.svg"), preload("res://assets/sprites/protagonist_up_1.svg")]
+]
 var virtual_direction := Vector2.ZERO
+var facing: int = 0
+var walk_clock: float = 0.0
+var walking: bool = false
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
     var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
     if Input.is_key_pressed(KEY_A):
         direction.x -= 1.0
@@ -19,18 +27,25 @@ func _physics_process(_delta: float) -> void:
         direction = virtual_direction
     if get_parent().get("dialogue_open"):
         direction = Vector2.ZERO
-    velocity = direction.normalized() * SPEED
+    direction = direction.normalized()
+    walking = direction.length_squared() > 0.0
+    if walking:
+        if absf(direction.x) > absf(direction.y):
+            facing = 2 if direction.x > 0 else 1
+        else:
+            facing = 0 if direction.y > 0 else 3
+        walk_clock += delta
+    else:
+        walk_clock = 0.0
+    velocity = direction * SPEED
+    var next_position := global_position + velocity * delta
+    if get_parent().has_method("is_walkable") and not get_parent().is_walkable(next_position):
+        velocity = Vector2.ZERO
     move_and_slide()
-    global_position = global_position.clamp(Vector2(60, 90), WORLD_SIZE - Vector2(60, 60))
+    global_position = global_position.clamp(Vector2(65, 100), WORLD_SIZE - Vector2(65, 78))
     queue_redraw()
 
 func _draw() -> void:
-    draw_circle(Vector2(0, 14), 16, Color("#17241f"))
-    draw_rect(Rect2(-13, 6, 10, 14), Color("#211b28"))
-    draw_rect(Rect2(3, 6, 10, 14), Color("#211b28"))
-    draw_rect(Rect2(-16, -14, 32, 24), Color("#463451"))
-    draw_rect(Rect2(-13, -11, 26, 18), Color("#84518b"))
-    draw_rect(Rect2(-14, -31, 28, 21), Color("#e4b99b"))
-    draw_rect(Rect2(-15, -35, 30, 9), Color("#20182a"))
-    draw_rect(Rect2(-8, -22, 4, 4), Color("#20182a"))
-    draw_rect(Rect2(5, -22, 4, 4), Color("#20182a"))
+    var frame: int = int(walk_clock * 7.0) % 2 if walking else 0
+    var texture: Texture2D = FRAMES[facing][frame]
+    draw_texture_rect(texture, Rect2(-28, -75, 56, 93), false)
