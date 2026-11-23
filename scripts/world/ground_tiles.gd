@@ -2,7 +2,7 @@ extends RefCounted
 ## Chao de Santa Mortalha. Unica fonte para materiais e conexoes.
 ## Malha de 32px: 48 colunas x 30 linhas. Renderizacao procedural deterministica.
 const TILE: int = 32
-const WIDTH: int = 76
+const WIDTH: int = 96
 const HEIGHT: int = 44
 const GRASS: int = 0
 const STONE: int = 1
@@ -26,7 +26,10 @@ const PATHS = [
     Rect2i(54,20,4,12), # preparacao
     Rect2i(67,20,3,14), # crematorio
     Rect2i(54,33,14,3), # garagem
-    Rect2i(65,35,7,3)  # fiscalizacao
+    Rect2i(65,35,7,3), # fiscalizacao
+    Rect2i(76,17,20,4), # extensao para o comercio
+    Rect2i(80,12,4,6), # entrada da casa funeraria
+    Rect2i(89,12,4,6) # entrada da fornecedora
 ]
 const SOIL = [
     Rect2i(26,12,2,3),

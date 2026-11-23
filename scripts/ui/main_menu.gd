@@ -158,7 +158,7 @@ func _build_menu() -> void:
     credits.pressed.connect(show_credits)
     add_child(credits)
 
-    _make_label("SIMULADOR DE GESTÃO FUNERÁRIA  ·  DEMO 0.9", Vector2(87, 561), Vector2(484, 24), 13, Color("#b2a0af"))
+    _make_label("SIMULADOR DE GESTÃO FUNERÁRIA  ·  DEMO 1.0", Vector2(87, 561), Vector2(484, 24), 13, Color("#b2a0af"))
     _make_label("VINICIUS DINIZ  •  ASAS DO MEDO GAMES", Vector2(698, 597), Vector2(410, 24), 14, CREAM, true)
 
 func _build_modal() -> void:
@@ -263,7 +263,7 @@ func _open_game() -> void:
 func show_how_to_play() -> void:
     _show_modal(
         "COMO JOGAR",
-        "Você herdou um cemitério cheio de histórias e contas para pagar!\n\nWASD ou setas: caminhar  •  E: interagir\nR: voltar a uma posição segura  •  Esc: abrir o menu\n\nConverse com Seu Osvaldo e explore o Distrito dos Eternos: hospital, frota, conservacao, crematorio e normas brasileiras, com custos ficticios.",
+        "Você herdou um cemitério cheio de histórias e contas para pagar!\n\nWASD ou setas: caminhar  •  E: interagir\nR: voltar a uma posição segura  •  Esc: abrir o menu\n\nExplore predios por dentro, atenda familias e gerencie o estoque de urnas e caixoes. Todos os valores sao ficticios.",
         [{"label":"VOLTAR", "callback":Callable(self, "_close_modal")}]
     )
 

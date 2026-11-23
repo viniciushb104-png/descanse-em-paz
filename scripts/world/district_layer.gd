@@ -19,6 +19,10 @@ func _draw() -> void:
     _rect(Rect2(2311,664,32,22),Color("#afa2ad"))
     _hearse(Vector2(2083,459),1.0)
     _hearse(Vector2(2110,1194),0.9)
+    _building(Vector2(2464,151),Vector2(288,260),"CASA FUNERARIA UMBRA",Color("#997d8d"),Color("#543b5b"),false)
+    _building(Vector2(2785,153),Vector2(255,258),"EMPORIO DE URNAS",Color("#9b866f"),Color("#634854"),false)
+    _text(Vector2(2518,449),"ATENDIMENTO",18,GOLD)
+    _text(Vector2(2812,449),"SUPRIMENTOS",18,GOLD)
     _sign(Rect2(1551,695,139,69),"ARQUIVO","LEGAL")
     _sign(Rect2(2107,1127,194,54),"POSTO DE","FISCALIZACAO")
     _text(Vector2(1556,530),"DISTRITO DOS ETERNOS",24,GOLD)
@@ -36,13 +40,13 @@ func _text(pos: Vector2,t: String,s: int=18,c: Color=GOLD) -> void:
     draw_string(ThemeDB.fallback_font,pos,t,HORIZONTAL_ALIGNMENT_LEFT,-1,s,c)
 
 func _walls() -> void:
-    for x in range(1510,2432,91):
+    for x in range(1510,3072,91):
         _rect(Rect2(x,30,80,20),Color("#64596a"))
     for y in range(100,1370,80):
         if y < 510 or y > 690:
             _rect(Rect2(1492,y,18,75),Color("#64596a"))
-        _rect(Rect2(2392,y,18,75),Color("#64596a"))
-    for x in range(1510,2425,90):
+        _rect(Rect2(3038,y,18,75),Color("#64596a"))
+    for x in range(1510,3070,90):
         _rect(Rect2(x,1376,80,19),Color("#64596a"))
 
 func _building(pos: Vector2,sz: Vector2,name: String,walls: Color,roof: Color,has_cross: bool) -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/world/graves_layer.gd" id="5_graves"]
 [ext_resource type="Script" path="res://scripts/world/trees_layer.gd" id="6_trees"]
 [ext_resource type="Script" path="res://scripts/world/district_layer.gd" id="7_district"]
+[ext_resource type="Script" path="res://scripts/world/interior_layer.gd" id="8_interior"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 10.0
@@ -33,6 +34,11 @@ script = ExtResource("5_graves")
 z_index = 0
 script = ExtResource("7_district")
 
+[node name="InteriorLayer" type="Node2D" parent="."]
+z_index = 0
+visible = false
+script = ExtResource("8_interior")
+
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(748, 714)
 script = ExtResource("2_player")
@@ -44,5 +50,5 @@ shape = SubResource("CircleShape2D_player")
 zoom = Vector2(0.75, 0.75)
 limit_left = 0
 limit_top = 0
-limit_right = 2432
+limit_right = 3072
 limit_bottom = 1408
