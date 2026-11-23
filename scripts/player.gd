@@ -2,11 +2,13 @@ extends CharacterBody2D
 ## Personagem jogavel em quatro direcoes, animacao 2 quadros e colisao simples.
 const SPEED: float = 210.0
 const WORLD_SIZE := Vector2(1536.0, 960.0)
+const CHARACTER_ATLAS: Texture2D = preload("res://assets/art/characters.png")
+# [parado, caminhada A, caminhada B] por direcao; recortes reais do concept.
 const FRAMES = [
-    [preload("res://assets/sprites/protagonist_down_0.svg"), preload("res://assets/sprites/protagonist_down_1.svg")],
-    [preload("res://assets/sprites/protagonist_left_0.svg"), preload("res://assets/sprites/protagonist_left_1.svg")],
-    [preload("res://assets/sprites/protagonist_right_0.svg"), preload("res://assets/sprites/protagonist_right_1.svg")],
-    [preload("res://assets/sprites/protagonist_up_0.svg"), preload("res://assets/sprites/protagonist_up_1.svg")]
+    [Rect2(3, 3, 52, 85), Rect2(115, 3, 52, 85), Rect2(171, 3, 52, 85)] # down,
+    [Rect2(227, 3, 52, 85), Rect2(339, 3, 52, 85), Rect2(395, 3, 52, 85)] # left,
+    [Rect2(451, 3, 52, 85), Rect2(563, 3, 52, 85), Rect2(619, 3, 52, 85)] # right,
+    [Rect2(675, 3, 52, 85), Rect2(787, 3, 52, 85), Rect2(843, 3, 52, 85)] # up
 ]
 var virtual_direction := Vector2.ZERO
 var facing: int = 0
@@ -46,6 +48,5 @@ func _physics_process(delta: float) -> void:
     queue_redraw()
 
 func _draw() -> void:
-    var frame: int = int(walk_clock * 7.0) % 2 if walking else 0
-    var texture: Texture2D = FRAMES[facing][frame]
-    draw_texture_rect(texture, Rect2(-28, -75, 56, 93), false)
+    var frame: int = 0 if not walking else 1 + (int(walk_clock * 7.0) % 2)
+    draw_texture_rect_region(CHARACTER_ATLAS, Rect2(-28, -75, 56, 93), FRAMES[facing][frame], Color.WHITE, false, true)

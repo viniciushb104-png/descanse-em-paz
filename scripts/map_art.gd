@@ -1,38 +1,84 @@
 extends RefCounted
-## Mapa visual versionado em Godot; cada elemento e um recurso independente.
-## Visual base V0.2: arte vetorial original (substituivel por atlas PNG definitivo).
+## V0.3: importa e posiciona PIXEL ART RECORTADA DAS IMAGENS OFICIAIS do projeto.
+## Texturas PNG sao atlases com alfa; as regioes preservam assets independentes.
+## Os SVGs da v0.2 nao sao mais utilizados neste mapa.
 
-const GRASS = preload("res://assets/sprites/grass.svg")
-const FLOWERS_GRASS = preload("res://assets/sprites/flowers_grass.svg")
-const PATH = preload("res://assets/sprites/path.svg")
-const EARTH = preload("res://assets/sprites/earth.svg")
-const WALL = preload("res://assets/sprites/wall.svg")
-const GATE = preload("res://assets/sprites/gate.svg")
-const FENCE = preload("res://assets/sprites/fence.svg")
-const GRAVE0 = preload("res://assets/sprites/grave_0.svg")
-const GRAVE1 = preload("res://assets/sprites/grave_1.svg")
-const GRAVE2 = preload("res://assets/sprites/grave_2.svg")
-const PLOT = preload("res://assets/sprites/plot.svg")
-const PLOT_RESERVED = preload("res://assets/sprites/plot_reserved.svg")
-const HEDGE = preload("res://assets/sprites/hedge.svg")
-const FLOWERS = preload("res://assets/sprites/flowers.svg")
-const TREE = preload("res://assets/sprites/tree.svg")
-const LANTERN = preload("res://assets/sprites/lantern.svg")
-const BENCH = preload("res://assets/sprites/bench.svg")
-const PUMPKIN = preload("res://assets/sprites/pumpkin.svg")
-const STATUE = preload("res://assets/sprites/statue.svg")
-const FOUNTAIN = preload("res://assets/sprites/fountain.svg")
-const OFFICE = preload("res://assets/sprites/office.svg")
-const SHED = preload("res://assets/sprites/shed.svg")
-const FAMILY = preload("res://assets/sprites/family_plot.svg")
-const OSVALDO = preload("res://assets/sprites/osvaldo_down_0.svg")
-const BALTAZAR = preload("res://assets/sprites/baltazar_down_0.svg")
+const WORLD_ATLAS: Texture2D = preload("res://assets/art/world.png")
+const CHARACTER_ATLAS: Texture2D = preload("res://assets/art/characters.png")
+
+const SPRITES = {
+    "grass": Rect2(3, 3, 40, 40),
+    "flowers_grass": Rect2(47, 3, 40, 40),
+    "stone_path": Rect2(91, 3, 40, 40),
+    "earth": Rect2(135, 3, 40, 40),
+    "wall": Rect2(179, 3, 137, 80),
+    "gate": Rect2(320, 3, 198, 100),
+    "fence": Rect2(522, 3, 112, 87),
+    "grave_a": Rect2(638, 3, 48, 65),
+    "grave_b": Rect2(690, 3, 52, 65),
+    "grave_c": Rect2(746, 3, 46, 65),
+    "plot": Rect2(796, 3, 57, 65),
+    "family_plot": Rect2(3, 107, 150, 70),
+    "bush": Rect2(157, 107, 52, 52),
+    "flowerbed": Rect2(213, 107, 62, 46),
+    "hedge": Rect2(279, 107, 54, 52),
+    "tree": Rect2(337, 107, 174, 187),
+    "lantern": Rect2(515, 107, 38, 92),
+    "bench": Rect2(557, 107, 86, 64),
+    "pumpkin": Rect2(647, 107, 35, 45),
+    "statue": Rect2(686, 107, 138, 138),
+    "fountain": Rect2(3, 298, 207, 137),
+    "office": Rect2(214, 298, 300, 223),
+    "shed": Rect2(518, 298, 250, 188),
+    "marker": Rect2(772, 298, 48, 65)
+}
+
+const NPC_RECTS = {
+    "osvaldo_down_0": Rect2(3, 92, 52, 65),
+    "osvaldo_down_1": Rect2(59, 92, 52, 65),
+    "baltazar_down_0": Rect2(3, 161, 53, 70),
+    "baltazar_down_1": Rect2(60, 161, 53, 70)
+}
+
+const GRASS = "grass"
+const FLOWERS_GRASS = "flowers_grass"
+const PATH = "stone_path"
+const EARTH = "earth"
+const WALL = "wall"
+const GATE = "gate"
+const FENCE = "fence"
+const GRAVE0 = "grave_a"
+const GRAVE1 = "grave_b"
+const GRAVE2 = "grave_c"
+const PLOT = "plot"
+const PLOT_RESERVED = "plot_reserved"
+const HEDGE = "hedge"
+const FLOWERS = "flowerbed"
+const TREE = "tree"
+const LANTERN = "lantern"
+const BENCH = "bench"
+const PUMPKIN = "pumpkin"
+const STATUE = "statue"
+const FOUNTAIN = "fountain"
+const OFFICE = "office"
+const SHED = "shed"
+const FAMILY = "family_plot"
+const OSVALDO = "osvaldo_down_0"
+const BALTAZAR = "baltazar_down_0"
 
 const WORLD_RECT := Rect2(0, 0, 1536, 960)
 const PAPER := Color("#f6e5cb")
 
-static func stamp(ctx: Node2D, tex: Texture2D, x: float, y: float, w: float, h: float) -> void:
-    ctx.draw_texture_rect(tex, Rect2(x, y, w, h), false)
+static func stamp(ctx: Node2D, sprite_key: String, x: float, y: float, w: float, h: float) -> void:
+    var is_plot_reserved: bool = sprite_key == "plot_reserved"
+    var lookup_key: String = "plot" if is_plot_reserved else sprite_key
+    var atlas: Texture2D = CHARACTER_ATLAS if NPC_RECTS.has(lookup_key) else WORLD_ATLAS
+    var sources: Dictionary = NPC_RECTS if NPC_RECTS.has(lookup_key) else SPRITES
+    if not sources.has(lookup_key):
+        return
+    ctx.draw_texture_rect_region(atlas, Rect2(x, y, w, h), sources[lookup_key], Color.WHITE, false, true)
+    if is_plot_reserved:
+        ctx.draw_rect(Rect2(x + 2, y + 4, w - 4, h - 8), Color("#f0c068"), false, 4.0)
 
 static func writing(ctx: Node2D, pos: Vector2, message: String, size_px: int = 19, color: Color = PAPER) -> void:
     ctx.draw_string(ThemeDB.fallback_font, pos, message, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px, color)
@@ -122,10 +168,10 @@ static func paint(ctx: Node2D, reserved_plot: bool, time_minute: float) -> void:
         stamp(ctx, HEDGE, pos.x, pos.y, 66, 53)
 
     # Personagens fixos: as coordenadas coincidem com o sistema de interacao.
-    stamp(ctx, OSVALDO, 695, 588, 62, 96)
+    stamp(ctx, "osvaldo_down_1" if int(time_minute / 2.0) % 2 == 0 else OSVALDO, 695, 588, 62, 90)
     writing(ctx, Vector2(681, 590), "OSVALDO", 15, PAPER)
     var float_y: float = sin(time_minute * 0.18) * 5.0
-    stamp(ctx, BALTAZAR, 328, 470 + float_y, 71, 100)
+    stamp(ctx, "baltazar_down_1" if int(time_minute / 2.0) % 2 == 0 else BALTAZAR, 328, 470 + float_y, 71, 92)
     writing(ctx, Vector2(318, 468), "BALTAZAR", 15, Color("#bdf7fa"))
     if time_minute > 930.0:
         var alpha: float = clampf((time_minute - 930.0) / 180.0, 0.0, 0.24)

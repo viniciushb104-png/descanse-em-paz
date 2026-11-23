@@ -4,7 +4,7 @@
 
 Jogo de comédia gótica e administração funerária, criado por **Vinicius Diniz — Asas do Medo Games**, em Godot 4.7.2.
 
-## Protótipo 0.1
+## Protótipo 0.3 — pixel art original em uso
 - Explore o cemitério de Santa Mortalha em perspectiva superior;
 - converse com Seu Osvaldo e com Baltazar, o contador fantasma;
 - confira documentação, reserve um jazigo, registre o atendimento e faça manutenção;
