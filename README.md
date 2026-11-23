@@ -34,3 +34,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - **GroundLayer** desenha apenas o chao; **PropsLayer** conserva construcoes, objetos e NPCs.
 - Rotas entre portao, administracao, oficina, jazigo B-13 e jardins sao validadas automaticamente.
 - Personagem, camera, salvamento, controle e missao preservados.
+
+## Versao 0.6 — Lote 1: 10 covas/tumulos reais
+- 10 PNGs individuais, 4 covas e 6 tumulos, em `assets/props/` com transparencia.
+- `GravesLayer` exibe os objetos sem cortes de atlas; `graves_layout.gd` define posicoes, escala e colisao por ID.
+- O B-13 recebeu a imagem `Cova_01` com marcador dinamico, preservando a interacao e o progresso.
+- Os tumulos genericos do atlas antigo nao sao mais desenhados; demais predios, personagens, logica e UI foram preservados.
+- Novo smoke test confere as 10 texturas e verifica acesso e colisao da cova B-13.

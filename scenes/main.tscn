@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
 [ext_resource type="Script" path="res://scripts/world/ground_layer.gd" id="3_ground"]
 [ext_resource type="Script" path="res://scripts/world/props_layer.gd" id="4_props"]
+[ext_resource type="Script" path="res://scripts/world/graves_layer.gd" id="5_graves"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 10.0
@@ -17,6 +18,10 @@ script = ExtResource("3_ground")
 
 [node name="PropsLayer" type="Node2D" parent="."]
 script = ExtResource("4_props")
+
+[node name="GravesLayer" type="Node2D" parent="."]
+z_index = 2
+script = ExtResource("5_graves")
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(748, 714)

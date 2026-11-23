@@ -73,25 +73,11 @@ static func paint_buildings(ctx: Node2D) -> void:
         stamp(ctx, "wall", float(x), 890, 137, 70)
     stamp(ctx, "gate", 646, 808, 240, 145)
 
-static func paint_plots(ctx: Node2D, reserved: bool) -> void:
-    # Quadra B separada da oficina; fileiras ordenadas.
-    for row in range(2):
-        for col in range(5):
-            var px: float = 883.0 + float(col * 110)
-            var py: float = 429.0 + float(row * 127)
-            if row == 1 and col == 2:
-                stamp(ctx, "plot", px, py + 12, 79, 82)
-                ctx.draw_rect(Rect2(px + 1, py + 13, 78, 80), Color("#e9bd6e") if reserved else Color("#addbd5"), false, 3.0)
-                ctx.draw_string(ThemeDB.fallback_font, Vector2(px + 17, py + 9), "B-13", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, LIGHT)
-            else:
-                stamp(ctx, "grave_a" if (col + row) % 3 == 0 else ("grave_b" if col % 2 == 0 else "grave_c"), px, py, 65, 89)
-                if (col + row) % 2 == 0:
-                    stamp(ctx, "flowerbed", px + 6, py + 74, 53, 33)
+static func paint_plots(ctx: Node2D, _reserved: bool) -> void:
+    # As 10 covas/tumulos vao agora em GravesLayer, com PNG individual.
+    # Restam aqui apenas os cercados familiares da composicao anterior.
     stamp(ctx, "family_plot", 132, 700, 180, 90)
     stamp(ctx, "family_plot", 333, 703, 159, 83)
-    stamp(ctx, "grave_c", 225, 472, 63, 86)
-    stamp(ctx, "grave_a", 105, 462, 60, 86)
-    stamp(ctx, "grave_b", 522, 653, 59, 83)
 
 static func paint_decoration(ctx: Node2D) -> void:
     stamp(ctx, "tree", 61, 118, 180, 192)
@@ -100,14 +86,13 @@ static func paint_decoration(ctx: Node2D) -> void:
     stamp(ctx, "statue", 89, 305, 137, 143)
     stamp(ctx, "fountain", 489, 723, 195, 136)
     stamp(ctx, "bench", 274, 481, 122, 73)
-    stamp(ctx, "bench", 860, 735, 114, 65)
     for p in [Vector2(622, 532), Vector2(851, 536), Vector2(1080, 534), Vector2(1240, 537)]:
         stamp(ctx, "lantern", p.x, p.y, 29, 73)
-    for p in [Vector2(173, 839), Vector2(970, 826), Vector2(1410, 805)]:
+    for p in [Vector2(173, 839), Vector2(1040, 859), Vector2(1410, 805)]:
         stamp(ctx, "pumpkin", p.x, p.y, 40, 46)
     for p in [Vector2(570, 467), Vector2(984, 352), Vector2(995, 690), Vector2(192, 827)]:
         stamp(ctx, "flowerbed", p.x, p.y, 66, 46)
-    for p in [Vector2(80, 452), Vector2(599, 468), Vector2(1095, 690), Vector2(1342, 624)]:
+    for p in [Vector2(80, 452), Vector2(599, 468), Vector2(1342, 624)]:
         stamp(ctx, "hedge", p.x, p.y, 62, 57)
 
 static func paint_characters(ctx: Node2D, time_minute: float) -> void:
