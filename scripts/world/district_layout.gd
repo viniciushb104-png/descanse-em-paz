@@ -14,7 +14,7 @@ const STATIONS = [
     {"id":"garagem","name":"Garagem funeraria","p":Vector2(1818,1116)},
     {"id":"preparo","name":"Sala de conservacao","p":Vector2(1794,1035)},
     {"id":"crematorio","name":"Crematorio Cinzas & Cia","p":Vector2(2192,1039)},
-    {"id":"fiscalizacao","name":"Posto de fiscalizacao","p":Vector2(2208,1194)},
+    {"id":"fiscalizacao","name":"Posto de fiscalizacao","p":Vector2(2208,1155)},
     {"id":"biblioteca","name":"Arquivo Legal","p":Vector2(1604,658)},
     {"id":"carro","name":"Carro funerario","p":Vector2(2080,566)}
 ]
