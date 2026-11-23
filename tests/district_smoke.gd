@@ -12,7 +12,7 @@ func _run() -> void:
         push_error("DistrictLayer ausente")
         quit(81)
         return
-    if GROUND.WIDTH * GROUND.TILE != 2432 or GROUND.HEIGHT * GROUND.TILE != 1408:
+    if GROUND.WIDTH * GROUND.TILE != 3072 or GROUND.HEIGHT * GROUND.TILE != 1408:
         push_error("Mapa nao expandido")
         quit(82)
         return
@@ -21,7 +21,7 @@ func _run() -> void:
         push_error("Camera nao segue o protagonista")
         quit(83)
         return
-    if DISTRICT.STATIONS.size() != 7:
+    if DISTRICT.STATIONS.size() != 9:
         push_error("Setores incompletos")
         quit(84)
         return

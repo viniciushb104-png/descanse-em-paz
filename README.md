@@ -62,3 +62,12 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Fontes oficiais e ressalvas em `docs/DISTRITO_V09.md` e `scripts/systems/legal_lessons.gd`.
 - Primeiras construcoes do distrito sao **arte provisoria modular**, para substituir depois por sprites independentes.
 - Antigos salvamentos ate a etapa 5 continuam validos; o proximo objetivo passa a ser o hospital.
+
+## Versao 1.0 — Interiores, Emporio e clientes
+- Distrito expandido para 3072 x 1408, Casa Funeraria Umbra e Emporio das Ultimas Coisas.
+- Nove ambientes internos acessiveis por portas: escritorio, hospital, garagem, conservacao, crematorio, arquivo, fiscalizacao, funeraria e fornecedora.
+- Protagonista pode caminhar nos interiores, conversar com atendentes e clientes, examinar catalogo e consultar mural.
+- Campanha paralela de 20 atendimentos humanos com perfis variados (calmo, enlutado, estranho, desconfiado etc.).
+- Estoque real no jogo: compra de caixoes e urnas cinerarias, custos ficticios e consumo por caso.
+- Pausa e salvamento persistem entre exterior e interior. Testes automatizados evitam quebrar as versoes anteriores.
+- Conteudo educacional refere-se ao CDC, ao registro civil, ao ambiente e a regras sanitarias, sempre com ressalvas locais.

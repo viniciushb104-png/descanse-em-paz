@@ -2,11 +2,12 @@ extends Node2D
 ## Vertical slice 0.1: exploracao, documentacao, finanças e manutencao.
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
-const WORLD := Vector2(2432.0, 1408.0)
+const WORLD := Vector2(3072.0, 1408.0)
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
 const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
+@onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
@@ -58,6 +59,7 @@ var options_box: VBoxContainer
 func _ready() -> void:
     _build_ui()
     _load_game()
+    rooms.apply_room()
     _ensure_valid_player_position()
     _refresh_ui()
     $PropsLayer.queue_redraw()
@@ -96,6 +98,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
         get_viewport().set_input_as_handled()
 
 func _near_station() -> Dictionary:
+    if rooms.inside():
+        return rooms.nearest(player.global_position)
     var nearest: Dictionary = {}
     var shortest := 98.0
     for station in STATIONS + DISTRICT_LAYOUT.STATIONS:
@@ -110,9 +114,14 @@ func _try_interact() -> void:
         return
     var station := _near_station()
     if not station.is_empty():
-        _interact(str(station["id"]))
+        if rooms.inside():
+            rooms.interact(str(station["id"]))
+        else:
+            _interact(str(station["id"]))
 
 func _interact(id: String) -> void:
+    if rooms.offer_entry(id):
+        return
     match id:
         "osvaldo":
             if stage == 0:
@@ -173,6 +182,9 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if rooms.handle_choice(action):
+        _refresh_ui()
+        return
     if action.begins_with("legal_"):
         var key: String = action.trim_prefix("legal_")
         var item: Dictionary = LEGAL.ITEMS.get(key,{})
@@ -307,6 +319,7 @@ func _save_game() -> void:
     cfg.set_value("save", "position", player.global_position)
     cfg.set_value("save", "clock", clock_minutes)
     cfg.set_value("save", "map_version", MAP_SAVE_VERSION)
+    rooms.save_state(cfg)
     cfg.save("user://save.cfg")
 
 func _load_game() -> void:
@@ -320,6 +333,7 @@ func _load_game() -> void:
     compliance = clampi(int(cfg.get_value("save", "compliance", 65)), 0, 100)
     reserved_plot = bool(cfg.get_value("save", "reserved_plot", false))
     clock_minutes = float(cfg.get_value("save", "clock", 480.0))
+    rooms.load_state(cfg)
     var saved_map_version: int = int(cfg.get_value("save", "map_version", 0))
     if saved_map_version != MAP_SAVE_VERSION:
         # Preserva a missao, os indicadores e o caixa, mas nao uma posicao
@@ -332,18 +346,18 @@ func _load_game() -> void:
 
 func _ensure_valid_player_position() -> void:
     if not is_walkable(player.global_position):
-        player.global_position = SPAWN
+        player.global_position = rooms.safe_spawn()
         rescue_notice = "Personagem reposicionado em uma area segura."
         _save_game()
 
 func _open_pause_menu() -> void:
     if dialogue_open:
         return
-    _show(
-        "PAUSAR EXPEDIENTE",
-        "Seu trabalho esta salvo. Os mortos podem esperar alguns minutos, mas Baltazar continua de olho nas contas.",
-        [{"text":"Voltar ao cemiterio", "action":"close"}, {"text":"Salvar e ir ao menu inicial", "action":"menu_return"}]
-    )
+    var menu_options: Array = [{"text":"Retomar expediente","action":"close"}]
+    if rooms.inside():
+        menu_options.append({"text":"Sair do predio","action":"leave_room"})
+    menu_options.append({"text":"Salvar e ir ao menu inicial","action":"menu_return"})
+    _show("PAUSAR EXPEDIENTE","Os mortos podem esperar, mas Baltazar continua de olho nas contas.",menu_options)
 
 func _rescue_player() -> void:
     # Resgate seguro: nao altera missao, dinheiro ou reputacao.
@@ -351,7 +365,7 @@ func _rescue_player() -> void:
         _close()
     player.virtual_direction = Vector2.ZERO
     player.velocity = Vector2.ZERO
-    player.global_position = SPAWN
+    player.global_position = rooms.safe_spawn()
     rescue_notice = "Posicao restaurada. Continue explorando!"
     _save_game()
     _refresh_ui()
@@ -505,7 +519,7 @@ func _refresh_ui() -> void:
         return
     var minutes: int = int(clock_minutes)
     status_label.text = "SANTA MORTALHA  |  Dia %d  |  %02d:%02d\nCaixa R$ %d  ·  Reputacao %d/100  ·  Conformidade %d/100" % [day, int(minutes / 60.0), minutes % 60, money, reputation, compliance]
-    objective_label.text = "MISSÃO DO EXPEDIENTE\n" + OBJECTIVES[stage]
+    objective_label.text = "MISSÃO DO EXPEDIENTE\n" + (rooms.objective() if stage >= 12 else OBJECTIVES[stage])
     if dialogue_open:
         prompt_label.text = ""
     elif not rescue_notice.is_empty():
@@ -517,9 +531,11 @@ func _refresh_ui() -> void:
 
 
 func is_walkable(world_position: Vector2) -> bool:
+    if rooms.inside():
+        return rooms.walkable(world_position)
     # Sem barreiras invisiveis nas areas transitaveis. Os blocos abrangem
     # somente o corpo da administracao e do galpao, nao suas entradas.
-    if world_position.x < 58.0 or world_position.x > 2385.0:
+    if world_position.x < 58.0 or world_position.x > 3025.0:
         return false
     if world_position.y < 92.0 or world_position.y > 1350.0:
         return false

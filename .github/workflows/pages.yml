@@ -56,6 +56,9 @@ jobs:
       - name: Testar distrito, missões e legislação
         run: godot --headless --path . --script res://tests/district_smoke.gd
 
+      - name: Testar interiores, estoque e vinte casos
+        run: godot --headless --path . --script res://tests/interior_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web
