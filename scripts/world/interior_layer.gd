@@ -4,6 +4,13 @@ const INK := Color("#241a2b")
 const GOLD := Color("#d8b882")
 const PAPER := Color("#eadfd0")
 var room: String = ""
+var customer_name: String = "VISITANTE"
+var customer_profile: String = "calmo"
+
+func set_customer(name: String, profile: String) -> void:
+    customer_name = name
+    customer_profile = profile
+    queue_redraw()
 
 func set_room(key: String) -> void:
     room = key
@@ -54,7 +61,15 @@ func _draw() -> void:
     draw_rect(Rect2(215,270,184,35),Color("#654656"))
     draw_rect(Rect2(871,298,190,39),Color("#674b52"))
     _npc(Vector2(294,326),Color("#d9b5a0"),Color("#403245"),"ATENDENTE")
-    _npc(Vector2(818,325),Color("#b9a5b8"),Color("#584051"),"CLIENTE")
+    var coat := Color("#584051")
+    match customer_profile:
+        "sofredor": coat=Color("#5d647a")
+        "suspeito": coat=Color("#383948")
+        "estranho": coat=Color("#956481")
+        "apressado": coat=Color("#916552")
+        "economico": coat=Color("#6c725c")
+        "confuso": coat=Color("#5d7a7a")
+    _npc(Vector2(818,325),Color("#b9a5b8"),coat,customer_name)
     draw_rect(Rect2(180,182,72,44),Color("#322635"))
     draw_rect(Rect2(188,187,56,31),Color("#baa27e"))
     _text(Vector2(176,174),"CASOS",15,PAPER)
