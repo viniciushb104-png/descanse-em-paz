@@ -1,11 +1,9 @@
 extends RefCounted
-## V0.3: importa e posiciona PIXEL ART RECORTADA DAS IMAGENS OFICIAIS do projeto.
-## Texturas PNG sao atlases com alfa; as regioes preservam assets independentes.
-## Os SVGs da v0.2 nao sao mais utilizados neste mapa.
-
-const WORLD_ATLAS: Texture2D = preload("res://assets/art/world.png")
-const CHARACTER_ATLAS: Texture2D = preload("res://assets/art/characters.png")
-
+## Mapa V0.4: as artes reais (PNG atlases) em blocos coerentes.
+## Renderizacao separada em terreno, caminhos, predios e decoracao.
+## Camera inicial exibe todo o terreno, para evitar cortes de edificios.
+const ATLAS: Texture2D = preload("res://assets/art/world.png")
+const CHARACTERS: Texture2D = preload("res://assets/art/characters.png")
 const SPRITES = {
     "grass": Rect2(3, 3, 40, 40),
     "flowers_grass": Rect2(47, 3, 40, 40),
@@ -29,150 +27,119 @@ const SPRITES = {
     "statue": Rect2(686, 107, 138, 138),
     "fountain": Rect2(3, 298, 207, 137),
     "office": Rect2(214, 298, 300, 223),
-    "shed": Rect2(518, 298, 250, 188),
-    "marker": Rect2(772, 298, 48, 65)
+    "shed": Rect2(518, 298, 250, 188)
 }
-
 const NPC_RECTS = {
     "osvaldo_down_0": Rect2(3, 92, 52, 65),
     "osvaldo_down_1": Rect2(59, 92, 52, 65),
     "baltazar_down_0": Rect2(3, 161, 53, 70),
     "baltazar_down_1": Rect2(60, 161, 53, 70)
 }
+const GREEN := Color("#34473b")
+const STONE := Color("#79697b")
+const LIGHT := Color("#f6e3be")
 
-const GRASS = "grass"
-const FLOWERS_GRASS = "flowers_grass"
-const PATH = "stone_path"
-const EARTH = "earth"
-const WALL = "wall"
-const GATE = "gate"
-const FENCE = "fence"
-const GRAVE0 = "grave_a"
-const GRAVE1 = "grave_b"
-const GRAVE2 = "grave_c"
-const PLOT = "plot"
-const PLOT_RESERVED = "plot_reserved"
-const HEDGE = "hedge"
-const FLOWERS = "flowerbed"
-const TREE = "tree"
-const LANTERN = "lantern"
-const BENCH = "bench"
-const PUMPKIN = "pumpkin"
-const STATUE = "statue"
-const FOUNTAIN = "fountain"
-const OFFICE = "office"
-const SHED = "shed"
-const FAMILY = "family_plot"
-const OSVALDO = "osvaldo_down_0"
-const BALTAZAR = "baltazar_down_0"
-
-const WORLD_RECT := Rect2(0, 0, 1536, 960)
-const PAPER := Color("#f6e5cb")
-
-static func stamp(ctx: Node2D, sprite_key: String, x: float, y: float, w: float, h: float) -> void:
-    var is_plot_reserved: bool = sprite_key == "plot_reserved"
-    var lookup_key: String = "plot" if is_plot_reserved else sprite_key
-    var atlas: Texture2D = CHARACTER_ATLAS if NPC_RECTS.has(lookup_key) else WORLD_ATLAS
-    var sources: Dictionary = NPC_RECTS if NPC_RECTS.has(lookup_key) else SPRITES
-    if not sources.has(lookup_key):
+static func stamp(ctx: Node2D, key: String, x: float, y: float, w: float, h: float, opacity: float = 1.0) -> void:
+    var is_npc: bool = NPC_RECTS.has(key)
+    var area: Dictionary = NPC_RECTS if is_npc else SPRITES
+    if not area.has(key):
         return
-    ctx.draw_texture_rect_region(atlas, Rect2(x, y, w, h), sources[lookup_key], Color.WHITE, false, true)
-    if is_plot_reserved:
-        ctx.draw_rect(Rect2(x + 2, y + 4, w - 4, h - 8), Color("#f0c068"), false, 4.0)
+    var texture: Texture2D = CHARACTERS if is_npc else ATLAS
+    ctx.draw_texture_rect_region(texture, Rect2(x, y, w, h), area[key], Color(1, 1, 1, opacity), false, true)
 
-static func writing(ctx: Node2D, pos: Vector2, message: String, size_px: int = 19, color: Color = PAPER) -> void:
-    ctx.draw_string(ThemeDB.fallback_font, pos, message, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px, color)
+static func path(ctx: Node2D, region: Rect2) -> void:
+    ctx.draw_rect(region, STONE, true)
+    ctx.draw_rect(region, Color("#b49aac"), false, 3.0)
+    var x: int = int(region.position.x)
+    while x < int(region.end.x):
+        var y: int = int(region.position.y)
+        while y < int(region.end.y):
+            var w: float = minf(48.0, region.end.x - float(x))
+            var h: float = minf(48.0, region.end.y - float(y))
+            stamp(ctx, "stone_path", float(x), float(y), w, h, 0.78)
+            y += 48
+        x += 48
 
-static func paint(ctx: Node2D, reserved_plot: bool, time_minute: float) -> void:
-    # Terreno modular: 64x64 px, caminhos por cima e decoracoes como objetos independentes.
-    for y in range(0, 960, 64):
-        for x in range(0, 1536, 64):
-            stamp(ctx, FLOWERS_GRASS if (int(x / 64) + int(y / 64) * 3) % 7 == 0 else GRASS, x, y, 64, 64)
-    # Caminho central do portao para a administracao.
-    for yy in range(430, 950, 64):
-        for xx in range(665, 857, 64):
-            stamp(ctx, PATH, xx, yy, 64, 64)
-    for yy in range(510, 610, 64):
-        for xx in range(170, 1450, 64):
-            stamp(ctx, PATH, xx, yy, 64, 64)
-    for yy in range(368, 584, 64):
-        for xx in range(351, 550, 64):
-            stamp(ctx, PATH, xx, yy, 64, 64)
-    for yy in range(580, 915, 64):
-        for xx in range(1160, 1395, 64):
-            stamp(ctx, PATH, xx, yy, 64, 64)
+static func paint(ctx: Node2D, reserved: bool, time_minute: float) -> void:
+    paint_ground(ctx)
+    paint_paths(ctx)
+    paint_buildings(ctx)
+    paint_plots(ctx, reserved)
+    paint_decoration(ctx)
+    paint_characters(ctx, time_minute)
+    if time_minute > 1020.0:
+        var alpha: float = clampf((time_minute - 1020.0) / 120.0, 0.0, 0.12)
+        ctx.draw_rect(Rect2(0, 0, 1536, 960), Color(0.03, 0.03, 0.12, alpha), true)
 
-    # Muros, jardins e areas delimitadas, mantendo entrada inferior desobstruida.
-    for xx in range(0, 1536, 152):
-        stamp(ctx, WALL, xx, 0, 152, 85)
-    for yy in range(77, 879, 80):
-        stamp(ctx, WALL, 0, yy, 50, 80)
-        stamp(ctx, WALL, 1488, yy, 50, 80)
-    for xx in range(0, 600, 152):
-        stamp(ctx, WALL, xx, 880, 152, 85)
-    for xx in range(915, 1536, 152):
-        stamp(ctx, WALL, xx, 880, 152, 85)
-    stamp(ctx, GATE, 650, 792, 250, 171)
-    writing(ctx, Vector2(704, 928), "ULTIMO SUSPIRO", 18, Color("#efc98a"))
+static func paint_ground(ctx: Node2D) -> void:
+    ctx.draw_rect(Rect2(0, 0, 1536, 960), GREEN, true)
+    # Sem o padrao de quadriculado: os recortes de grama viram detalhes pontuais.
+    for i in range(80):
+        var x: float = 75.0 + float((i * 211 + 13) % 1392)
+        var y: float = 93.0 + float((i * 157 + 27) % 775)
+        stamp(ctx, "flowers_grass" if i % 7 == 0 else "grass", x, y, 34, 34, 0.22)
 
-    # Sombras e vegetacao ambiente.
-    stamp(ctx, TREE, 22, 82, 216, 237)
-    stamp(ctx, TREE, 1320, 90, 180, 205)
-    stamp(ctx, TREE, 44, 667, 150, 174)
-    stamp(ctx, HEDGE, 540, 460, 91, 59)
-    stamp(ctx, HEDGE, 934, 487, 88, 57)
-    stamp(ctx, HEDGE, 1003, 490, 91, 57)
-    for pos in [Vector2(80, 464), Vector2(260, 460), Vector2(946, 110), Vector2(1040, 100), Vector2(1454, 599)]:
-        stamp(ctx, FLOWERS, pos.x, pos.y, 82, 50)
+static func paint_paths(ctx: Node2D) -> void:
+    path(ctx, Rect2(700, 364, 137, 552))
+    path(ctx, Rect2(150, 544, 1243, 108))
+    path(ctx, Rect2(394, 396, 111, 180))
+    path(ctx, Rect2(1220, 340, 110, 225))
+    path(ctx, Rect2(1058, 609, 160, 113))
+    path(ctx, Rect2(435, 700, 267, 84))
 
-    # Administracao e contabilidade: entrada em baixo, proximo ao ponto E do escritorio.
-    stamp(ctx, OFFICE, 204, 120, 485, 344)
-    writing(ctx, Vector2(314, 151), "ADMINISTRACAO", 19)
-    stamp(ctx, LANTERN, 287, 408, 34, 80)
-    stamp(ctx, LANTERN, 600, 407, 34, 80)
+static func paint_buildings(ctx: Node2D) -> void:
+    # Topo inteiro da capela e do galpao fica dentro do mundo.
+    stamp(ctx, "office", 168, 116, 466, 315)
+    stamp(ctx, "shed", 1101, 132, 340, 226)
+    # Muros discretos, sem cobrir as edificacoes.
+    for x in range(0, 1536, 137):
+        stamp(ctx, "wall", float(x), 5, 137, 76)
+    for y in range(90, 883, 76):
+        stamp(ctx, "wall", 4, float(y), 48, 76)
+        stamp(ctx, "wall", 1480, float(y), 48, 76)
+    for x in range(0, 625, 137):
+        stamp(ctx, "wall", float(x), 890, 137, 70)
+    for x in range(910, 1536, 137):
+        stamp(ctx, "wall", float(x), 890, 137, 70)
+    stamp(ctx, "gate", 646, 808, 240, 145)
 
-    # Quadra B: jazigos posicionados em fileiras e acessiveis pela lateral dos caminhos.
-    writing(ctx, Vector2(861, 198), "QUADRA B", 24)
-    for row in range(3):
-        for col in range(6):
-            var px: float = 798 + col * 103
-            var py: float = 246 + row * 103
-            if row == 1 and col == 3:
-                stamp(ctx, PLOT_RESERVED if reserved_plot else PLOT, px - 13, py - 5, 88, 77)
-                writing(ctx, Vector2(px + 4, py - 9), "B-13", 17, Color("#ffe8aa"))
+static func paint_plots(ctx: Node2D, reserved: bool) -> void:
+    # Quadra B separada da oficina; fileiras ordenadas.
+    for row in range(2):
+        for col in range(5):
+            var px: float = 883.0 + float(col * 110)
+            var py: float = 429.0 + float(row * 127)
+            if row == 1 and col == 2:
+                stamp(ctx, "plot", px, py + 12, 79, 82)
+                ctx.draw_rect(Rect2(px + 1, py + 13, 78, 80), Color("#e9bd6e") if reserved else Color("#addbd5"), false, 3.0)
+                ctx.draw_string(ThemeDB.fallback_font, Vector2(px + 17, py + 9), "B-13", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, LIGHT)
             else:
-                stamp(ctx, EARTH, px + 10, py + 33, 47, 28)
-                var grave_texture: String = GRAVE0 if (row + col) % 3 == 0 else (GRAVE1 if (row + col) % 3 == 1 else GRAVE2)
-                stamp(ctx, grave_texture, px - 2, py - 28, 66, 92)
-                if (row + col) % 2 == 0:
-                    stamp(ctx, FLOWERS, px + 28, py + 30, 38, 26)
+                stamp(ctx, "grave_a" if (col + row) % 3 == 0 else ("grave_b" if col % 2 == 0 else "grave_c"), px, py, 65, 89)
+                if (col + row) % 2 == 0:
+                    stamp(ctx, "flowerbed", px + 6, py + 74, 53, 33)
+    stamp(ctx, "family_plot", 132, 700, 180, 90)
+    stamp(ctx, "family_plot", 333, 703, 159, 83)
+    stamp(ctx, "grave_c", 225, 472, 63, 86)
+    stamp(ctx, "grave_a", 105, 462, 60, 86)
+    stamp(ctx, "grave_b", 522, 653, 59, 83)
 
-    # Jardins familiares do lado oeste.
-    stamp(ctx, FAMILY, 108, 610, 208, 111)
-    stamp(ctx, FAMILY, 340, 701, 210, 113)
-    stamp(ctx, STATUE, 95, 347, 147, 157)
-    stamp(ctx, FOUNTAIN, 611, 742, 221, 171)
-    stamp(ctx, BENCH, 312, 585, 136, 79)
-    stamp(ctx, BENCH, 962, 694, 123, 70)
-    for pos in [Vector2(78, 762), Vector2(239, 774), Vector2(492, 758), Vector2(352, 608)]:
-        stamp(ctx, GRAVE0, pos.x, pos.y, 70, 100)
+static func paint_decoration(ctx: Node2D) -> void:
+    stamp(ctx, "tree", 61, 118, 180, 192)
+    stamp(ctx, "tree", 850, 99, 167, 183)
+    stamp(ctx, "tree", 1340, 704, 143, 164)
+    stamp(ctx, "statue", 89, 305, 137, 143)
+    stamp(ctx, "fountain", 489, 723, 195, 136)
+    stamp(ctx, "bench", 274, 481, 122, 73)
+    stamp(ctx, "bench", 860, 735, 114, 65)
+    for p in [Vector2(622, 532), Vector2(851, 536), Vector2(1080, 534), Vector2(1240, 537)]:
+        stamp(ctx, "lantern", p.x, p.y, 29, 73)
+    for p in [Vector2(173, 839), Vector2(970, 826), Vector2(1410, 805)]:
+        stamp(ctx, "pumpkin", p.x, p.y, 40, 46)
+    for p in [Vector2(570, 467), Vector2(984, 352), Vector2(995, 690), Vector2(192, 827)]:
+        stamp(ctx, "flowerbed", p.x, p.y, 66, 46)
+    for p in [Vector2(80, 452), Vector2(599, 468), Vector2(1095, 690), Vector2(1342, 624)]:
+        stamp(ctx, "hedge", p.x, p.y, 62, 57)
 
-    # Galpao de manutencao — ponto interativo fica na porta, na parte de baixo.
-    stamp(ctx, SHED, 1116, 628, 324, 225)
-    writing(ctx, Vector2(1176, 673), "MANUTENCAO", 18)
-    for pos in [Vector2(552, 525), Vector2(850, 525), Vector2(681, 883), Vector2(935, 877), Vector2(1037, 525)]:
-        stamp(ctx, LANTERN, pos.x, pos.y, 38, 93)
-    for pos in [Vector2(132, 826), Vector2(1420, 830), Vector2(580, 845), Vector2(1010, 850)]:
-        stamp(ctx, PUMPKIN, pos.x, pos.y, 48, 52)
-    for pos in [Vector2(430, 525), Vector2(1165, 568), Vector2(1439, 521)]:
-        stamp(ctx, HEDGE, pos.x, pos.y, 66, 53)
-
-    # Personagens fixos: as coordenadas coincidem com o sistema de interacao.
-    stamp(ctx, "osvaldo_down_1" if int(time_minute / 2.0) % 2 == 0 else OSVALDO, 695, 588, 62, 90)
-    writing(ctx, Vector2(681, 590), "OSVALDO", 15, PAPER)
-    var float_y: float = sin(time_minute * 0.18) * 5.0
-    stamp(ctx, "baltazar_down_1" if int(time_minute / 2.0) % 2 == 0 else BALTAZAR, 328, 470 + float_y, 71, 92)
-    writing(ctx, Vector2(318, 468), "BALTAZAR", 15, Color("#bdf7fa"))
-    if time_minute > 930.0:
-        var alpha: float = clampf((time_minute - 930.0) / 180.0, 0.0, 0.24)
-        ctx.draw_rect(WORLD_RECT, Color(0.06, 0.04, 0.15, alpha), true)
+static func paint_characters(ctx: Node2D, time_minute: float) -> void:
+    stamp(ctx, "osvaldo_down_0" if int(time_minute / 3.0) % 2 == 0 else "osvaldo_down_1", 746, 556, 65, 89)
+    stamp(ctx, "baltazar_down_0" if int(time_minute / 3.0) % 2 == 0 else "baltazar_down_1", 537, 412 + sin(time_minute * 0.12) * 4.0, 70, 93)

@@ -9,11 +9,11 @@ const NIGHT := Color("#24192f")
 const GOLD := Color("#deb57c")
 const BLUE := Color("#8dbddc")
 const STATIONS := [
-    {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(725, 670)},
-    {"id": "office", "name": "Escritorio", "p": Vector2(430, 490)},
-    {"id": "plot", "name": "Jazigo B-13", "p": Vector2(1110, 365)},
-    {"id": "maintenance", "name": "Manutencao", "p": Vector2(1255, 870)},
-    {"id": "ghost", "name": "Baltazar", "p": Vector2(365, 560)}
+    {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(778, 638)},
+    {"id": "office", "name": "Escritorio", "p": Vector2(425, 476)},
+    {"id": "plot", "name": "Jazigo B-13", "p": Vector2(1125, 630)},
+    {"id": "maintenance", "name": "Manutencao", "p": Vector2(1270, 407)},
+    {"id": "ghost", "name": "Baltazar", "p": Vector2(572, 500)}
 ]
 const OBJECTIVES := [
     "Fale com Seu Osvaldo, o coveiro.",
@@ -32,6 +32,9 @@ var reputation: int = 55
 var compliance: int = 65
 var reserved_plot: bool = false
 var dialogue_open: bool = false
+const SPAWN := Vector2(748, 714)
+const MAP_SAVE_VERSION := 4
+var rescue_notice: String = ""
 var visual_animation_elapsed: float = 0.0
 var status_label: Label
 var objective_label: Label
@@ -44,6 +47,7 @@ var options_box: VBoxContainer
 func _ready() -> void:
     _build_ui()
     _load_game()
+    _ensure_valid_player_position()
     _refresh_ui()
     queue_redraw()
     if stage == 0:
@@ -72,6 +76,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
         get_viewport().set_input_as_handled()
     elif event.keycode == KEY_E and not dialogue_open:
         _try_interact()
+        get_viewport().set_input_as_handled()
+    elif event.keycode == KEY_R:
+        _rescue_player()
         get_viewport().set_input_as_handled()
 
 func _near_station() -> Dictionary:
@@ -177,6 +184,7 @@ func _save_game() -> void:
     cfg.set_value("save", "reserved_plot", reserved_plot)
     cfg.set_value("save", "position", player.global_position)
     cfg.set_value("save", "clock", clock_minutes)
+    cfg.set_value("save", "map_version", MAP_SAVE_VERSION)
     cfg.save("user://save.cfg")
 
 func _load_game() -> void:
@@ -190,7 +198,32 @@ func _load_game() -> void:
     compliance = clampi(int(cfg.get_value("save", "compliance", 65)), 0, 100)
     reserved_plot = bool(cfg.get_value("save", "reserved_plot", false))
     clock_minutes = float(cfg.get_value("save", "clock", 480.0))
-    player.global_position = cfg.get_value("save", "position", player.global_position)
+    var saved_map_version: int = int(cfg.get_value("save", "map_version", 0))
+    if saved_map_version != MAP_SAVE_VERSION:
+        # Preserva a missao, os indicadores e o caixa, mas nao uma posicao
+        # que poderia estar presa dentro de um novo edificio.
+        player.global_position = SPAWN
+        rescue_notice = "Mapa reorganizado! Posicao restaurada; seu progresso foi mantido."
+    else:
+        player.global_position = cfg.get_value("save", "position", SPAWN)
+    _save_game()
+
+func _ensure_valid_player_position() -> void:
+    if not is_walkable(player.global_position):
+        player.global_position = SPAWN
+        rescue_notice = "Personagem reposicionado em uma area segura."
+        _save_game()
+
+func _rescue_player() -> void:
+    # Resgate seguro: nao altera missao, dinheiro ou reputacao.
+    if dialogue_open:
+        _close()
+    player.virtual_direction = Vector2.ZERO
+    player.velocity = Vector2.ZERO
+    player.global_position = SPAWN
+    rescue_notice = "Posicao restaurada. Continue explorando!"
+    _save_game()
+    _refresh_ui()
 
 func _close() -> void:
     dialogue_open = false
@@ -227,116 +260,137 @@ func _build_ui() -> void:
     layer.add_child(root)
     root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+    # HUD compacto: duas linhas; sem faixa horizontal gigante.
     var bar := Panel.new()
-    bar.position = Vector2.ZERO
-    bar.size = Vector2(1152, 67)
+    bar.position = Vector2(12, 10)
+    bar.size = Vector2(650, 74)
     bar.add_theme_stylebox_override("panel", _style(NIGHT, GOLD))
     bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(bar)
     status_label = Label.new()
-    status_label.position = Vector2(18, 14)
-    status_label.size = Vector2(1110, 45)
-    status_label.add_theme_font_size_override("font_size", 19)
+    status_label.position = Vector2(13, 7)
+    status_label.size = Vector2(625, 60)
+    status_label.add_theme_font_size_override("font_size", 18)
     status_label.add_theme_color_override("font_color", PAPER)
     status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     bar.add_child(status_label)
 
     var mission := Panel.new()
-    mission.position = Vector2(674, 78)
-    mission.size = Vector2(460, 112)
+    mission.position = Vector2(700, 10)
+    mission.size = Vector2(439, 92)
     mission.add_theme_stylebox_override("panel", _style(Color("#302238"), Color("#917259")))
     mission.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(mission)
     objective_label = Label.new()
-    objective_label.position = Vector2(14, 10)
-    objective_label.size = Vector2(433, 95)
-    objective_label.add_theme_font_size_override("font_size", 19)
+    objective_label.position = Vector2(14, 7)
+    objective_label.size = Vector2(412, 75)
+    objective_label.add_theme_font_size_override("font_size", 16)
     objective_label.add_theme_color_override("font_color", PAPER)
     objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     objective_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     mission.add_child(objective_label)
 
+    var tip := Panel.new()
+    tip.position = Vector2(240, 600)
+    tip.size = Vector2(665, 38)
+    tip.add_theme_stylebox_override("panel", _style(Color("#302238bb"), Color("#b79a6e")))
+    tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(tip)
     prompt_label = Label.new()
-    prompt_label.position = Vector2(188, 598)
-    prompt_label.size = Vector2(780, 34)
-    prompt_label.add_theme_font_size_override("font_size", 18)
+    prompt_label.position = Vector2(12, 8)
+    prompt_label.size = Vector2(640, 27)
+    prompt_label.add_theme_font_size_override("font_size", 16)
     prompt_label.add_theme_color_override("font_color", PAPER)
-    prompt_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-    prompt_label.add_theme_constant_override("shadow_offset_x", 2)
     prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    root.add_child(prompt_label)
+    tip.add_child(prompt_label)
 
     dialog_panel = Panel.new()
-    dialog_panel.position = Vector2(146, 306)
-    dialog_panel.size = Vector2(860, 330)
+    dialog_panel.position = Vector2(185, 281)
+    dialog_panel.size = Vector2(782, 314)
     dialog_panel.visible = false
     dialog_panel.add_theme_stylebox_override("panel", _style(NIGHT, GOLD))
     root.add_child(dialog_panel)
     dialog_title = Label.new()
-    dialog_title.position = Vector2(22, 13)
-    dialog_title.size = Vector2(815, 38)
-    dialog_title.add_theme_font_size_override("font_size", 24)
+    dialog_title.position = Vector2(18, 14)
+    dialog_title.size = Vector2(744, 36)
+    dialog_title.add_theme_font_size_override("font_size", 23)
     dialog_title.add_theme_color_override("font_color", BLUE)
     dialog_panel.add_child(dialog_title)
     dialog_body = Label.new()
-    dialog_body.position = Vector2(22, 56)
-    dialog_body.size = Vector2(812, 128)
+    dialog_body.position = Vector2(18, 57)
+    dialog_body.size = Vector2(741, 107)
     dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     dialog_body.add_theme_font_size_override("font_size", 17)
     dialog_body.add_theme_color_override("font_color", PAPER)
     dialog_panel.add_child(dialog_body)
     options_box = VBoxContainer.new()
-    options_box.position = Vector2(22, 186)
-    options_box.size = Vector2(812, 131)
-    options_box.add_theme_constant_override("separation", 4)
+    options_box.position = Vector2(20, 173)
+    options_box.size = Vector2(741, 127)
+    options_box.add_theme_constant_override("separation", 5)
     dialog_panel.add_child(options_box)
 
-    _touch_controls(root)
+    # Botao de resgate acessivel mesmo se o teclado perder foco.
+    var rescue := Button.new()
+    rescue.text = "R  Resgatar personagem"
+    rescue.position = Vector2(943, 601)
+    rescue.size = Vector2(195, 37)
+    rescue.pressed.connect(_rescue_player)
+    root.add_child(rescue)
+    if DisplayServer.is_touchscreen_available():
+        _touch_controls(root)
 
 func _touch_controls(root: Control) -> void:
     var directions := [
-        {"label": "◀", "p": Vector2(24, 549), "d": Vector2.LEFT},
-        {"label": "▲", "p": Vector2(80, 498), "d": Vector2.UP},
-        {"label": "▼", "p": Vector2(80, 549), "d": Vector2.DOWN},
-        {"label": "▶", "p": Vector2(136, 549), "d": Vector2.RIGHT}
+        {"label": "◀", "p": Vector2(17, 546), "d": Vector2.LEFT},
+        {"label": "▲", "p": Vector2(70, 502), "d": Vector2.UP},
+        {"label": "▼", "p": Vector2(70, 546), "d": Vector2.DOWN},
+        {"label": "▶", "p": Vector2(123, 546), "d": Vector2.RIGHT}
     ]
     for info in directions:
         var btn := Button.new()
         btn.text = str(info["label"])
         btn.position = info["p"]
-        btn.size = Vector2(50, 46)
-        btn.modulate.a = 0.8
+        btn.size = Vector2(49, 40)
         var direction: Vector2 = info["d"]
-        btn.button_down.connect(func() -> void: player.set("virtual_direction", direction))
-        btn.button_up.connect(func() -> void: player.set("virtual_direction", Vector2.ZERO))
+        btn.button_down.connect(func() -> void: player.virtual_direction = direction)
+        btn.button_up.connect(func() -> void: player.virtual_direction = Vector2.ZERO)
         root.add_child(btn)
     var interact := Button.new()
-    interact.text = "INTERAGIR [E]"
-    interact.position = Vector2(976, 549)
-    interact.size = Vector2(160, 48)
+    interact.text = "Interagir"
+    interact.position = Vector2(958, 548)
+    interact.size = Vector2(175, 43)
     interact.pressed.connect(_try_interact)
     root.add_child(interact)
 
 func _refresh_ui() -> void:
     if status_label == null:
         return
-    var total: int = int(clock_minutes)
-    status_label.text = "☠ SANTA MORTALHA   Dia %d  |  %02d:%02d  |  Caixa R$ %d  |  Reputacao %d/100  |  Conformidade %d/100" % [day, int(total / 60.0), total % 60, money, reputation, compliance]
-    objective_label.text = "MISSAO DO EXPEDIENTE\n" + OBJECTIVES[stage]
+    var minutes: int = int(clock_minutes)
+    status_label.text = "SANTA MORTALHA  |  Dia %d  |  %02d:%02d\nCaixa R$ %d  ·  Reputacao %d/100  ·  Conformidade %d/100" % [day, int(minutes / 60.0), minutes % 60, money, reputation, compliance]
+    objective_label.text = "MISSÃO DO EXPEDIENTE\n" + OBJECTIVES[stage]
     if dialogue_open:
         prompt_label.text = ""
+    elif not rescue_notice.is_empty():
+        prompt_label.text = rescue_notice
+        rescue_notice = ""
     else:
         var near := _near_station()
-        prompt_label.text = ("[E] " + str(near["name"])) if not near.is_empty() else "Aproxime-se de um marcador para interagir"
+        prompt_label.text = ("E  ·  " + str(near["name"])) if not near.is_empty() else "WASD / Setas: andar   ·   E: interagir   ·   R: resgatar"
+
 
 func is_walkable(world_position: Vector2) -> bool:
-    # Os edificios possuem solidez basica. O escritorio e acessivel pela frente.
-    if Rect2(224, 155, 435, 293).has_point(world_position):
+    # Sem barreiras invisiveis nas areas transitaveis. Os blocos abrangem
+    # somente o corpo da administracao e do galpao, nao suas entradas.
+    if world_position.x < 58.0 or world_position.x > 1474.0:
         return false
-    if Rect2(1136, 669, 266, 168).has_point(world_position):
+    if world_position.y < 92.0 or world_position.y > 895.0:
         return false
-    # Fora dos limites do cemitério
-    return world_position.x >= 65.0 and world_position.x <= 1465.0 and world_position.y >= 100.0 and world_position.y <= 882.0
+    if Rect2(196, 150, 418, 280).has_point(world_position):
+        return false
+    if Rect2(1138, 168, 286, 203).has_point(world_position):
+        return false
+    return true
 
 func _draw() -> void:
     MAP_ART.paint(self, reserved_plot, clock_minutes)

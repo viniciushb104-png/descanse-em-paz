@@ -38,6 +38,9 @@ jobs:
       - name: Importar recursos e validar projeto
         run: godot --headless --path . --editor --quit
 
+      - name: Testar aparicao e movimento do jogador
+        run: godot --headless --path . --script res://tests/smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web
