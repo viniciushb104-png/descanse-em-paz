@@ -142,7 +142,7 @@ static func paint(ctx: Node2D, reserved_plot: bool, time_minute: float) -> void:
                 writing(ctx, Vector2(px + 4, py - 9), "B-13", 17, Color("#ffe8aa"))
             else:
                 stamp(ctx, EARTH, px + 10, py + 33, 47, 28)
-                var grave_texture: Texture2D = GRAVE0 if (row + col) % 3 == 0 else (GRAVE1 if (row + col) % 3 == 1 else GRAVE2)
+                var grave_texture: String = GRAVE0 if (row + col) % 3 == 0 else (GRAVE1 if (row + col) % 3 == 1 else GRAVE2)
                 stamp(ctx, grave_texture, px - 2, py - 28, 66, 92)
                 if (row + col) % 2 == 0:
                     stamp(ctx, FLOWERS, px + 28, py + 30, 38, 26)
