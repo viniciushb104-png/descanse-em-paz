@@ -73,8 +73,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     if not event.pressed or event.echo:
         return
-    if event.keycode == KEY_ESCAPE and dialogue_open:
-        _close()
+    if event.keycode == KEY_ESCAPE:
+        if dialogue_open:
+            _close()
+        else:
+            _open_pause_menu()
         get_viewport().set_input_as_handled()
     elif event.keycode == KEY_E and not dialogue_open:
         _try_interact()
@@ -128,6 +131,10 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action == "menu_return":
+        _save_game()
+        get_tree().change_scene_to_file("res://scenes/menu/main_menu.tscn")
+        return
     match action:
         "close":
             _close()
@@ -215,6 +222,15 @@ func _ensure_valid_player_position() -> void:
         player.global_position = SPAWN
         rescue_notice = "Personagem reposicionado em uma area segura."
         _save_game()
+
+func _open_pause_menu() -> void:
+    if dialogue_open:
+        return
+    _show(
+        "PAUSAR EXPEDIENTE",
+        "Seu trabalho esta salvo. Os mortos podem esperar alguns minutos, mas Baltazar continua de olho nas contas.",
+        [{"text":"Voltar ao cemiterio", "action":"close"}, {"text":"Salvar e ir ao menu inicial", "action":"menu_return"}]
+    )
 
 func _rescue_player() -> void:
     # Resgate seguro: nao altera missao, dinheiro ou reputacao.
@@ -339,6 +355,12 @@ func _build_ui() -> void:
     rescue.size = Vector2(195, 37)
     rescue.pressed.connect(_rescue_player)
     root.add_child(rescue)
+    var menu_button := Button.new()
+    menu_button.text = "MENU"
+    menu_button.position = Vector2(1010, 108)
+    menu_button.size = Vector2(128, 36)
+    menu_button.pressed.connect(_open_pause_menu)
+    root.add_child(menu_button)
     if DisplayServer.is_touchscreen_available():
         _touch_controls(root)
 

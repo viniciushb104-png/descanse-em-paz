@@ -47,3 +47,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - `TreeLayer` carrega PNGs independentes e evita os cortes do atlas anterior.
 - A colisão corresponde apenas ao tronco/raízes; caminhos e missões permanecem acessíveis.
 - As demais árvores criadas ficam para uma próxima rodada de posicionamento e testes.
+
+## Versão 0.8 — Menu inicial gótico
+- Tela inicial própria com lua, capela, árvores góticas e tipografia dramática.
+- **Continuar expediente** verifica o salvamento local; **Novo jogo** exige confirmação se houver progresso.
+- Painéis interativos **Como Jogar** e **Créditos**.
+- No cemitério, **Esc** sem diálogo ou botão **MENU** permite salvar e voltar à abertura.
+- Testes da Godot agora validam o menu e a preservação do jogo. Detalhes em `docs/MENU_V08.md`.
