@@ -41,6 +41,9 @@ jobs:
       - name: Testar aparicao e movimento do jogador
         run: godot --headless --path . --script res://tests/smoke.gd
 
+      - name: Validar piso e conexao dos caminhos
+        run: godot --headless --path . --script res://tests/ground_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

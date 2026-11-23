@@ -47,22 +47,8 @@ static func stamp(ctx: Node2D, key: String, x: float, y: float, w: float, h: flo
     var texture: Texture2D = CHARACTERS if is_npc else ATLAS
     ctx.draw_texture_rect_region(texture, Rect2(x, y, w, h), area[key], Color(1, 1, 1, opacity), false, true)
 
-static func path(ctx: Node2D, region: Rect2) -> void:
-    ctx.draw_rect(region, STONE, true)
-    ctx.draw_rect(region, Color("#b49aac"), false, 3.0)
-    var x: int = int(region.position.x)
-    while x < int(region.end.x):
-        var y: int = int(region.position.y)
-        while y < int(region.end.y):
-            var w: float = minf(48.0, region.end.x - float(x))
-            var h: float = minf(48.0, region.end.y - float(y))
-            stamp(ctx, "stone_path", float(x), float(y), w, h, 0.78)
-            y += 48
-        x += 48
-
+# Piso em GroundLayer; este modulo renderiza apenas objetos e NPCs.
 static func paint(ctx: Node2D, reserved: bool, time_minute: float) -> void:
-    paint_ground(ctx)
-    paint_paths(ctx)
     paint_buildings(ctx)
     paint_plots(ctx, reserved)
     paint_decoration(ctx)
@@ -70,22 +56,6 @@ static func paint(ctx: Node2D, reserved: bool, time_minute: float) -> void:
     if time_minute > 1020.0:
         var alpha: float = clampf((time_minute - 1020.0) / 120.0, 0.0, 0.12)
         ctx.draw_rect(Rect2(0, 0, 1536, 960), Color(0.03, 0.03, 0.12, alpha), true)
-
-static func paint_ground(ctx: Node2D) -> void:
-    ctx.draw_rect(Rect2(0, 0, 1536, 960), GREEN, true)
-    # Sem o padrao de quadriculado: os recortes de grama viram detalhes pontuais.
-    for i in range(80):
-        var x: float = 75.0 + float((i * 211 + 13) % 1392)
-        var y: float = 93.0 + float((i * 157 + 27) % 775)
-        stamp(ctx, "flowers_grass" if i % 7 == 0 else "grass", x, y, 34, 34, 0.22)
-
-static func paint_paths(ctx: Node2D) -> void:
-    path(ctx, Rect2(700, 364, 137, 552))
-    path(ctx, Rect2(150, 544, 1243, 108))
-    path(ctx, Rect2(394, 396, 111, 180))
-    path(ctx, Rect2(1220, 340, 110, 225))
-    path(ctx, Rect2(1058, 609, 160, 113))
-    path(ctx, Rect2(435, 700, 267, 84))
 
 static func paint_buildings(ctx: Node2D) -> void:
     # Topo inteiro da capela e do galpao fica dentro do mundo.

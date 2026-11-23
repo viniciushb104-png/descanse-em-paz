@@ -3,7 +3,7 @@ extends Node2D
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
 const WORLD := Vector2(1536.0, 960.0)
-const MAP_ART = preload("res://scripts/map_art.gd")
+## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
 const GOLD := Color("#deb57c")
@@ -49,7 +49,7 @@ func _ready() -> void:
     _load_game()
     _ensure_valid_player_position()
     _refresh_ui()
-    queue_redraw()
+    $PropsLayer.queue_redraw()
     if stage == 0:
         _show("Bem-vindo a Santa Mortalha!", "Voce herdou um cemiterio em crise. Um contador fantasma, um coveiro experiente e montanhas de papelada esperam por voce. Fale com Seu Osvaldo!\n\nWASD ou setas: mover | E: interagir | Esc: fechar.", [{"text": "Comecar expediente", "action": "close"}])
     else:
@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
     visual_animation_elapsed += delta
     if visual_animation_elapsed >= 0.35:
         visual_animation_elapsed = 0.0
-        queue_redraw()
+        $PropsLayer.queue_redraw()
     if not dialogue_open:
         clock_minutes += delta * 1.8
         if clock_minutes >= 1080.0:
@@ -143,7 +143,7 @@ func _on_choice(action: String) -> void:
         "reserve":
             reserved_plot = true
             stage = 3
-            queue_redraw()
+            $PropsLayer.queue_redraw()
             _show("Reserva registrada", "Jazigo B-13 reservado. Agora retorne ao escritorio e registre o atendimento.", [{"text": "Continuar", "action": "close"}])
         "register":
             if not reserved_plot:
@@ -392,5 +392,4 @@ func is_walkable(world_position: Vector2) -> bool:
         return false
     return true
 
-func _draw() -> void:
-    MAP_ART.paint(self, reserved_plot, clock_minutes)
+

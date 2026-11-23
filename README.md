@@ -27,3 +27,10 @@ Código e arte originais reservados ao autor até definição de licença.
 
 ## Atualizacao V0.4 (23/11/2026)
 O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos predios; personagem agora usa um Sprite2D independente, com anel de localizacao. Salvamentos anteriores mantem a missao, mas reposicionam o jogador em local seguro. A camera inicial mostra o cemiterio completo. A CI testa presenca da textura e capacidade de deslocamento do jogador.
+
+## Versao 0.5 — piso reorganizado
+- Terreno em grid de **32 x 32 px**, com grama, terra e pedra.
+- A grama nao repete quadriculados de imagens recortadas; caminho com pedras de juntas irregulares.
+- **GroundLayer** desenha apenas o chao; **PropsLayer** conserva construcoes, objetos e NPCs.
+- Rotas entre portao, administracao, oficina, jazigo B-13 e jardins sao validadas automaticamente.
+- Personagem, camera, salvamento, controle e missao preservados.
