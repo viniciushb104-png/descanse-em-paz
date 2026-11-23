@@ -2,8 +2,8 @@ extends RefCounted
 ## Chao de Santa Mortalha. Unica fonte para materiais e conexoes.
 ## Malha de 32px: 48 colunas x 30 linhas. Renderizacao procedural deterministica.
 const TILE: int = 32
-const WIDTH: int = 48
-const HEIGHT: int = 30
+const WIDTH: int = 76
+const HEIGHT: int = 44
 const GRASS: int = 0
 const STONE: int = 1
 const DIRT: int = 2
@@ -20,14 +20,22 @@ const PATHS = [
     Rect2i(38,11,4,6),  # oficina
     Rect2i(32,19,6,3),  # quadra B
     Rect2i(13,22,9,3),  # jardins
-    Rect2i(7,19,5,4)    # sepulturas oeste
+    Rect2i(7,19,5,4),   # sepulturas oeste
+    Rect2i(43,17,33,4), # passagem para o leste
+    Rect2i(55,12,4,6),  # hospital
+    Rect2i(54,20,4,12), # preparacao
+    Rect2i(67,20,3,14), # crematorio
+    Rect2i(54,33,14,3), # garagem
+    Rect2i(65,35,7,3)  # fiscalizacao
 ]
 const SOIL = [
     Rect2i(26,12,2,3),
     Rect2i(28,14,4,2),
     Rect2i(3,22,4,3),
     Rect2i(42,12,2,3),
-    Rect2i(31,23,4,2)
+    Rect2i(31,23,4,2),
+    Rect2i(51,27,3,4),
+    Rect2i(71,30,3,3)
 ]
 
 static func hash_at(x: int, y: int, salt: int = 0) -> int:

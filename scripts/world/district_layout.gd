@@ -1,0 +1,25 @@
+extends RefCounted
+## Distrito dos Eternos: pontos de interacao e colisoes fixos.
+const WORLD_SIZE := Vector2(2432, 1408)
+const BUILDINGS = [
+    Rect2(1654,148,353,254),
+    Rect2(1609,758,337,233),
+    Rect2(2039,754,337,246),
+    Rect2(1655,1151,410,215),
+    Rect2(2077,454,263,95),
+    Rect2(2105,1194,233,84)
+]
+const STATIONS = [
+    {"id":"hospital","name":"Hospital Santa Ultima Hora","p":Vector2(1813,446)},
+    {"id":"garagem","name":"Garagem funeraria","p":Vector2(1818,1116)},
+    {"id":"preparo","name":"Sala de conservacao","p":Vector2(1794,1035)},
+    {"id":"crematorio","name":"Crematorio Cinzas & Cia","p":Vector2(2192,1039)},
+    {"id":"fiscalizacao","name":"Posto de fiscalizacao","p":Vector2(2208,1194)},
+    {"id":"biblioteca","name":"Arquivo Legal","p":Vector2(1604,658)},
+    {"id":"carro","name":"Carro funerario","p":Vector2(2080,566)}
+]
+static func is_blocked(where: Vector2) -> bool:
+    for footprint in BUILDINGS:
+        if footprint.has_point(where):
+            return true
+    return false

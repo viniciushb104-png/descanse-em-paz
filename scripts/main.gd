@@ -2,9 +2,10 @@ extends Node2D
 ## Vertical slice 0.1: exploracao, documentacao, finanças e manutencao.
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
-const WORLD := Vector2(1536.0, 960.0)
+const WORLD := Vector2(2432.0, 1408.0)
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
+const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
@@ -89,7 +90,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _near_station() -> Dictionary:
     var nearest: Dictionary = {}
     var shortest := 98.0
-    for station in STATIONS:
+    for station in STATIONS + DISTRICT_LAYOUT.STATIONS:
         var distance: float = player.global_position.distance_to(station["p"])
         if distance < shortest:
             shortest = distance
@@ -406,15 +407,17 @@ func _refresh_ui() -> void:
 func is_walkable(world_position: Vector2) -> bool:
     # Sem barreiras invisiveis nas areas transitaveis. Os blocos abrangem
     # somente o corpo da administracao e do galpao, nao suas entradas.
-    if world_position.x < 58.0 or world_position.x > 1474.0:
+    if world_position.x < 58.0 or world_position.x > 2385.0:
         return false
-    if world_position.y < 92.0 or world_position.y > 895.0:
+    if world_position.y < 92.0 or world_position.y > 1350.0:
         return false
     if Rect2(196, 150, 418, 280).has_point(world_position):
         return false
     if Rect2(1138, 168, 286, 203).has_point(world_position):
         return false
     if GRAVE_LAYOUT.is_blocked(world_position):
+        return false
+    if DISTRICT_LAYOUT.is_blocked(world_position):
         return false
     if TREE_LAYOUT.is_blocked(world_position):
         return false

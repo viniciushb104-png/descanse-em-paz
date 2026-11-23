@@ -66,7 +66,8 @@ static func paint_buildings(ctx: Node2D) -> void:
         stamp(ctx, "wall", float(x), 5, 137, 76)
     for y in range(90, 883, 76):
         stamp(ctx, "wall", 4, float(y), 48, 76)
-        stamp(ctx, "wall", 1480, float(y), 48, 76)
+        if y < 546 or y > 698:
+            stamp(ctx, "wall", 1480, float(y), 48, 76)
     for x in range(0, 625, 137):
         stamp(ctx, "wall", float(x), 890, 137, 70)
     for x in range(910, 1536, 137):
