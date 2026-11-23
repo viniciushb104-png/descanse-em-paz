@@ -4,6 +4,7 @@ extends Node2D
 
 const WORLD := Vector2(1536.0, 960.0)
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
+const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
 const NIGHT := Color("#24192f")
@@ -392,6 +393,8 @@ func is_walkable(world_position: Vector2) -> bool:
     if Rect2(1138, 168, 286, 203).has_point(world_position):
         return false
     if GRAVE_LAYOUT.is_blocked(world_position):
+        return false
+    if TREE_LAYOUT.is_blocked(world_position):
         return false
     return true
 

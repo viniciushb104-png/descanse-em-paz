@@ -47,6 +47,9 @@ jobs:
       - name: Testar dez sprites individuais e acesso ao B-13
         run: godot --headless --path . --script res://tests/graves_smoke.gd
 
+      - name: Testar arvores goticas e caminhos livres
+        run: godot --headless --path . --script res://tests/trees_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

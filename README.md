@@ -41,3 +41,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - O B-13 recebeu a imagem `Cova_01` com marcador dinamico, preservando a interacao e o progresso.
 - Os tumulos genericos do atlas antigo nao sao mais desenhados; demais predios, personagens, logica e UI foram preservados.
 - Novo smoke test confere as 10 texturas e verifica acesso e colisao da cova B-13.
+
+## Versão 0.7 — Primeiras árvores góticas
+- O cenário agora inclui 4 árvores novas retiradas das nossas artes originais, em `assets/trees/`.
+- `TreeLayer` carrega PNGs independentes e evita os cortes do atlas anterior.
+- A colisão corresponde apenas ao tronco/raízes; caminhos e missões permanecem acessíveis.
+- As demais árvores criadas ficam para uma próxima rodada de posicionamento e testes.

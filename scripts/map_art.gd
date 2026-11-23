@@ -80,15 +80,12 @@ static func paint_plots(ctx: Node2D, _reserved: bool) -> void:
     stamp(ctx, "family_plot", 333, 703, 159, 83)
 
 static func paint_decoration(ctx: Node2D) -> void:
-    stamp(ctx, "tree", 61, 118, 180, 192)
-    stamp(ctx, "tree", 850, 99, 167, 183)
-    stamp(ctx, "tree", 1340, 704, 143, 164)
     stamp(ctx, "statue", 89, 305, 137, 143)
     stamp(ctx, "fountain", 489, 723, 195, 136)
     stamp(ctx, "bench", 274, 481, 122, 73)
     for p in [Vector2(622, 532), Vector2(851, 536), Vector2(1080, 534), Vector2(1240, 537)]:
         stamp(ctx, "lantern", p.x, p.y, 29, 73)
-    for p in [Vector2(173, 839), Vector2(1040, 859), Vector2(1410, 805)]:
+    for p in [Vector2(173, 839), Vector2(1040, 859), Vector2(1320, 834)]:
         stamp(ctx, "pumpkin", p.x, p.y, 40, 46)
     for p in [Vector2(570, 467), Vector2(984, 352), Vector2(995, 690), Vector2(192, 827)]:
         stamp(ctx, "flowerbed", p.x, p.y, 66, 46)
