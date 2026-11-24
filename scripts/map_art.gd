@@ -2,6 +2,7 @@ extends RefCounted
 ## Mapa V0.4: as artes reais (PNG atlases) em blocos coerentes.
 ## Renderizacao separada em terreno, caminhos, predios e decoracao.
 ## Camera inicial exibe todo o terreno, para evitar cortes de edificios.
+const BOUNDARIES = preload("res://scripts/world/boundary_art.gd")
 const ATLAS: Texture2D = preload("res://assets/art/world.png")
 const CHARACTERS: Texture2D = preload("res://assets/art/characters.png")
 const SPRITES = {
@@ -61,18 +62,7 @@ static func paint_buildings(ctx: Node2D) -> void:
     # Topo inteiro da capela e do galpao fica dentro do mundo.
     stamp(ctx, "office", 168, 116, 466, 315)
     stamp(ctx, "shed", 1101, 132, 340, 226)
-    # Muros discretos, sem cobrir as edificacoes.
-    for x in range(0, 1536, 137):
-        stamp(ctx, "wall", float(x), 5, 137, 76)
-    for y in range(90, 883, 76):
-        stamp(ctx, "wall", 4, float(y), 48, 76)
-        if y < 546 or y > 698:
-            stamp(ctx, "wall", 1480, float(y), 48, 76)
-    for x in range(0, 625, 137):
-        stamp(ctx, "wall", float(x), 890, 137, 70)
-    for x in range(910, 1536, 137):
-        stamp(ctx, "wall", float(x), 890, 137, 70)
-    stamp(ctx, "gate", 646, 808, 240, 145)
+    BOUNDARIES.paint_cemetery(ctx)
 
 static func paint_plots(ctx: Node2D, _reserved: bool) -> void:
     # As 10 covas/tumulos vao agora em GravesLayer, com PNG individual.
@@ -82,15 +72,15 @@ static func paint_plots(ctx: Node2D, _reserved: bool) -> void:
 
 static func paint_decoration(ctx: Node2D) -> void:
     stamp(ctx, "statue", 89, 305, 137, 143)
-    stamp(ctx, "fountain", 489, 723, 195, 136)
-    stamp(ctx, "bench", 274, 481, 122, 73)
+    stamp(ctx, "fountain", 466, 730, 160, 112)
+    stamp(ctx, "bench", 260, 465, 104, 62)
     for p in [Vector2(622, 532), Vector2(851, 536), Vector2(1080, 534), Vector2(1240, 537)]:
         stamp(ctx, "lantern", p.x, p.y, 29, 73)
     for p in [Vector2(173, 839), Vector2(1040, 859), Vector2(1320, 834)]:
         stamp(ctx, "pumpkin", p.x, p.y, 40, 46)
     for p in [Vector2(570, 467), Vector2(984, 352), Vector2(995, 690), Vector2(192, 827)]:
         stamp(ctx, "flowerbed", p.x, p.y, 66, 46)
-    for p in [Vector2(80, 452), Vector2(599, 468), Vector2(1342, 624)]:
+    for p in [Vector2(80, 452), Vector2(475, 480), Vector2(1342, 624)]:
         stamp(ctx, "hedge", p.x, p.y, 62, 57)
 
 static func paint_characters(ctx: Node2D, time_minute: float) -> void:

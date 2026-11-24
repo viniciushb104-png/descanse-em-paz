@@ -1,6 +1,7 @@
 extends Node2D
 ## Arquitetura gotica provisoria, sem arquivos de arte recortados.
 ## Futuras construcoes ganharao PNGs individuais como as arvores.
+const BOUNDARIES = preload("res://scripts/world/boundary_art.gd")
 const INK := Color("#251b2c")
 const GOLD := Color("#dec18f")
 const BLUE := Color("#9fbdca")
@@ -10,7 +11,7 @@ func _ready() -> void:
     queue_redraw()
 
 func _draw() -> void:
-    _walls()
+    BOUNDARIES.paint_district(self)
     _building(Vector2(1654,148),Vector2(353,254),"HOSPITAL SANTA ULTIMA HORA",Color("#9a8a9e"),Color("#604e70"),true)
     _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
     _building(Vector2(2039,754),Vector2(337,246),"CREMATORIO CINZAS & CIA",Color("#937c91"),Color("#4f3d57"),false)

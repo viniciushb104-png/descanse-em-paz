@@ -1,5 +1,6 @@
 extends Node2D
 ## Campo de trabalho: interacao contextual, sem CanvasLayer de minigame.
+const BOUNDARIES = preload("res://scripts/world/boundary_art.gd")
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
@@ -205,10 +206,7 @@ func _paint_north() -> void:
     # Gate sides leave the central walkway open even with fallback art.
     for x in [690.0,870.0]:
         _sprite(_north_tex("lamp",LAMP),Vector2(x,-80),100.0)
-    for x in range(100,1500,145):
-        if x<640 or x>920:
-            _sprite(_north_tex("fence",NORTH_FENCE),Vector2(x,-85),65.0)
-        _sprite(_north_tex("fence",NORTH_FENCE),Vector2(x,-1650),65.0)
+    BOUNDARIES.paint_north(self)
     for i in range(4):
         var x := 155.0+float(i%2)*795.0
         var y := -245.0-float(floori(float(i)/2.0))*690.0
