@@ -384,6 +384,190 @@ const STORIES = [
     "last": "Seria bom sair daqui sentindo que fomos ouvidos, não apenas atendidos."
   }
 ]
+const SUPPORTING_VOICES = [
+  {
+    "name": "Irmã de Afonso",
+    "line": "Ele não queria cerimônia cara, mas queria que todos estivessem presentes.",
+    "profile": "calmo"
+  },
+  {
+    "name": "Filha de Ester",
+    "line": "Mãe, eu também sinto falta dele. Podemos decidir isso juntas?",
+    "profile": "sofredor"
+  },
+  {
+    "name": "Gervásio Caixote",
+    "line": "Violeta, minha loja vende urnas, não autorizações automáticas de cremação.",
+    "profile": "fornecedor"
+  },
+  {
+    "name": "Prima de Leopoldo",
+    "line": "Esse registro é antigo; nossa família inteira precisa entender os direitos do jazigo.",
+    "profile": "reservado"
+  },
+  {
+    "name": "Irmão de Gil",
+    "line": "Quero ajudar com a conta, mas não aceito um valor que ninguém consegue explicar.",
+    "profile": "economico"
+  },
+  {
+    "name": "Funcionária do hospital",
+    "line": "A Declaração de Óbito e a Certidão de Óbito são etapas diferentes; vamos orientar com calma.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Arquimedes Ossário",
+    "line": "Sem revisão, esse veículo fica na garagem. Meu terno não é um extintor.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Assistente de estoque",
+    "line": "As caixas chegaram com etiquetas diferentes. Prefiro conferir antes de receber.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Dona Clotilde",
+    "line": "Procedimentos técnicos exigem equipe, estrutura e regras aplicáveis; não inventamos obrigação.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Seu Cinério Brasa",
+    "line": "No caso de morte violenta, não seguimos sem a autorização judicial exigida.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Engenheira do cemitério",
+    "line": "Antes de ampliar, preciso verificar o projeto e a licença ambiental vigente.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Sobrinha de Hortênsia",
+    "line": "Titia gostava de estrelas, mas nunca gostaria que decidissem por ela sem perguntar.",
+    "profile": "calmo"
+  },
+  {
+    "name": "Conferente do Empório",
+    "line": "Aqui constam seis unidades intactas, mas há avarias. Preciso registrar a diferença.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Auxiliar ambiental",
+    "line": "Encontrei o plano, porém faltam registros de treinamento. Melhor admitir e corrigir.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Mecânico da frota",
+    "line": "O barulho é do freio, Tibúrcio. Não é um solo de jazz do além.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Vendedor da funerária",
+    "line": "O modelo prometido não está em estoque. Precisamos avisar antes de substituir.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Funcionária do arquivo",
+    "line": "Nem todo pedido de informação autoriza revelar dados pessoais.",
+    "profile": "reservado"
+  },
+  {
+    "name": "Irmão de Inácio",
+    "line": "O cartório já foi citado três vezes, mas eu ainda não entendi o passo seguinte.",
+    "profile": "confuso"
+  },
+  {
+    "name": "Atendente do crematório",
+    "line": "Precisamos conferir a manifestação de vontade e os requisitos legais da situação.",
+    "profile": "profissional"
+  },
+  {
+    "name": "Irmã de Aurora",
+    "line": "Ela gostava de flores, mas principalmente de ver a família em paz.",
+    "profile": "sofredor"
+  }
+]
+const PERSONAL_REPLIES = [
+  {
+    "humor": "Afonso ri baixinho: 'Então a única surpresa deve ser boa, não uma cobrança escondida.'",
+    "sober": "Afonso assente: 'Com os itens separados consigo conversar com meus irmãos.'"
+  },
+  {
+    "humor": "Ester diz: 'Ele fazia piada com tudo. Obrigada por não exigir que eu sorria.'",
+    "sober": "Ester responde: 'É bom poder pensar sem sentir que estou atrasada para algo.'"
+  },
+  {
+    "humor": "Violeta responde: 'Perfeito, vamos escolher a arte sem fingir que ela substitui documentos.'",
+    "sober": "Violeta aprova: 'Planejar direito me diverte mais que um contrato mágico.'"
+  },
+  {
+    "humor": "Leopoldo suspira: 'Justo. Até minha chave gigante não deve substituir o registro.'",
+    "sober": "Leopoldo aceita: 'Vou buscar os documentos e esclarecer com a família.'"
+  },
+  {
+    "humor": "Gil responde: 'Finalmente um susto que não vem do preço! Obrigado.'",
+    "sober": "Gil diz: 'Assim consigo decidir dentro do orçamento sem constrangimento.'"
+  },
+  {
+    "humor": "Palmira suspira: 'Que bom, achei que meus primos tinham fundado um novo cartório.'",
+    "sober": "Palmira agradece: 'Agora sei exatamente a diferença entre os documentos.'"
+  },
+  {
+    "humor": "Tadeu ri: 'Está bem, meu relógio pode resmungar dentro da oficina.'",
+    "sober": "Tadeu anota a alternativa: 'Prefiro explicar o atraso a criar outro problema.'"
+  },
+  {
+    "humor": "Áurea responde: 'Até os preços baixos precisam de documento em vida.'",
+    "sober": "Áurea concorda: 'Vamos verificar a nota antes da entrada no estoque.'"
+  },
+  {
+    "humor": "Helena fala baixo: 'Obrigada por não transformar nossa dúvida em venda.'",
+    "sober": "A família concorda: 'Vamos ouvir o responsável técnico antes de decidir.'"
+  },
+  {
+    "humor": "Noctílio percebe: 'A papelada afinal não é um capricho do Cinério.'",
+    "sober": "Noctílio responde: 'Vamos verificar a autorização e organizar o possível.'"
+  },
+  {
+    "humor": "Agatha sorri: 'Gosto de ciência com menos assombração e mais mapas.'",
+    "sober": "Agatha responde: 'Isso ajuda a entender por que o terreno precisa de análise.'"
+  },
+  {
+    "humor": "Hortênsia ri de leve: 'Minha tia teria amado a transparência intergaláctica.'",
+    "sober": "Hortênsia concorda: 'Vamos consultar a família antes da personalização.'"
+  },
+  {
+    "humor": "Valdemar observa: 'A moda torta pode ficar só no cabelo, não nas tampas.'",
+    "sober": "Valdemar aceita: 'Vou registrar as avarias e propor solução formal.'"
+  },
+  {
+    "humor": "Marcela não sorri, mas responde: 'Assim já começamos com dados reais.'",
+    "sober": "Marcela anota: 'Registros verificados são mais úteis que desculpas elegantes.'"
+  },
+  {
+    "humor": "Tibúrcio responde: 'A canção do freio fica para o concerto da oficina.'",
+    "sober": "Tibúrcio concorda: 'Vou planejar a rota com o veículo seguro.'"
+  },
+  {
+    "humor": "Benício ri: 'Se o cartão levar um susto, que seja previsto no orçamento.'",
+    "sober": "Benício assente: 'Agora sei exatamente pelo que estarei pagando.'"
+  },
+  {
+    "humor": "Mirtes concorda: 'Prefiro sigilo sério a simpatia que exponha alguém.'",
+    "sober": "Mirtes responde: 'Vou seguir o canal adequado de solicitação.'"
+  },
+  {
+    "humor": "Inácio sorri: 'Papel organizadinho talvez seja um pequeno milagre.'",
+    "sober": "Inácio anota: 'Agora consigo orientar o restante da família.'"
+  },
+  {
+    "humor": "Lucinda responde: 'Então podemos planejar a homenagem sem antecipar procedimentos.'",
+    "sober": "Lucinda aceita: 'Vamos verificar a vontade e os requisitos aplicáveis.'"
+  },
+  {
+    "humor": "Aurora parece aliviada: 'Um pouco de leveza sem esquecer o essencial ajuda.'",
+    "sober": "A família responde: 'A decisão precisa refletir o que conversamos.'"
+  }
+]
 const FEEDBACK = {
     "warm":[
         "A pessoa relaxa um pouco e conta um detalhe que não estava no cadastro.",
@@ -482,7 +666,15 @@ static func scene(index: int, step: int, client_name: String) -> Dictionary:
     var rearranged: Array = []
     for i in range(choices.size()):
         rearranged.append(choices[(i+rotation)%choices.size()])
-    return {"speaker":client_name, "line":str(lines[mode]),"mode":mode,"choices":rearranged, "step":step,"total":keys.size(),"tier":tier(index)}
+    var speaker_name: String = client_name
+    var speaker_profile: String = ""
+    var text_line: String = str(lines[mode])
+    if mode == "deep" and index >= 5:
+        var supporting: Dictionary = SUPPORTING_VOICES[index]
+        speaker_name = str(supporting["name"])
+        speaker_profile = str(supporting["profile"])
+        text_line = str(supporting["line"])
+    return {"speaker":speaker_name, "profile":speaker_profile, "line":text_line,"mode":mode,"choices":rearranged,"step":step,"total":keys.size(),"tier":tier(index)}
 
 static func reaction(index: int, step: int, choice_index: int, speaker: String) -> Dictionary:
     var current: Dictionary = scene(index,step,speaker)
@@ -495,9 +687,12 @@ static func reaction(index: int, step: int, choice_index: int, speaker: String) 
     var score: int = int(selected["grade"])
     var mode: String = str(current["mode"])
     var summary: String = str(FEEDBACK[mode][0 if score==2 else 1 if score==1 else 2])
+    if score==2 and mode == "warm":
+        var personal: Dictionary = PERSONAL_REPLIES[index]
+        summary = str(personal["humor"] if str(selected["tone"])=="humor" else personal["sober"])
     if score==0:
-        summary += "\n\n⚠ Essa abordagem precisa ser corrigida antes de autorizar serviços ou concluir o caso."
-    return {"speaker":speaker,"line":summary,"score":score,"insight":str(selected["insight"]),"tone":str(selected["tone"]),"unsafe":score==0}
+        summary += "\n\nEssa abordagem precisa ser corrigida antes de autorizar serviços ou concluir o caso."
+    return {"speaker":str(current["speaker"]),"profile":str(current["profile"]),"line":summary,"score":score,"insight":str(selected["insight"]),"tone":str(selected["tone"]),"unsafe":score==0}
 
 static func required_score(index: int) -> int:
     var count: int = beat_keys(index).size()

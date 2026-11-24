@@ -221,7 +221,10 @@ func _show_beat() -> void:
         responses.append({"text":str(option["text"]),"action":"case_pick_"+str(index)})
     responses.append({"text":"Consultar o livro de ocorrencias","action":"case_board"})
     var chapter: String = "Dificuldade %d/4 | Conversa %d/%d" % [int(beat["tier"]),dialogue_step+1,int(beat["total"])]
-    game()._show_character(str(item["client"]),chapter+"\n\n"+str(beat["line"]),str(item["profile"]),responses)
+    var speaking_profile: String = str(beat.get("profile",""))
+    if speaking_profile.is_empty():
+        speaking_profile = str(item["profile"])
+    game()._show_character(str(beat["speaker"]),chapter+"\n\n"+str(beat["line"]),speaking_profile,responses)
 
 func choose_dialogue_option(index: int) -> void:
     var item: Dictionary = CASES.active(case_index)
@@ -258,7 +261,11 @@ func _show_reaction() -> void:
         return
     var response: Array = [{"text":"Reconsiderar e esclarecer o passo","action":"case_retry"}] if last_grade == 0 else [{"text":"Continuar conversa","action":"case_advance"}]
     response.append({"text":"Retomar mais tarde","action":"close"})
-    game()._show_character(str(item["client"]),last_reaction,str(item["profile"]),response)
+    var last: Dictionary = DIALOGUES.scene(case_index,dialogue_step,str(item["client"]))
+    var speaking_profile: String = str(last.get("profile",""))
+    if speaking_profile.is_empty():
+        speaking_profile = str(item["profile"])
+    game()._show_character(str(last.get("speaker",item["client"])),last_reaction,speaking_profile,response)
 
 func advance_dialogue() -> void:
     if not awaiting_reaction:
