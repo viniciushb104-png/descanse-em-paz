@@ -68,6 +68,9 @@ jobs:
       - name: Testar entrada direta e ritmo de dialogos
         run: godot --headless --path . --script res://tests/pacing_smoke.gd
 
+      - name: Testar molduras e retratos de todos os personagens
+        run: godot --headless --path . --script res://tests/dialogue_frames_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

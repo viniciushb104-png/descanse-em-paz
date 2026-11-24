@@ -118,3 +118,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Prioridade de renderização explícita: fundo abaixo do logotipo e modais acima.
 - Posição superior esquerda com 536x285 no viewport de 1152x648; balanço suave preservado.
 - Teste de visibilidade agora verifica canal alfa, centro opaco, tamanho e prioridade de camada.
+
+## Versão 1.2.6 — Diálogos com molduras individuais
+- Interface inspirada nas caixas de Jack: janela de retrato, placa do nome, painel da fala e escolhas em área separada.
+- 46 identidades de personagens/participantes registradas, com cores e adornos individuais.
+- Retratos provisórios diferenciados, prontos para troca por PNG transparente de cada personagem em `assets/portraits/<id>.png`.
+- Compatível com diálogos antigos, textos longos, teclado e celular horizontal.
+- Detalhes: `docs/CAIXAS_DIALOGOS_V126.md`.
