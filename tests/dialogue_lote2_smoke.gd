@@ -56,7 +56,9 @@ func _run() -> void:
             quit(216)
             return
         visited[region_key] = true
-        var image := texture.get_image()
+        # Ler explicitamente a regiao evita diferencas entre APIs de AtlasTexture.
+        var top_left := Vector2i(int(texture.region.position.x),int(texture.region.position.y))
+        var image := ART2.ATLAS.get_image().get_region(Rect2i(top_left,Vector2i(256,256)))
         if image == null or image.get_size() != Vector2i(256,256) or image.get_pixel(128,128).a > 0.08:
             push_error("Janela de retrato nao esta transparente: "+id)
             quit(217)
