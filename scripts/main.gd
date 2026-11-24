@@ -175,8 +175,13 @@ func _open_journal() -> void:
     if dialogue_open or rooms.changing:
         return
     var mission: String = rooms.objective() if stage >= 12 else OBJECTIVES[stage]
-    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n"+mission+"\n\nAtendimentos concluidos: %d/20.\n\nConsulte os atendentes e o Arquivo Legal para estudar cada procedimento. Os valores sao ficticios." % rooms.case_index, [{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
-
+    var work_note: String = ""
+    var order: Dictionary = burial_queue.pending()
+    if not order.is_empty():
+        work_note = "\n\nORDEM DE SEPULTAMENTO: %s\nServico liberado! Procure Seu Osvaldo no cemitério e interaja para preparar o jazigo. O trabalho pode ser retomado depois." % str(order.get("plot", "B-13"))
+    elif burial_queue.is_done(BURIAL_QUEUE.INITIAL_ORDER):
+        work_note = "\n\nJazigo B-13: servico concluido e registrado."
+    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n" + mission + "\n\nAtendimentos concluidos: %d/20." % rooms.case_index + work_note + "\n\nConsulte os atendentes e o Arquivo Legal. Os valores sao ficticios.", [{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
 func _portrait_gallery() -> void:
     _show("GALERIA DE RETRATOS","Teste visual das expressoes. O progresso e o dinheiro nao serao alterados.",[
         {"text":"Baltazar — contador fantasma","action":"portrait_select_baltazar"},
@@ -236,7 +241,8 @@ func _interact(id: String) -> void:
             if stage == 2 and not reserved_plot:
                 _show("Quadra B, jazigo B-13", "O cadastro ficticio indica que este jazigo esta disponivel. Em casos reais, conferem-se tambem titularidade, direitos de uso e regras locais.", [{"text": "Reservar jazigo", "action": "reserve"}, {"text": "Voltar", "action": "close"}])
             else:
-                _show("Quadra B, jazigo B-13", "Estado: %s. A rastreabilidade de cada sepultura e essencial." % ("RESERVADO" if reserved_plot else "LIVRE"), [{"text": "Fechar", "action": "close"}])
+                var plot_status := "SEPULTAMENTO CONCLUIDO" if is_b13_buried() else ("RESERVADO" if reserved_plot else "LIVRE")
+                _show("Quadra B, jazigo B-13", "Estado: %s. A rastreabilidade de cada sepultura e essencial." % plot_status, [{"text": "Fechar", "action": "close"}])
         "maintenance":
             if stage == 4:
                 _show("Manutencao preventiva", "Revisar caminhos, vegetacao e drenagem reduz riscos. Investimento didatico: R$ 160. Deseja autorizar?", [{"text": "Autorizar R$ 160", "action": "maintain"}, {"text": "Deixar para depois", "action": "close"}])
@@ -853,6 +859,8 @@ func _refresh_ui() -> void:
     else:
         var near := _near_station()
         var target: String = str(near.get("name",""))
+        if str(near.get("id","")) == "osvaldo" and burial_queue.has_pending():
+            target = "Seu Osvaldo - SEPULTAMENTO AGENDADO"
         if not near.is_empty() and not rooms.inside() and rooms.CATALOG.ROOMS.has(str(near["id"])):
             target = "Entrar: " + target
         prompt_label.text = ("E  ·  " + target) if not near.is_empty() else "WASD / Setas: andar   ·   E: interagir   ·   R: resgatar"
