@@ -90,19 +90,35 @@ static func material_at(cell: Vector2i) -> int:
 static func material_at_world(pos: Vector2) -> int:
     return material_at(Vector2i(int(floorf(pos.x / float(TILE))),int(floorf(pos.y / float(TILE)))))
 
+const TEXTURES = [
+    preload("res://assets/ground/grass.png"),
+    preload("res://assets/ground/stone.png"),
+    preload("res://assets/ground/soil.png"),
+    preload("res://assets/ground/road.png"),
+    preload("res://assets/ground/paving.png"),
+    preload("res://assets/ground/commercial.png")
+]
+
 static func paint(ctx: Node2D) -> void:
     ctx.draw_rect(Rect2(0,0,WIDTH*TILE,HEIGHT*TILE),GREEN)
     ctx.draw_rect(Rect2(0,-NORTH_ROWS*TILE,48*TILE,NORTH_ROWS*TILE),GREEN)
     for cy in range(-NORTH_ROWS,HEIGHT):
         for cx in range(48 if cy<0 else WIDTH):
             var cell := Vector2i(cx,cy)
-            match material_at(cell):
-                STONE: _stone(ctx,cell)
-                DIRT: _soil(ctx,cell)
-                ROAD: _road(ctx,cell)
-                PAVING: _paving(ctx,cell,false)
-                COMMERCIAL: _paving(ctx,cell,true)
-                _: _grass(ctx,cell)
+            var material := material_at(cell)
+            if material<0:
+                continue
+            var p := Vector2(cell*TILE)
+            var variant := hash_at(cx,cy,20)
+            var shade := 0.92+float(variant%5)*0.015
+            # Espelhamento alternado elimina cortes entre bordas de tiles repetidos.
+            var w := -32.0 if posmod(cx,2)==1 else 32.0
+            var hh := -32.0 if posmod(cy,2)==1 else 32.0
+            ctx.draw_texture_rect(TEXTURES[material],Rect2(p,Vector2(w,hh)),false,Color(shade,shade,shade))
+            if material==ROAD:
+                _road_details(ctx,cell)
+            elif material in [STONE,DIRT]:
+                _transition_details(ctx,cell,material)
 
 static func _grass(ctx: Node2D, cell: Vector2i) -> void:
     # Evita um quadriculado visivel: nao pinta quadrados inteiros na grama.
@@ -207,3 +223,38 @@ static func _paving(ctx: Node2D, cell: Vector2i, commercial: bool) -> void:
             var at := p+Vector2(col*16+1,row*16+1)
             ctx.draw_rect(Rect2(at,Vector2(14,14)),shade)
             ctx.draw_rect(Rect2(at,Vector2(14,1)),shade.lightened(0.08))
+
+static func _road_details(ctx: Node2D, cell: Vector2i) -> void:
+    var p := Vector2(cell*TILE)
+    for d in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
+        if material_at(cell+d)!=ROAD:
+            var edge := Rect2(p,Vector2(32,4))
+            if d==Vector2i.DOWN: edge.position.y+=28
+            if d==Vector2i.LEFT: edge.size=Vector2(4,32)
+            if d==Vector2i.RIGHT:
+                edge.size=Vector2(4,32)
+                edge.position.x+=28
+            ctx.draw_rect(edge,Color("#897a85"))
+    if cell.x==75 and cell.y%2==0 and cell.y>=21 and cell.y<36:
+        ctx.draw_rect(Rect2(p+Vector2(15,6),2,20),Color("#a59a85"))
+    if cell.x in [64,73] and cell.y>=14 and cell.y<=17:
+        ctx.draw_rect(Rect2(p+Vector2(2,2),2,28),Color("#b0a18d"))
+    if cell.y==36 and cell.x>=65 and cell.x<74:
+        ctx.draw_rect(Rect2(p+Vector2(0,4),32,2),Color("#b0a18d"))
+
+static func _transition_details(ctx: Node2D,cell: Vector2i,material: int) -> void:
+    var p := Vector2(cell*TILE)
+    var tint := Color("#62684b") if material==STONE else Color("#6a6950")
+    for d in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
+        if material_at(cell+d)!=GRASS:
+            continue
+        for i in range(8):
+            var depth := 1+hash_at(cell.x*8+i,cell.y,40)%3
+            var rect := Rect2(p+Vector2(i*4,0),Vector2(4,depth))
+            if d==Vector2i.DOWN:
+                rect.position.y+=32-depth
+            elif d==Vector2i.LEFT:
+                rect=Rect2(p+Vector2(0,i*4),Vector2(depth,4))
+            elif d==Vector2i.RIGHT:
+                rect=Rect2(p+Vector2(32-depth,i*4),Vector2(depth,4))
+            ctx.draw_rect(rect,tint)
