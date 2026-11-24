@@ -14,12 +14,14 @@ const TREE_LILAC: Texture2D = preload("res://assets/trees/Arvore_01.png")
 const TREE_GOTHIC: Texture2D = preload("res://assets/trees/Arvore_10.png")
 const TREE_TWISTED: Texture2D = preload("res://assets/trees/Arvore_06.png")
 const MENU_BACKGROUND_PATH := "res://assets/menu/menu_turma.png"
+const MENU_LOGO: Texture2D = preload("res://assets/menu/logo_descanse_em_paz.png")
 const GRAVE_MARKER_SCRIPT := preload("res://scripts/ui/menu_grave_marker.gd")
 
 var elapsed: float = 0.0
 var continue_button: Button
 var continue_marker: Control
 var menu_background: TextureRect
+var menu_logo: TextureRect
 var new_button: Button
 var modal_overlay: ColorRect
 var modal_title: Label
@@ -29,6 +31,7 @@ var modal_actions: HBoxContainer
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _install_background()
+    _install_logo()
     _build_menu()
     _build_modal()
     _refresh_continue()
@@ -39,6 +42,10 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     elapsed += delta
+    if is_instance_valid(menu_logo):
+        # Placa presa no topo: rotacao pequena ao redor do ponto de suspensao.
+        # Periodo ~7.6s, amplitude 1.5 grau; nunca sai do canto do menu.
+        menu_logo.rotation = sin(elapsed * 0.83) * deg_to_rad(1.5)
     if menu_background == null:
         queue_redraw()
 
@@ -148,6 +155,22 @@ func _install_background() -> void:
     menu_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
+func _install_logo() -> void:
+    menu_logo = TextureRect.new()
+    menu_logo.name = "HangingGameLogo"
+    menu_logo.texture = MENU_LOGO
+    menu_logo.position = Vector2(33, -3)
+    menu_logo.size = Vector2(546, 290)
+    # A origem no alto central imita as correntes de uma placa suspensa.
+    menu_logo.pivot_offset = Vector2(menu_logo.size.x * 0.5, 5.0)
+    menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    # Textura pintada suave; os demais elementos do jogo seguem pixel art.
+    menu_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(menu_logo)
+
+
 func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Button:
     var marker := GRAVE_MARKER_SCRIPT.new() as Control
     marker.name = "Memorial_" + title_text.replace(" ", "_")
@@ -185,11 +208,8 @@ func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Butt
 
 
 func _build_menu() -> void:
-    # Cabecalho no ceu escuro; personagens permanecem livres no lado esquerdo.
-    _make_label("✦  SANTA MORTALHA  ✦", Vector2(58, 20), Vector2(530, 26), 16, GOLD)
-    _make_label("Descanse em Paz", Vector2(52, 62), Vector2(690, 67), 48, CREAM)
-    _make_label("& Pague em Dia", Vector2(63, 124), Vector2(600, 59), 40, GOLD)
-    _make_label("A morte é inevitável. A burocracia também.", Vector2(64, 183), Vector2(600, 32), 17, LILAC)
+    # O PNG oficial substitui o titulo textual antigo sem competir com a arte.
+    _make_label("A morte é inevitável. A burocracia também.", Vector2(64, 289), Vector2(600, 32), 17, LILAC)
 
     # Botões grandes sobre o gramado à direita; preservam mouse, teclado e toque.
     continue_button = _add_memorial_button("CONTINUAR EXPEDIENTE", 298.0, true)

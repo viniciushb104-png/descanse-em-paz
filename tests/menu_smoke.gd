@@ -23,6 +23,21 @@ func _run() -> void:
         quit(73)
         return
 
+    # O logotipo PNG nao pode bloquear os botoes nem perder seu efeito pendurado.
+    var logo := menu.get_node_or_null("HangingGameLogo") as TextureRect
+    if logo == null or logo.texture == null or logo.texture.get_width() < 900:
+        push_error("Logo transparente do menu nao foi carregado.")
+        quit(81)
+        return
+    if logo.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+        push_error("Logo bloqueia toques do menu.")
+        quit(82)
+        return
+    menu._process(1.0)
+    if absf(logo.rotation) <= 0.002:
+        push_error("Logo nao possui a oscilacao pendurada.")
+        quit(83)
+        return
     # O menu cinematografico deve manter quatro botoes reais com placas visuais.
     var markers := menu.find_children("Memorial_*", "Control", true, false)
     if markers.size() != 4:

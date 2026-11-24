@@ -106,3 +106,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Conclusao responsavel registra automaticamente o caso, com fonte legal opcional.
 - Escolhas 1-4 e Enter para dialogos de uma opcao no PC; botoes touch mantidos.
 - Ver docs/RITMO_V121.md.
+
+## Versao 1.2.2 — Logo oficial no menu
+- Logotipo gótico original como PNG transparente otimizado no canto superior esquerdo da tela inicial.
+- Animacao discreta de balanço (~1,5°) como placa pendurada; sem queda ou interacao involuntaria.
+- Titulo textual duplicado removido; botoes e fundo cinematografico preservados.
+- Testes do menu ampliados. Ver `docs/MENU_LOGO_V122.md`.
