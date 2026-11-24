@@ -23,6 +23,24 @@ func _run() -> void:
         quit(73)
         return
 
+    # O menu cinematografico deve manter quatro botoes reais com placas visuais.
+    var markers := menu.find_children("Memorial_*", "Control", true, false)
+    if markers.size() != 4:
+        push_error("Placas funerarias ausentes no menu.")
+        quit(79)
+        return
+    var coffin_count: int = 0
+    var grave_count: int = 0
+    for marker in markers:
+        if int(marker.get("shape_kind")) == 1:
+            coffin_count += 1
+        else:
+            grave_count += 1
+    if coffin_count != 2 or grave_count != 2:
+        push_error("Menu deveria ter dois caixoes e duas lapides.")
+        quit(80)
+        return
+
     menu.show_how_to_play()
     var overlay := menu.get_node_or_null("ModalOverlay") as ColorRect
     if overlay == null or not overlay.visible:
