@@ -8,6 +8,18 @@ func _run() -> void:
     root.add_child(game)
     game.set_physics_process(false)
     await process_frame
+    var total := 0
+    for key in GHOST.GHOST_HD:
+        for tex in GHOST.GHOST_HD[key]:
+            if tex==null or tex.get_size()!=Vector2(256,256):
+                push_error("Sprite HD inválido: "+key)
+                quit(4)
+                return
+            total+=1
+    if total!=49:
+        push_error("Lote HD incompleto")
+        quit(5)
+        return
     for i in range(6):
         game.phase=i
         game._load_phase()

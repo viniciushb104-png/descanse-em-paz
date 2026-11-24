@@ -1,3 +1,3 @@
-# Fantasma Fora do Lugar — protagonista
+# Fantasma — Lote 01 HD
 
-O atlas de 32 px contém 36 quadros derivados das artes aprovadas, com alfa. Os PNGs individuais opcionais de 256x256 podem substituir os quadros automaticamente: idle_00, walk_00–05, run_00–05, jump_00–04, float_00–05, hurt_00–04, defeat_00–05, fall_00. A pasta também recebe turnaround e retratos do pacote HD. A física existente permanece independente da imagem.
+49 PNGs individuais de 256 × 256, carregados explicitamente pelo minigame. 36 quadros de jogo, 8 retratos e 5 vistas de referência. O atlas compacto permanece arquivado e não é usado na corrida. Os retratos e vistas estão reservados para diálogos e cenas futuras.

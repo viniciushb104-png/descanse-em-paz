@@ -4,7 +4,18 @@ signal phase_saved(next_phase: int)
 const TITLES = ["O Despertar dos Esquecidos","O Bosque das Lápides Perdidas","As Catacumbas do Silêncio","O Arquivo Assombrado","A Torre das Últimas Horas","Enfim, Descanse em Paz"]
 const LESSONS = ["Identifique a quadra e o jazigo antes de qualquer serviço.","Mantenha acessos livres e caminhos conservados.","Confira a identificação de cada espaço funerário.","Registros permitem localizar e conferir informações.","Planeje a manutenção e a segurança da equipe.","Identificação e respeito à memória orientam o atendimento."]
 const VIEW = Vector2(800,300)
-const GHOST_ATLAS = preload("res://assets/minigames/ghost/ghost_atlas.png")
+const GHOST_HD = {
+    "idle": [preload("res://assets/minigames/ghost/idle_00.png")],
+    "walk": [preload("res://assets/minigames/ghost/walk_00.png"),preload("res://assets/minigames/ghost/walk_01.png"),preload("res://assets/minigames/ghost/walk_02.png"),preload("res://assets/minigames/ghost/walk_03.png"),preload("res://assets/minigames/ghost/walk_04.png"),preload("res://assets/minigames/ghost/walk_05.png")],
+    "run": [preload("res://assets/minigames/ghost/run_00.png"),preload("res://assets/minigames/ghost/run_01.png"),preload("res://assets/minigames/ghost/run_02.png"),preload("res://assets/minigames/ghost/run_03.png"),preload("res://assets/minigames/ghost/run_04.png"),preload("res://assets/minigames/ghost/run_05.png")],
+    "jump": [preload("res://assets/minigames/ghost/jump_00.png"),preload("res://assets/minigames/ghost/jump_01.png"),preload("res://assets/minigames/ghost/jump_02.png"),preload("res://assets/minigames/ghost/jump_03.png"),preload("res://assets/minigames/ghost/jump_04.png")],
+    "float": [preload("res://assets/minigames/ghost/float_00.png"),preload("res://assets/minigames/ghost/float_01.png"),preload("res://assets/minigames/ghost/float_02.png"),preload("res://assets/minigames/ghost/float_03.png"),preload("res://assets/minigames/ghost/float_04.png"),preload("res://assets/minigames/ghost/float_05.png")],
+    "hurt": [preload("res://assets/minigames/ghost/hurt_00.png"),preload("res://assets/minigames/ghost/hurt_01.png"),preload("res://assets/minigames/ghost/hurt_02.png"),preload("res://assets/minigames/ghost/hurt_03.png"),preload("res://assets/minigames/ghost/hurt_04.png")],
+    "defeat": [preload("res://assets/minigames/ghost/defeat_00.png"),preload("res://assets/minigames/ghost/defeat_01.png"),preload("res://assets/minigames/ghost/defeat_02.png"),preload("res://assets/minigames/ghost/defeat_03.png"),preload("res://assets/minigames/ghost/defeat_04.png"),preload("res://assets/minigames/ghost/defeat_05.png")],
+    "fall": [preload("res://assets/minigames/ghost/fall_00.png")],
+    "portrait": [preload("res://assets/minigames/ghost/portrait_00.png"),preload("res://assets/minigames/ghost/portrait_01.png"),preload("res://assets/minigames/ghost/portrait_02.png"),preload("res://assets/minigames/ghost/portrait_03.png"),preload("res://assets/minigames/ghost/portrait_04.png"),preload("res://assets/minigames/ghost/portrait_05.png"),preload("res://assets/minigames/ghost/portrait_06.png"),preload("res://assets/minigames/ghost/portrait_07.png")],
+    "turnaround": [preload("res://assets/minigames/ghost/turnaround_00.png"),preload("res://assets/minigames/ghost/turnaround_01.png"),preload("res://assets/minigames/ghost/turnaround_02.png"),preload("res://assets/minigames/ghost/turnaround_03.png"),preload("res://assets/minigames/ghost/turnaround_04.png")]
+}
 var ghost_frames: Dictionary = {}
 var facing_left := false
 var defeat_timer := 0.0
@@ -96,10 +107,12 @@ func _hold(key: String, pressed: bool) -> void:
             if pressed:
                 jump_request=true
 func _input(event: InputEvent) -> void:
-    if ended or paused:
+    if ended:
         return
     if event is InputEventScreenTouch:
         if event.pressed:
+            if paused:
+                return
             for key in controls:
                 var b: Button=controls[key]
                 if b.get_global_rect().has_point(event.position):
@@ -113,7 +126,7 @@ func _input(event: InputEvent) -> void:
             if not touches.values().has(key):
                 _hold(key,false)
             get_viewport().set_input_as_handled()
-    elif event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_SPACE:
+    elif not paused and event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_SPACE:
         jump_request=true
 func _notification(what: int) -> void:
     if what==NOTIFICATION_APPLICATION_FOCUS_OUT or what==NOTIFICATION_APPLICATION_PAUSED:
@@ -140,6 +153,12 @@ func _load_phase() -> void:
     camera_x=0.0
     elapsed=0.0
     paused=false
+    touches.clear()
+    left=false
+    right=false
+    run_held=false
+    jump_held=false
+    jump_request=false
     next_button.visible=false
     goal_x=1760.0+phase*120.0
     platforms.append(Rect2(0,240,210,60))
@@ -159,7 +178,7 @@ func _load_phase() -> void:
     message.text="Baltazar: Recupere todos os fragmentos e siga até o portão. "+LESSONS[phase]
     _refresh()
 func _refresh() -> void:
-    hud.text="Fase %d/6 — %s | Vida %d/3 | Memórias %d/%d" % [phase+1,TITLES[phase],hp,collected.size(),fragments.size()]
+    hud.text="HD | Fase %d/6 — %s | Vida %d/3 | Memórias %d/%d" % [phase+1,TITLES[phase],hp,collected.size(),fragments.size()]
     board.queue_redraw()
 func _damage() -> void:
     if invulnerable>0.0:
@@ -168,6 +187,8 @@ func _damage() -> void:
     deaths+=1
     invulnerable=1.2
     pos=checkpoint
+    grounded=true
+    float_left=0.0
     vel=Vector2.ZERO
     if hp<=0:
         defeat_timer=0.72
@@ -287,31 +308,15 @@ func _paint() -> void:
     var texture: Texture2D = _current_ghost_texture()
     var rect := Rect2(p-Vector2(26,46),Vector2(52,52))
     if facing_left:
-        rect.position.x+=rect.size.x
-        rect.size.x=-rect.size.x
+        board.draw_set_transform((board.size-VIEW*factor)*0.5+Vector2(p.x*2.0*factor,0),0.0,Vector2(-factor,factor))
     var tint := Color.WHITE
     if invulnerable>0.0 and int(elapsed*12.0)%2!=0:
         tint.a=0.65
     board.draw_texture_rect(texture,rect,false,tint)
+    board.draw_set_transform((board.size-VIEW*factor)*0.5,0.0,Vector2.ONE*factor)
 
 func _load_ghost_art() -> void:
-    var ranges := {"idle":Vector2i(0,1),"walk":Vector2i(1,6),"run":Vector2i(7,6),"jump":Vector2i(13,5),"float":Vector2i(18,6),"hurt":Vector2i(24,5),"defeat":Vector2i(29,6),"fall":Vector2i(35,1)}
-    for key in ranges:
-        var pair: Vector2i = ranges[key]
-        var frames: Array[Texture2D] = []
-        for i in range(pair.y):
-            var path := "res://assets/minigames/ghost/%s_%02d.png" % [key,i]
-            if ResourceLoader.exists(path):
-                var texture := load(path) as Texture2D
-                if texture!=null:
-                    frames.append(texture)
-                    continue
-            var tile := AtlasTexture.new()
-            tile.atlas=GHOST_ATLAS
-            tile.region=Rect2((pair.x+i)*32,0,32,32)
-            tile.filter_clip=true
-            frames.append(tile)
-        ghost_frames[key]=frames
+    ghost_frames=GHOST_HD.duplicate()
 
 func _current_ghost_texture() -> Texture2D:
     var key := "idle"
