@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/world/interior_layer.gd" id="8_interior"]
 [ext_resource type="Script" path="res://scripts/systems/interior_runtime.gd" id="9_rooms"]
 [ext_resource type="Script" path="res://scripts/ui/door_transition.gd" id="10_transition"]
+[ext_resource type="Script" path="res://scripts/world/lobby_beauty.gd" id="11_lobby"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 10.0
@@ -20,6 +21,10 @@ script = ExtResource("1_main")
 [node name="GroundLayer" type="Node2D" parent="."]
 z_index = -20
 script = ExtResource("3_ground")
+
+[node name="LobbyBeauty" type="Node2D" parent="."]
+z_index = -3
+script = ExtResource("11_lobby")
 
 [node name="TreeLayer" type="Node2D" parent="."]
 z_index = -5
