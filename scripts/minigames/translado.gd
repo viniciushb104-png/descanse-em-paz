@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.8"
+const BUILD_LABEL := "ARCADE 2.9"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -63,11 +63,16 @@ var countdown := 3.0
 var obstacles: Array[Dictionary] = []
 var flash := 0.0
 var fuel := 100.0
-const ROUTE_CAR = preload("res://assets/sprites/hearse.svg")
+const ROUTE_CAR = preload("res://assets/hud/translado/route_car.png")
+var hud_art: Dictionary = {}
 
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _load_roadside()
+    for part in ["route_base","speed_base","fuel_base","route_car"]:
+        var path: String = "res://assets/hud/translado/"+part+".webp"
+        if ResourceLoader.exists(path):
+            hud_art[part] = load(path)
     for i in range(1,14):
         obstacles.append({"z":float(i)*205.0+120.0,"lane": [-0.63,0.63,0.0,0.63,-0.63][i%5],"hit":false,"model":(i-1)%TRAFFIC.size()})
     var frame := VBoxContainer.new()
@@ -242,6 +247,9 @@ func _hud_text(pos: Vector2, value: String, size: int, tint: Color = Color("#f5d
 func _paint_hud() -> void:
     var progress := clampf(distance/LENGTH,0.0,1.0)
     var kmh := speed*0.68
+    if hud_art.has("route_base") and hud_art.has("speed_base") and hud_art.has("fuel_base"):
+        _paint_art_hud(progress,kmh)
+        return
     _hud_panel(Rect2(8,8,178,104))
     _hud_panel(Rect2(194,8,572,104))
     _hud_panel(Rect2(774,8,178,104))
@@ -270,7 +278,7 @@ func _paint_hud() -> void:
     var bounce := sin(distance*0.3)*1.5 if speed>1.0 else 0.0
     board.draw_texture_rect(ROUTE_CAR,Rect2(car_x-20,37+bounce,40,20),false)
     if brake_active:
-        board.draw_circle(Vector2(car_x+17,49+bounce),3,Color("#ff5745"))
+        board.draw_circle(Vector2(car_x-17,49+bounce),3,Color("#ff5745"))
     _hud_text(Vector2(205,94),"Hospital",14)
     var arrival := progress>=0.9
     _hud_text(Vector2(555,94),"Cemiterio" if not arrival else "CHEGANDO!",18,Color("#9fe5a9") if arrival else Color("#f5d39b"))
@@ -281,6 +289,43 @@ func _paint_hud() -> void:
         var portion := clampf(fuel/100.0*8.0-float(i),0.0,1.0)
         board.draw_rect(Rect2(segment.position,Vector2(segment.size.x,segment.size.y*portion)),Color("#dc5145") if fuel<=20.0 else Color("#e8af45"))
     _hud_text(Vector2(786,93),"%d%%" % int(fuel),20)
+
+func _paint_art_hud(progress: float, kmh: float) -> void:
+    var dial := Rect2(8,1,106,106)
+    board.draw_texture_rect(hud_art["speed_base"],dial,false)
+    var pivot := dial.position+Vector2(0.492,0.644)*dial.size
+    var angle := deg_to_rad(160.0+220.0*clampf(kmh/200.0,0.0,1.0))
+    board.draw_line(pivot,pivot+Vector2(cos(angle),sin(angle))*34.0,Color("#ff734d"),2.5,true)
+    board.draw_circle(pivot,3.4,Color("#d9a94c"))
+    _hud_text(Vector2(118,33),"%03d km/h" % int(kmh),23)
+    _hud_text(Vector2(118,55),"Impactos: %d" % bumps,15,Color("#ff7565") if flash>0.0 else Color("#f5d39b"))
+    var route := Rect2(279,2,390,130)
+    board.draw_texture_rect(hud_art["route_base"],route,false)
+    var start := route.position.x+route.size.x*182.0/800.0
+    var span := route.size.x*437.0/800.0
+    var y := route.position.y+route.size.y*158.0/267.0
+    board.draw_rect(Rect2(start,y,span*progress,route.size.y*16.0/267.0),Color("#e9aa43"))
+    for i in range(7):
+        var x := start+span*float(i)/6.0
+        board.draw_line(Vector2(x,y+9),Vector2(x,y+14),Color("#bda4c6"),1.0)
+    var car_x := start+span*progress
+    var bounce := sin(distance*0.3)*1.4 if speed>1.0 else 0.0
+    var car: Texture2D = hud_art.get("route_car",ROUTE_CAR)
+    board.draw_texture_rect(car,Rect2(car_x-20,y-17+bounce,40,22),false)
+    _hud_text(Vector2(290,145),REGION_NAMES[_panorama_index(distance)],15)
+    _hud_text(Vector2(612,145),"%d%%" % int(progress*100.0),18)
+    if progress>=0.9:
+        _hud_text(Vector2(526,17),"CHEGANDO!",17,Color("#a0e5ad"))
+    var tank := Rect2(729,9,220,132)
+    board.draw_texture_rect(hud_art["fuel_base"],tank,false)
+    for i in range(8):
+        var portion := clampf(fuel/100.0*8.0-float(i),0.0,1.0)
+        var x := tank.position.x+tank.size.x*(137.0+40.0*i)/500.0
+        var fy := tank.position.y+tank.size.y*175.0/300.0
+        var w := tank.size.x*36.0/500.0
+        var height := tank.size.y*39.0/300.0
+        board.draw_rect(Rect2(x,fy,w*portion,height),Color("#dc5145") if fuel<=20.0 else Color("#e8af45"))
+    _hud_text(Vector2(820,151),"%d%%" % int(fuel),18)
 
 func _panorama_index(z: float) -> int:
     return clampi(floori(z/REGION_SPAN),0,PANORAMAS.size()-1)
@@ -384,11 +429,11 @@ func _roadside_kind(z: float, slot: int, side: int) -> int:
 func _paint_roadside() -> void:
     if roadside.size()!=ROADSIDE_NAMES.size():
         return
-    var base_slot := floori(distance/65.0)
+    var base_slot := floori(distance/100.0)
     # Farthest first. Objects stay fixed in world coordinates.
-    for i in range(10,0,-1):
+    for i in range(7,0,-1):
         var slot := base_slot+i
-        var z := float(slot)*65.0
+        var z := float(slot)*100.0
         var ahead := z-distance
         if ahead<0.0 or ahead>DEPTH:
             continue
@@ -400,11 +445,13 @@ func _paint_roadside() -> void:
             var h: float = ROADSIDE_HEIGHTS[kind]*perspective
             var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
             # Anchor the inner edge outside the roadway, including broad houses.
-            var edge := _road_point(t,float(side)*1.18)
+            var edge := _road_point(t,float(side)*(1.4 if kind in [4,5] else 1.24))
             var x := edge.x if side>0 else edge.x-w
             var y := edge.y
             if kind==7:
                 y -= (20.0+sin(distance*0.035+float(slot))*7.0)*perspective
+            if kind!=7:
+                board.draw_rect(Rect2(x+w*0.1,y-2.0*perspective,w*0.8,5.0*perspective),Color(0,0,0,0.25))
             board.draw_texture_rect(tex,Rect2(x,y-h,w,h),false)
 
 func _traffic_width(t: float, model: int) -> float:
