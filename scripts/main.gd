@@ -9,6 +9,8 @@ const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
 const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
 const MOBILE_HUD = preload("res://scripts/ui/mobile_hud.gd")
 const CLIENT_PORTRAIT = preload("res://scripts/ui/client_portrait.gd")
+const DIALOGUE_CHARACTERS = preload("res://scripts/ui/dialogue_characters.gd")
+const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -59,6 +61,8 @@ var dialog_panel: Panel
 var dialog_title: Label
 var dialog_body: Label
 var dialog_portrait: Control
+var dialog_frame: Control
+var dialog_role: Label
 var options_box: VBoxContainer
 var mobile_hud: Control
 var driving_layer: CanvasLayer
@@ -424,35 +428,70 @@ func _show(heading: String, body: String, choices: Array) -> void:
     dialog_panel.visible = true
     dialog_title.text = heading
     dialog_body.text = body
-    if dialog_portrait != null:
-        dialog_portrait.visible = false
-    var scroll: ScrollContainer = dialog_panel.get_node("BodyScroll")
-    scroll.position.x = 18.0
-    scroll.size.x = 806.0
-    dialog_body.custom_minimum_size.x = 770.0
-    scroll.scroll_vertical = 0
-    (dialog_panel.get_node("ChoicesScroll") as ScrollContainer).scroll_vertical = 0
+    _apply_dialogue_identity(DIALOGUE_CHARACTERS.resolve(heading),heading)
+    var body_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
+    var choice_scroll := dialog_panel.get_node("ChoicesScroll") as ScrollContainer
+    body_scroll.scroll_vertical = 0
+    choice_scroll.scroll_vertical = 0
     for child in options_box.get_children():
         options_box.remove_child(child)
         child.queue_free()
+    var character: Dictionary = DIALOGUE_CHARACTERS.resolve(heading)
+    var accent := Color(str(character.get("accent","#d8b882")))
     for choice in choices:
         var btn := Button.new()
         btn.text = "%d · %s" % [options_box.get_child_count()+1,str(choice["text"])]
-        btn.custom_minimum_size = Vector2(0, 54)
+        btn.custom_minimum_size = Vector2(0, 51)
         btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         btn.add_theme_font_size_override("font_size", 17)
+        btn.add_theme_color_override("font_color",Color("#f8e9d5"))
+        btn.add_theme_color_override("font_hover_color",Color("#ffffff"))
+        var normal := StyleBoxFlat.new()
+        normal.bg_color = Color("#35283c")
+        normal.border_color = accent.darkened(0.37)
+        normal.set_border_width_all(2)
+        normal.set_corner_radius_all(5)
+        btn.add_theme_stylebox_override("normal",normal)
+        var selected := normal.duplicate() as StyleBoxFlat
+        selected.bg_color = accent.darkened(0.70)
+        selected.border_color = accent
+        btn.add_theme_stylebox_override("hover",selected)
+        btn.add_theme_stylebox_override("pressed",selected)
+        btn.add_theme_stylebox_override("focus",selected)
         btn.pressed.connect(_on_choice.bind(str(choice["action"])))
         options_box.add_child(btn)
 
+func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String = "") -> void:
+    var has_actor: bool = not actor.is_empty()
+    dialog_frame.call("set_identity",actor)
+    dialog_portrait.visible = has_actor
+    dialog_role.visible = has_actor
+    var speech_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
+    if has_actor:
+        dialog_portrait.call("set_actor",speaker,mood)
+        dialog_title.position = Vector2(194,21)
+        dialog_title.size = Vector2(502,35)
+        dialog_title.add_theme_font_size_override("font_size",23)
+        dialog_title.add_theme_color_override("font_color",Color(str(actor["accent"])).lightened(0.16))
+        dialog_role.text = str(actor["role"]).to_upper()
+        dialog_role.add_theme_color_override("font_color",Color(str(actor["accent"])))
+        speech_scroll.position = Vector2(191,92)
+        speech_scroll.size = Vector2(667,125)
+        dialog_body.custom_minimum_size.x = 625.0
+    else:
+        dialog_title.position = Vector2(48,21)
+        dialog_title.size = Vector2(755,35)
+        dialog_title.add_theme_font_size_override("font_size",23)
+        dialog_title.add_theme_color_override("font_color",Color("#dfbd87"))
+        speech_scroll.position = Vector2(33,92)
+        speech_scroll.size = Vector2(825,125)
+        dialog_body.custom_minimum_size.x = 782.0
+    speech_scroll.scroll_vertical = 0
+
 func _show_character(speaker: String, words: String, mood: String, choices: Array) -> void:
     _show(speaker, words, choices)
-    dialog_portrait.call("set_actor",speaker,mood)
-    dialog_portrait.visible = true
-    var scroll: ScrollContainer = dialog_panel.get_node("BodyScroll")
-    scroll.position.x = 153.0
-    scroll.size.x = 671.0
-    dialog_body.custom_minimum_size.x = 634.0
-    scroll.scroll_vertical = 0
+    var actor: Dictionary = DIALOGUE_CHARACTERS.resolve(speaker)
+    _apply_dialogue_identity(actor,speaker,mood)
 
 func _style(bg: Color, edge: Color) -> StyleBoxFlat:
     var st := StyleBoxFlat.new()
@@ -524,54 +563,82 @@ func _build_ui() -> void:
     prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     tip.add_child(prompt_label)
 
+    # Caixa ornamental como a de Jack: retrato, placa do nome, fala e escolhas.
+    # O painel fica na base da tela; a parte superior do mundo continua visivel.
     dialog_panel = Panel.new()
+    dialog_panel.name = "DialoguePanel"
     dialog_panel.anchor_left = 0.5
     dialog_panel.anchor_right = 0.5
-    dialog_panel.anchor_top = 0.5
-    dialog_panel.anchor_bottom = 0.5
-    dialog_panel.offset_left = -421.0
-    dialog_panel.offset_right = 421.0
-    dialog_panel.offset_top = -202.0
-    dialog_panel.offset_bottom = 202.0
+    dialog_panel.anchor_top = 1.0
+    dialog_panel.anchor_bottom = 1.0
+    dialog_panel.offset_left = -447.0
+    dialog_panel.offset_right = 447.0
+    dialog_panel.offset_top = -425.0
+    dialog_panel.offset_bottom = -15.0
     dialog_panel.visible = false
-    dialog_panel.add_theme_stylebox_override("panel", _style(NIGHT, GOLD))
+    dialog_panel.add_theme_stylebox_override("panel",StyleBoxEmpty.new())
     root.add_child(dialog_panel)
+
+    dialog_frame = DIALOGUE_FRAME.new()
+    dialog_frame.name = "DialogueFrame"
+    dialog_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    dialog_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_panel.add_child(dialog_frame)
+
     dialog_title = Label.new()
-    dialog_title.position = Vector2(22, 15)
-    dialog_title.size = Vector2(798, 40)
-    dialog_title.add_theme_font_size_override("font_size", 23)
-    dialog_title.add_theme_color_override("font_color", BLUE)
+    dialog_title.name = "CharacterName"
+    dialog_title.position = Vector2(194,21)
+    dialog_title.size = Vector2(502,35)
+    dialog_title.add_theme_font_size_override("font_size",23)
+    dialog_title.add_theme_color_override("font_color",Color("#e1c392"))
+    dialog_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
     dialog_panel.add_child(dialog_title)
+
+    dialog_role = Label.new()
+    dialog_role.name = "CharacterRole"
+    dialog_role.position = Vector2(694,25)
+    dialog_role.size = Vector2(156,27)
+    dialog_role.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    dialog_role.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    dialog_role.add_theme_font_size_override("font_size",12)
+    dialog_role.add_theme_color_override("font_color",Color("#d6b98a"))
+    dialog_role.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_panel.add_child(dialog_role)
+
     var body_scroll := ScrollContainer.new()
     body_scroll.name = "BodyScroll"
-    body_scroll.position = Vector2(18, 63)
-    body_scroll.size = Vector2(806, 158)
+    body_scroll.position = Vector2(191,92)
+    body_scroll.size = Vector2(667,125)
+    body_scroll.follow_focus = true
     dialog_panel.add_child(body_scroll)
     dialog_body = Label.new()
     dialog_body.name = "DialogText"
-    dialog_body.custom_minimum_size = Vector2(770, 0)
+    dialog_body.custom_minimum_size = Vector2(625,0)
     dialog_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    dialog_body.add_theme_font_size_override("font_size", 18)
-    dialog_body.add_theme_color_override("font_color", PAPER)
+    dialog_body.add_theme_font_size_override("font_size",18)
+    dialog_body.add_theme_color_override("font_color",Color("#f3e4ce"))
     body_scroll.add_child(dialog_body)
+
     dialog_portrait = CLIENT_PORTRAIT.new()
     dialog_portrait.name = "ClientPortrait"
-    dialog_portrait.position = Vector2(20,72)
-    dialog_portrait.size = Vector2(112,134)
+    dialog_portrait.position = Vector2(34,85)
+    dialog_portrait.size = Vector2(118,132)
     dialog_portrait.visible = false
     dialog_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
     dialog_panel.add_child(dialog_portrait)
+
     var choices_scroll := ScrollContainer.new()
     choices_scroll.name = "ChoicesScroll"
-    choices_scroll.position = Vector2(18, 234)
-    choices_scroll.size = Vector2(806, 155)
+    choices_scroll.position = Vector2(33,248)
+    choices_scroll.size = Vector2(825,140)
+    choices_scroll.follow_focus = true
     dialog_panel.add_child(choices_scroll)
     options_box = VBoxContainer.new()
     options_box.name = "OptionsBox"
-    options_box.custom_minimum_size = Vector2(776, 0)
+    options_box.custom_minimum_size = Vector2(790,0)
     options_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    options_box.add_theme_constant_override("separation", 7)
+    options_box.add_theme_constant_override("separation",5)
     choices_scroll.add_child(options_box)
 
     # Botao de resgate acessivel mesmo se o teclado perder foco.
