@@ -5,6 +5,9 @@ const LENGTH := 3000.0
 const MAX_SPEED := 180.0
 const VIEW := Vector2(960,480)
 const HORIZON := 196.0
+const PLAYER_WIDTH := 130.0
+const PLAYER_Y := 430.0
+const BUILD_LABEL := "ARCADE 2.4"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -57,7 +60,7 @@ func _ready() -> void:
     controls.alignment = BoxContainer.ALIGNMENT_CENTER
     controls.add_theme_constant_override("separation",12)
     frame.add_child(controls)
-    for pair in [["left","◀ Esquerda"],["right","Direita ▶"],["down","Freio"],["up","Acelerar"]]:
+    for pair in [["left","Esquerda"],["right","Direita"],["down","Freio"],["up","Acelerar"]]:
         var b := Button.new()
         b.text = pair[1]
         b.focus_mode = Control.FOCUS_NONE
@@ -129,9 +132,10 @@ func _physics_process(delta: float) -> void:
             _impact()
     var previous := distance
     distance += speed*delta
+    var contact_offset := (1.0-(PLAYER_Y-HORIZON)/(VIEW.y-HORIZON))*DEPTH
     for obstacle in obstacles:
         var z: float = obstacle["z"]
-        if not obstacle["hit"] and previous <= z and distance >= z:
+        if not obstacle["hit"] and previous + contact_offset <= z and distance + contact_offset >= z:
             obstacle["hit"] = true
             if absf(lateral-float(obstacle["lane"]))<0.32:
                 _impact()
@@ -187,6 +191,7 @@ func _paint() -> void:
             var h := 14.0+65.0*t
             board.draw_rect(Rect2(p.x-2*t,p.y-h,4*t+1,h),Color("#22202e"))
             board.draw_rect(Rect2(p.x-5*t,p.y-h-8*t,10*t+1,10*t+1),Color("#f5c875"))
+    var player_drawn := false
     for i in range(obstacles.size()-1,-1,-1):
         var obstacle: Dictionary = obstacles[i]
         var ahead := float(obstacle["z"])-distance
@@ -194,7 +199,10 @@ func _paint() -> void:
             continue
         var t := 1.0-ahead/DEPTH
         var p := _road_point(t,float(obstacle["lane"]))
-        _traffic(p, maxf(0.08,t),int(obstacle["model"]))
+        if not player_drawn and p.y > PLAYER_Y:
+            _player_car(Vector2(480.0+lateral*365.0,PLAYER_Y))
+            player_drawn = true
+        _traffic(p, t,int(obstacle["model"]))
     var finish_ahead := LENGTH-distance
     if finish_ahead<DEPTH:
         var t := 1.0-finish_ahead/DEPTH
@@ -202,16 +210,17 @@ func _paint() -> void:
         var w := (_road_point(t,1)-_road_point(t,-1)).length()
         board.draw_rect(Rect2(p.x-w/2,p.y-5,w,9),Color("#90d6a6"))
         board.draw_string(ThemeDB.fallback_font,p+Vector2(-36,-12),"CHEGADA",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("#e8ffdd"))
-    _player_car(Vector2(480.0+lateral*365.0,430.0))
+    if not player_drawn:
+        _player_car(Vector2(480.0+lateral*365.0,PLAYER_Y))
     board.draw_rect(Rect2(8,6,385,69),Color(0.07,0.045,0.11,0.74))
     board.draw_rect(Rect2(16,14,240,12),Color("#15131c"))
     board.draw_rect(Rect2(16,14,240*clampf(distance/LENGTH,0,1),12),Color("#d8b477"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(16,45),"HOSPITAL → JARDIM DO ÚLTIMO SUSPIRO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#f3e5c8"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)],HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
+    board.draw_string(ThemeDB.fallback_font,Vector2(16,45),"HOSPITAL - JARDIM DO ÚLTIMO SUSPIRO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#f3e5c8"))
+    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)]+" | "+BUILD_LABEL,HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
     if countdown>0.0:
         board.draw_string(ThemeDB.fallback_font,Vector2(450,260),str(ceili(countdown)),HORIZONTAL_ALIGNMENT_LEFT,-1,70,Color("#f6cf84"))
     elif speed<1.0 and distance<1.0:
-        board.draw_string(ThemeDB.fallback_font,Vector2(300,245),"W / ↑ para acelerar",HORIZONTAL_ALIGNMENT_LEFT,-1,26,Color("#ffffff"))
+        board.draw_string(ThemeDB.fallback_font,Vector2(300,245),"W / Acelerar para partir",HORIZONTAL_ALIGNMENT_LEFT,-1,26,Color("#ffffff"))
     if flash>0.0:
         board.draw_rect(Rect2(0,0,960,480),Color(0.9,0.25,0.2,flash*0.45))
     board.draw_set_transform(Vector2.ZERO)
@@ -231,14 +240,20 @@ func _paint_panorama() -> void:
     var index := _panorama_index(distance)
     var blend := _panorama_blend(distance)
     var drift := clampf(-_curve(distance)*35.0-lateral*14.0,-55.0,55.0)
-    var area := Rect2(-60.0+drift,-4.0,1080.0,HORIZON+40.0)
+    var area := Rect2(-60.0+drift,0.0,1080.0,HORIZON)
     board.draw_texture_rect(PANORAMAS[index],area,false)
     if blend>0.0 and index+1<PANORAMAS.size():
         board.draw_texture_rect(PANORAMAS[index+1],area,false,Color(1.0,1.0,1.0,blend))
 
+func _traffic_width(t: float, model: int) -> float:
+    var player_depth := (PLAYER_Y-HORIZON)/(VIEW.y-HORIZON)
+    var perspective := lerpf(28.0,445.0,clampf(t,0.0,1.0))/lerpf(28.0,445.0,player_depth)
+    var relative_width: float = [0.88,0.98,1.04,1.10,1.13,0.98][model]
+    return PLAYER_WIDTH*relative_width*perspective
+
 func _traffic(p: Vector2,t: float,model: int) -> void:
     var tex: Texture2D = TRAFFIC[model]
-    var w := (100.0 if model in [2,3,4] else 88.0)*t
+    var w := _traffic_width(t,model)
     var h := w*float(tex.get_height())/float(tex.get_width())
     board.draw_rect(Rect2(p.x-w*0.4,p.y-2*t,w*0.8,5*t),Color(0,0,0,0.28))
     board.draw_texture_rect(tex,Rect2(p.x-w/2,p.y-h,w,h),false)
