@@ -55,6 +55,38 @@ func _run() -> void:
         quit(89)
         return
     game._close()
+    # Regressao: o carro sul interceptava a Fiscalizacao por ter um
+    # retangulo de interacao grande, mesmo sobre a porta do posto.
+    var inspection_door := Vector2(2208,1155)
+    if not game.is_walkable(inspection_door):
+        push_error("Porta da Fiscalizacao bloqueada por colisao")
+        quit(94)
+        return
+    game.player.global_position = inspection_door
+    if str(game._near_station().get("id","")) != "fiscalizacao":
+        push_error("Carro funerario esta interceptando a entrada da Fiscalizacao")
+        quit(95)
+        return
+    game.stage = 10
+    game._try_interact()
+    var rooms := game.get_node("RoomsRuntime")
+    if not rooms.inside() or str(rooms.room) != "fiscalizacao":
+        push_error("E / Interagir nao abriu o Posto de Fiscalizacao")
+        quit(96)
+        return
+    rooms.interact("agent")
+    if not game.dialogue_open or game.dialog_title.text != "Marcela Meia-Noite, Fiscal":
+        push_error("Agente de Fiscalizacao nao apresenta a missao ambiental")
+        quit(97)
+        return
+    game._close()
+    rooms.leave()
+    if rooms.inside() or game.player.global_position != inspection_door:
+        push_error("Saida da Fiscalizacao nao restaurou o jogador ao distrito")
+        quit(98)
+        return
+    game.stage = 12
+    # A solucao nao pode eliminar a interacao com os dois carros.
     for point in [Vector2(2200,585),Vector2(2210,1310)]:
         if not game.is_walkable(point):
             push_error("Acesso ao carro bloqueado")
