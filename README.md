@@ -137,3 +137,14 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Sem molduras duplicadas: Osvaldo e Baltazar já usam ornamentos integrados, e Amália conserva a moldura externa do lote 1.
 - Galeria interativa pelo Diário (tecla J no PC, botão Diário no celular), sem interferir no progresso.
 - Expressões contextuais nos diálogos e fallback para os demais personagens. Teste dedicado em `tests/portraits_expressions_smoke.gd`.
+
+
+## Minigame 02 — O Ofício de Osvaldo (primeira versão jogável)
+- Sepultamentos são tarefas **práticas e interativas**, iniciadas pelo NPC Seu Osvaldo quando existe ordem autorizada; não são meros diálogos.
+- O primeiro serviço do jazigo **B-13** é liberado depois da conferência documental, reserva e registro do atendimento inicial.
+- Cinco ações em perspectiva 2D: selecionar ferramentas, limpar folhas, preparar o terreno, controlar a descida ilustrada do caixão e finalizar a sepultura.
+- Funciona com mouse e toque; atalhos numéricos, setas e botão **Guardar e voltar** permitem controle e retomada do serviço.
+- Fila de ordens e progresso são persistidos em `user://save.cfg`; a finalização aumenta os indicadores sem cobrar novamente a receita já registrada.
+- Após a conclusão, a cova B-13 passa a apresentar uma sepultura finalizada no mapa.
+- Casos sem sepultamento explícito (por exemplo cremação, orientações e simples compras) **não geram enterro** automaticamente.
+- Teste de regressão: `tests/oficio_osvaldo_smoke.gd`. Detalhes e plano de expansão: `docs/MINIGAME_OSVALDO_V1.md`.
