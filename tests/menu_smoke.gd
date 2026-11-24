@@ -23,6 +23,25 @@ func _run() -> void:
         quit(73)
         return
 
+    # Fundo aprovado integrado em PNG original; nao pode bloquear mouse/toque.
+    var background := menu.get_node_or_null("CemeteryMenuBackground") as TextureRect
+    if background == null or background.texture == null:
+        push_error("Fundo da turminha nao foi carregado no menu.")
+        quit(84)
+        return
+    if background.texture.get_width() != 1152 or background.texture.get_height() != 648:
+        push_error("Fundo do menu tem dimensoes incorretas.")
+        quit(85)
+        return
+    if background.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+        push_error("Fundo bloqueia a interacao dos botoes.")
+        quit(86)
+        return
+    if background.get_index() != 0:
+        push_error("Fundo do menu deve ficar atras do logo e dos botoes.")
+        quit(87)
+        return
+
     # O logotipo PNG nao pode bloquear os botoes nem perder seu efeito pendurado.
     var logo := menu.get_node_or_null("HangingGameLogo") as TextureRect
     if logo == null or logo.texture == null or logo.texture.get_width() < 900:
@@ -88,5 +107,5 @@ func _run() -> void:
         quit(78)
         return
     level._close()
-    print("MENU OK: cena principal, botao continuar, ajuda, creditos e pausa.")
+    print("MENU OK: fundo original, logo pendurado, lapides, caixoes, salvar, continuar e pausa.")
     quit(0)
