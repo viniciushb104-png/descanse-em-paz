@@ -112,3 +112,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Animacao discreta de balanço (~1,5°) como placa pendurada; sem queda ou interacao involuntaria.
 - Titulo textual duplicado removido; botoes e fundo cinematografico preservados.
 - Testes do menu ampliados. Ver `docs/MENU_LOGO_V122.md`.
+
+## Correção do logo do menu (1.2.3)
+- Corrigido PNG paletizado de baixa compatibilidade para **RGBA padrão** com transparência real.
+- Prioridade de renderização explícita: fundo abaixo do logotipo e modais acima.
+- Posição superior esquerda com 536x285 no viewport de 1152x648; balanço suave preservado.
+- Teste de visibilidade agora verifica canal alfa, centro opaco, tamanho e prioridade de camada.

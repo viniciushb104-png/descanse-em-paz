@@ -151,6 +151,7 @@ func _install_background() -> void:
     menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
     menu_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    menu_background.z_index = -5
     add_child(menu_background)
     menu_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -159,8 +160,10 @@ func _install_logo() -> void:
     menu_logo = TextureRect.new()
     menu_logo.name = "HangingGameLogo"
     menu_logo.texture = MENU_LOGO
-    menu_logo.position = Vector2(33, -3)
-    menu_logo.size = Vector2(546, 290)
+    # Usa PNG RGBA padrao: a versao anterior era paletizada com tRNS.
+    # Posicao e escala em coordenadas do menu virtual (1152 x 648).
+    menu_logo.position = Vector2(30, 4)
+    menu_logo.size = Vector2(536, 285)
     # A origem no alto central imita as correntes de uma placa suspensa.
     menu_logo.pivot_offset = Vector2(menu_logo.size.x * 0.5, 5.0)
     menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -168,7 +171,10 @@ func _install_logo() -> void:
     # Textura pintada suave; os demais elementos do jogo seguem pixel art.
     menu_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
     menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    menu_logo.z_index = 5
+    menu_logo.modulate = Color.WHITE
     add_child(menu_logo)
+    menu_logo.show()
 
 
 func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Button:
@@ -233,6 +239,8 @@ func _build_modal() -> void:
     modal_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     modal_overlay.color = Color(0.045, 0.035, 0.09, 0.82)
     modal_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+    # Quando abrir um modal, ele fica acima do logo animado.
+    modal_overlay.z_index = 10
     add_child(modal_overlay)
     var panel := Panel.new()
     panel.name = "ModalPanel"

@@ -44,9 +44,23 @@ func _run() -> void:
 
     # O logotipo PNG nao pode bloquear os botoes nem perder seu efeito pendurado.
     var logo := menu.get_node_or_null("HangingGameLogo") as TextureRect
-    if logo == null or logo.texture == null or logo.texture.get_width() < 900:
-        push_error("Logo transparente do menu nao foi carregado.")
+    if logo == null or logo.texture == null or logo.texture.get_width() < 800:
+        push_error("Logo RGBA do menu nao foi carregado.")
         quit(81)
+        return
+    var logo_image: Image = logo.texture.get_image()
+    if logo_image == null or logo_image.is_empty() or not logo_image.detect_alpha():
+        push_error("Logo deve ter canal alfa valido.")
+        quit(84)
+        return
+    var logo_center: Color = logo_image.get_pixel(logo_image.get_width()/2,logo_image.get_height()/2)
+    if logo_center.a < 0.7:
+        push_error("Centro do logo parece transparente demais para ficar visivel.")
+        quit(85)
+        return
+    if not logo.visible or not logo.is_visible_in_tree() or logo.z_index <= 0 or logo.size.x < 350:
+        push_error("Logo foi ocultado, ficou pequeno demais ou sob outra camada.")
+        quit(86)
         return
     if logo.mouse_filter != Control.MOUSE_FILTER_IGNORE:
         push_error("Logo bloqueia toques do menu.")
