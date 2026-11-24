@@ -211,6 +211,8 @@ func _interact(id: String) -> void:
         return
     match id:
         "cemetery_cat":
+            if is_instance_valid(cemetery_cat):
+                cemetery_cat.call("meow")
             _show("Gato do Cemiterio", "Miau!", [{"text":"Fazer carinho","action":"cat_pet"}, {"text":"Deixar descansar","action":"close"}])
         "osvaldo":
             if burial_queue.has_pending():
