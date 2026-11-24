@@ -102,6 +102,9 @@ jobs:
       - name: Validar retratos expressivos e galeria do Diario
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-portraits_expressions_smoke" godot --headless --path . --script res://tests/portraits_expressions_smoke.gd
 
+      - name: Validar preferencias e capela do ultimo adeus
+        run: godot --headless --path . --script res://tests/wake_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

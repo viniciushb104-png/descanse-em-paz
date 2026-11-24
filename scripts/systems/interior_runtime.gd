@@ -9,6 +9,7 @@ var return_point := Vector2(748,714)
 var case_index: int = 0
 var pending_burial_id := ""
 const BURIAL_CASES := [1,5,16]
+const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const FIELD = preload("res://scripts/world/burial_field.gd")
 var inventory: Dictionary = {"caixao":2,"urna":1}
 var skip_entry: bool = false
@@ -162,6 +163,9 @@ func _end_transition() -> void:
     game()._refresh_ui()
 
 func interact(id: String) -> void:
+    if room=="chapel" and id.begins_with("wake_"):
+        wake_interact(id)
+        return
     match id:
         "exit":
             leave()
@@ -206,7 +210,7 @@ func show_board() -> void:
 
 func show_case() -> void:
     if not pending_burial_id.is_empty():
-        game()._show("Sepultamento pendente","O atendimento ainda nao terminou. Procure Seu Osvaldo no cemiterio.",[{"text":"Voltar","action":"close"}])
+        game()._show("Sepultamento pendente","O atendimento ainda nao terminou. Organize o velorio na capela antes de procurar Seu Osvaldo.",[{"text":"Voltar","action":"close"}])
         return
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
@@ -469,7 +473,7 @@ func authorize_burial() -> void:
             inventory[needed] = int(inventory[needed])-1
             pending_burial_id = key
             game()._save_game()
-            game()._show("Servico agendado","Jazigo "+id+" reservado. A recompensa sera liberada somente apos o sepultamento. Procure Osvaldo.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
+            game()._show("Servico agendado","Jazigo "+id+" reservado. A recompensa sera liberada somente apos o velorio e sepultamento. Visite a capela ao norte.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
             return
 
 func complete_burial(service_id: String) -> bool:
@@ -492,6 +496,8 @@ func reject_case() -> void:
     show_case()
 
 func handle_choice(action: String) -> bool:
+    if action.begins_with("wake_"):
+        return wake_choice(action)
     if action.begins_with("case_pick_"):
         var number: String = action.trim_prefix("case_pick_")
         if number.is_valid_int():
@@ -537,8 +543,75 @@ func handle_choice(action: String) -> bool:
 
 func objective() -> String:
     if not pending_burial_id.is_empty():
-        return "Atendimento em andamento: conclua o sepultamento com Osvaldo."
+        return "Atendimento em andamento: velorio na capela, depois sepultamento com Osvaldo."
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         return "Campanha completa: 20 casos atendidos!"
     return "Caso %02d/%02d | Nivel %d/4: %s.\nLocal: %s" % [case_index+1,CASES.total(),DIALOGUES.tier(case_index),str(item["client"]),str(CATALOG.ROOMS[item["room"]]["title"])]
+
+func wake_interact(id: String) -> void:
+    var order: Dictionary = game().burial_queue.pending()
+    if order.is_empty():
+        game()._show("Capela do Ultimo Adeus","Nenhuma cerimonia agendada. O salao esta aberto para visita.",[{"text":"Voltar","action":"close"}])
+        return
+    if WAKE.done(order):
+        game()._show("Cerimonia encerrada","A despedida terminou. Procure Seu Osvaldo para o jazigo "+str(order["plot"])+".",[{"text":"Voltar","action":"close"}])
+        return
+    var state: Dictionary = WAKE.state(order)
+    if id=="wake_family":
+        var choices: Array = [{"text":"Receber a familia","action":"wake_receive"},{"text":"Voltar","action":"close"}] if WAKE.ready(order) and not bool(state["received"]) else [{"text":"Entendi","action":"close"}]
+        game()._show(str(order["customer"]),WAKE.requests(order)+"\n\nPreparativos: %d/5." % WAKE.matches(order),choices)
+        return
+    if id=="wake_coffin":
+        if not WAKE.ready(order) or not bool(state["received"]):
+            game()._show("Preparativos pendentes","Confira os cinco pedidos e receba a familia antes da despedida.",[{"text":"Voltar","action":"close"}])
+        elif not bool(state["farewell"]):
+            game()._show(str(order["customer"]),str(WAKE.profile(str(order["id"]))["farewell"]),[{"text":"Respeitar o momento de despedida","action":"wake_farewell"},{"text":"Voltar","action":"close"}])
+        else:
+            game()._show("O ultimo adeus","A familia esta pronta para seguir ao cemiterio.",[{"text":"Encerrar cerimonia","action":"wake_finish"},{"text":"Voltar","action":"close"}])
+        return
+    var key := id.trim_prefix("wake_")
+    if not WAKE.OPTIONS.has(key):
+        return
+    if bool(state["received"]):
+        game()._show("Cerimonia em andamento","Os preparativos foram aprovados pela familia.",[{"text":"Voltar","action":"close"}])
+        return
+    var opts: Array = []
+    for i in range(WAKE.OPTIONS[key].size()):
+        opts.append({"text":str(WAKE.OPTIONS[key][i]),"action":"wake_set_"+key+"_"+str(i)})
+    game()._show(str(WAKE.LABELS[key]),"Escolha conforme os pedidos da familia. Pode rever a escolha depois.",opts)
+
+func wake_choice(action: String) -> bool:
+    if room!="chapel" or changing:
+        return true
+    var order: Dictionary = game().burial_queue.pending()
+    if order.is_empty() or WAKE.done(order):
+        return true
+    var state: Dictionary = WAKE.state(order)
+    if action.begins_with("wake_set_"):
+        var parts := action.trim_prefix("wake_set_").split("_")
+        if parts.size()!=2 or not WAKE.OPTIONS.has(parts[0]) or not parts[1].is_valid_int() or bool(state["received"]):
+            return true
+        var n := int(parts[1])
+        if n<0 or n>=WAKE.OPTIONS[parts[0]].size():
+            return true
+        state["choices"][parts[0]] = n
+    elif action=="wake_receive" and WAKE.ready(order):
+        state["received"] = true
+    elif action=="wake_farewell" and WAKE.ready(order) and bool(state["received"]):
+        state["farewell"] = true
+    elif action=="wake_finish" and WAKE.ready(order) and bool(state["received"]) and bool(state["farewell"]):
+        state["done"] = true
+    else:
+        return true
+    var progress: Dictionary = order["progress"]
+    progress["wake"] = state
+    game().burial_queue.update_progress(str(order["id"]),progress)
+    game()._save_game()
+    game().get_node("InteriorLayer").queue_redraw()
+    game()._close()
+    if bool(state["done"]):
+        game()._notify("Velorio concluido. Sepultamento liberado com Osvaldo.",4.0)
+    else:
+        game()._notify("Preparacao registrada.",1.7)
+    return true

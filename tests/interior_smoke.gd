@@ -27,8 +27,8 @@ func _run() -> void:
     root.add_child(game)
     await process_frame
     var r: Node = game.get_node("RoomsRuntime")
-    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=10:
-        push_error("20 casos ou 10 interiores ausentes")
+    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=11:
+        push_error("20 casos ou 11 interiores ausentes")
         quit(91)
         return
     game._close()

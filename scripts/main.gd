@@ -3,6 +3,7 @@ extends Node2D
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
 const WORLD := Vector2(3072.0, 2304.0)
+const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
 var burial_field: Node2D
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
@@ -25,6 +26,7 @@ const NIGHT := Color("#24192f")
 const GOLD := Color("#deb57c")
 const BLUE := Color("#8dbddc")
 const STATIONS := [
+    {"id":"chapel","name":"Capela do Ultimo Adeus","p":Vector2(780,-175)},
     {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(778, 638)},
     {"id": "office", "name": "Escritorio", "p": Vector2(425, 476)},
     {"id": "plot", "name": "Jazigo B-13", "p": Vector2(1125, 630)},
@@ -301,6 +303,10 @@ func _interact(id: String) -> void:
 
 func _on_choice(action: String) -> void:
     if action == "field_begin":
+        if not WAKE.done(burial_queue.pending()):
+            _close()
+            _notify("Conclua o velorio na capela primeiro.",3.0)
+            return
         _close()
         burial_field.begin()
         _notify("Siga ao jazigo marcado. E ou INTERAGIR para cavar.",4.0)
@@ -310,7 +316,7 @@ func _on_choice(action: String) -> void:
         return
     if action == "field_finish":
         var order: Dictionary = burial_queue.pending()
-        if not order.is_empty() and burial_field.count_for(str(order["plot"]))>=6 and burial_field.near(player.global_position).get("id","")=="field_dig":
+        if not order.is_empty() and WAKE.done(order) and burial_field.count_for(str(order["plot"]))>=6 and burial_field.near(player.global_position).get("id","")=="field_dig":
             _close()
             _burial_finished(true,100,str(order["id"]))
             burial_field.active = false
@@ -907,6 +913,9 @@ func _refresh_ui() -> void:
     var minutes: int = int(clock_minutes)
     status_label.text = "SANTA MORTALHA  |  Dia %d  |  %02d:%02d\nCaixa R$ %d  ·  Reputacao %d/100  ·  Conformidade %d/100" % [day, int(minutes / 60.0), minutes % 60, money, reputation, compliance]
     objective_label.text = "MISSÃO DO EXPEDIENTE\n" + (rooms.objective() if stage >= 12 else OBJECTIVES[stage])
+    var wake_order: Dictionary = burial_queue.pending()
+    if not wake_order.is_empty() and not WAKE.done(wake_order):
+        objective_label.text = "O ULTIMO ADEUS | "+str(wake_order["customer"])+"\nCapela ao norte: %d/5 pedidos. Despedida antes do enterro." % WAKE.matches(wake_order)
     if is_instance_valid(burial_field) and burial_field.active and not rooms.inside():
         var job: Dictionary = burial_queue.pending()
         if not job.is_empty():
@@ -942,6 +951,8 @@ func is_walkable(world_position: Vector2) -> bool:
     if world_position.y<92.0 and (world_position.x<650.0 or world_position.x>925.0) and world_position.y>=-100.0:
         return false
     if world_position.y<0.0 and world_position.x>1510.0:
+        return false
+    if Rect2(665,-335,230,135).has_point(world_position):
         return false
     if Rect2(196, 150, 418, 280).has_point(world_position):
         return false
@@ -981,6 +992,9 @@ func is_b13_buried() -> bool:
 func _start_osvaldo_work() -> void:
     var service: Dictionary = burial_queue.pending()
     if service.is_empty() or rooms.inside():
+        return
+    if not WAKE.done(service):
+        _show("Seu Osvaldo","Primeiro o ultimo adeus. A capela fica atras do escritorio e da oficina, pelo portao norte.",[{"text":"Entendi","action":"close"}])
         return
     _show("Seu Osvaldo","Chefe, nada de telinha! Pegue a pa e siga ao jazigo %s. Seis pazadas e um servico digno. O defunto nao tem pressa, mas o Baltazar tem planilha." % str(service["plot"]),[{"text":"Pegar a pa e trabalhar","action":"field_begin"},{"text":"Depois","action":"close"}])
 

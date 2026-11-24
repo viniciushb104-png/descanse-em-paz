@@ -1,5 +1,7 @@
 extends Node2D
 ## Campo de trabalho: interacao contextual, sem CanvasLayer de minigame.
+const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
+const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 const TOMB = preload("res://assets/props/tumulos/Tumulo_01.png")
 const OLD_TOMBS = [preload("res://assets/props/tumulos/Tumulo_01.png"),preload("res://assets/props/tumulos/Tumulo_02.png"),preload("res://assets/props/tumulos/Tumulo_03.png"),preload("res://assets/props/tumulos/Tumulo_04.png"),preload("res://assets/props/tumulos/Tumulo_05.png"),preload("res://assets/props/tumulos/Tumulo_06.png")]
@@ -89,7 +91,7 @@ func near(pos: Vector2) -> Dictionary:
     if not active:
         return {}
     var order := current()
-    if order.is_empty():
+    if order.is_empty() or not WAKE.done(order):
         return {}
     var p := position_for(str(order["plot"]))
     if p != Vector2.ZERO and p.distance_to(pos)<112.0:
@@ -128,7 +130,7 @@ func strike() -> void:
     if elapsed>=0.0 or not active:
         return
     var order := current()
-    if order.is_empty():
+    if order.is_empty() or not WAKE.done(order):
         return
     var id := str(order["plot"])
     var p := position_for(id)
@@ -181,6 +183,8 @@ static func north_old_positions() -> Array[Vector2]:
     return result
 
 func _paint_north() -> void:
+    _sprite(_north_tex("chapel",CHAPEL),Vector2(780,-200),160.0)
+    draw_string(ThemeDB.fallback_font,Vector2(664,-350),"CAPELA DO ULTIMO ADEUS",HORIZONTAL_ALIGNMENT_LEFT,-1,18,Color("#e4b875"))
     # Old memorials alternate with new plots; no painted UI rectangles.
     var old := north_old_positions()
     for i in range(old.size()):

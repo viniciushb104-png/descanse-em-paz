@@ -1,4 +1,5 @@
 extends Node2D
+const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CATALOG = preload("res://scripts/world/interior_catalog.gd")
 const OFFICE = preload("res://scenes/interiors/office.tscn")
 const MAINTENANCE = preload("res://scenes/interiors/maintenance.tscn")
@@ -34,6 +35,9 @@ func set_room(key: String) -> void:
 
 func _draw() -> void:
     if not CATALOG.ROOMS.has(room):
+        return
+    if room=="chapel":
+        _paint_chapel()
         return
     var info: Dictionary = CATALOG.ROOMS[room]
     var style: String = str(info["theme"])
@@ -128,3 +132,59 @@ func _decor(style: String) -> void:
                 draw_circle(Vector2(112+float(n)*51,443),10,GOLD)
         _:
             draw_rect(Rect2(75,438,136,50),Color("#42384e"))
+
+func _paint_chapel() -> void:
+    var order: Dictionary = get_parent().burial_queue.pending()
+    var state: Dictionary = WAKE.state(order)
+    var choices: Dictionary = state["choices"]
+    draw_rect(Rect2(0,0,1152,648),INK)
+    draw_rect(Rect2(40,40,1072,545),Color("#514152"))
+    draw_rect(Rect2(64,164,1024,412),Color("#69545b"))
+    for x in range(64,1088,64):
+        for y in range(164,576,32):
+            draw_rect(Rect2(x,y,62,30),Color("#765e65"))
+    draw_rect(Rect2(520,170,110,405),Color("#704052"))
+    _text(Vector2(70,80),"CAPELA DO ULTIMO ADEUS",28,GOLD)
+    _text(Vector2(70,115),"Organize a despedida conforme os pedidos da familia.",17,PAPER)
+    for x in [200.0,520.0,840.0]:
+        draw_rect(Rect2(x,45,90,100),Color("#302739"))
+        draw_rect(Rect2(x+8,55,74,82),Color("#8b679b"))
+    var coffin := PackedVector2Array([Vector2(548,255),Vector2(602,255),Vector2(630,286),Vector2(606,366),Vector2(544,366),Vector2(520,286)])
+    draw_colored_polygon(coffin,Color("#583c35"))
+    var outline := coffin.duplicate()
+    outline.append(coffin[0])
+    draw_polyline(outline,GOLD,3.0)
+    var flower_colors := [Color("#eee4cd"),Color("#bb5368"),Color("#e9ca73"),Color("#a781cc")]
+    var flower: int = int(choices.get("flowers",-1))
+    for p in [Vector2(275,245),Vector2(460,310),Vector2(690,310)]:
+        draw_rect(Rect2(p-Vector2(11,0),Vector2(22,27)),Color("#674d42"))
+        if flower>=0:
+            for i in range(7):
+                draw_circle(p+Vector2.from_angle(float(i)*2.4)*15,8,flower_colors[flower])
+    var lighting := int(choices.get("light",-1))
+    for p in [Vector2(875,245),Vector2(490,240),Vector2(660,240)]:
+        draw_rect(Rect2(p-Vector2(4,0),Vector2(8,28)),GOLD)
+        if lighting>=0:
+            draw_circle(p-Vector2(0,4),9,Color("#ffe3a0") if lighting<2 else Color("#e4d7ee"))
+            draw_circle(p,30,Color(1.0,0.76,0.35,0.11))
+    var arrangement := int(choices.get("chairs",0))
+    for i in range(6 if arrangement==2 else 12):
+        var p := Vector2(300+float(i%3)*62+0.0,392+float(floori(float(i)/6.0))*68)
+        if i%6>=3:
+            p.x+=405
+        if arrangement==1:
+            p=Vector2(575,335)+Vector2.from_angle(0.2+float(i)*0.245)*Vector2(275,160)
+        draw_rect(Rect2(p-Vector2(22,12),Vector2(44,27)),Color("#4c3433"))
+        draw_rect(Rect2(p-Vector2(22,17),Vector2(44,8)),Color("#a57c5d"))
+    draw_rect(Rect2(940,400,65,45),Color("#44303b"))
+    _text(Vector2(937,397),"MUSICA",15,GOLD)
+    if int(choices.get("music",-1))>=0:
+        _text(Vector2(920,470),str(WAKE.OPTIONS["music"][int(choices["music"])]),16,PAPER)
+    draw_rect(Rect2(548,191,54,29),Color("#5f403c"))
+    if int(choices.get("tribute",-1))>=0:
+        _text(Vector2(510,184),str(WAKE.OPTIONS["tribute"][int(choices["tribute"])]),14,PAPER)
+    _npc(Vector2(800,465),Color("#d9b5a0"),Color("#50465d"),"FAMILIA")
+    if bool(state["received"]):
+        _npc(Vector2(452,355),Color("#c6a38e"),Color("#655468"),"")
+        _npc(Vector2(700,355),Color("#d1baa8"),Color("#534f67"),"")
+    _text(Vector2(525,610),"SAIDA [E]",19,GOLD)
