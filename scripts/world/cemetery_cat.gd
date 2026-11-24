@@ -12,13 +12,66 @@ var pet_time := 0.0
 var step_time := 0.0
 var flip := false
 var random := RandomNumberGenerator.new()
+# Optional PNG art: until assets/cat is uploaded, procedural artwork remains visible.
+const FRAME_COUNTS = {"idle":4, "sit":5, "walk_right":8, "walk_left":8, "meow":4, "pet":6, "purr":4, "sleep":4}
+var frames: Dictionary = {}
+var sprite: Sprite2D
+var idle_seconds: float = 0.0
+var active_anim: String = "idle"
+var anim_elapsed: float = 0.0
+var meow_time: float = 0.0
 
 func _ready() -> void:
     position = HOME
     z_index = 12
     random.randomize()
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    _load_frames()
     set_process(true)
+
+func _load_frames() -> void:
+    for anim in FRAME_COUNTS:
+        var images: Array[Texture2D] = []
+        for index in range(int(FRAME_COUNTS[anim])):
+            var path := "res://assets/cat/%s_%02d.png" % [anim,index]
+            if ResourceLoader.exists(path):
+                var img := load(path) as Texture2D
+                if img != null:
+                    images.append(img)
+        if images.size() == int(FRAME_COUNTS[anim]):
+            frames[anim] = images
+    if not frames.is_empty():
+        sprite = Sprite2D.new()
+        sprite.name = "CatSprite"
+        sprite.position = Vector2(0,-48)
+        sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+        sprite.centered = true
+        add_child(sprite)
+
+func _set_animation(anim: String) -> void:
+    if active_anim != anim:
+        active_anim = anim
+        anim_elapsed = 0.0
+
+func _update_sprite(delta: float) -> void:
+    if sprite == null:
+        return
+    anim_elapsed += delta
+    var chosen := active_anim
+    if not frames.has(chosen):
+        chosen = "idle"
+    if not frames.has(chosen):
+        sprite.visible = false
+        return
+    var images: Array = frames[chosen]
+    sprite.visible = true
+    var fps := 6.0 if chosen in ["walk_right","walk_left"] else 4.0
+    var index := int(anim_elapsed * fps)
+    if chosen in ["meow","pet","sit"]:
+        index = mini(index, images.size()-1)
+    else:
+        index = index % images.size()
+    sprite.texture = images[index]
 
 func _process(delta: float) -> void:
     var world := get_parent()
@@ -26,10 +79,24 @@ func _process(delta: float) -> void:
     if not visible:
         return
     animation_time += delta
+    meow_time = maxf(0.0,meow_time-delta)
     pet_time = maxf(0.0, pet_time - delta)
-    if pet_time > 0.0 or bool(world.get("dialogue_open")):
+    if pet_time > 0.0:
+        _set_animation("pet" if pet_time > 0.7 else "purr")
+        _update_sprite(delta)
         queue_redraw()
         return
+    if meow_time > 0.0:
+        _set_animation("meow")
+        _update_sprite(delta)
+        queue_redraw()
+        return
+    if bool(world.get("dialogue_open")):
+        _set_animation("idle")
+        _update_sprite(delta)
+        queue_redraw()
+        return
+    var moved := false
     pause_left -= delta
     if pause_left <= 0.0:
         if global_position.distance_to(destination) > 5.0:
@@ -37,6 +104,7 @@ func _process(delta: float) -> void:
             var next_position := global_position + direction * SPEED * delta
             if bool(world.call("is_walkable", next_position)) and next_position.distance_to(HOME) < WANDER_RADIUS + 12.0:
                 position = next_position
+                moved = true
                 flip = direction.x < 0.0
                 step_time += delta
             else:
@@ -47,16 +115,35 @@ func _process(delta: float) -> void:
             destination = HOME + Vector2(random.randf_range(-WANDER_RADIUS, WANDER_RADIUS), random.randf_range(-55.0, 55.0))
             if not bool(world.call("is_walkable", destination)):
                 destination = HOME
+    if moved:
+        idle_seconds = 0.0
+        _set_animation("walk_left" if flip else "walk_right")
+    else:
+        idle_seconds += delta
+        _set_animation("sleep" if idle_seconds > 16.0 else ("sit" if idle_seconds > 6.0 else "idle"))
+    _update_sprite(delta)
     queue_redraw()
+
+func meow() -> void:
+    meow_time = 1.0
+    idle_seconds = 0.0
+    _set_animation("meow")
+    _update_sprite(0.0)
 
 func pet() -> void:
     pet_time = 2.3
+    meow_time = 0.0
+    idle_seconds = 0.0
+    _set_animation("pet")
     pause_left = 2.6
     destination = global_position
     meowed.emit()
     queue_redraw()
 
 func _draw() -> void:
+    if sprite != null and sprite.visible:
+        draw_ellipse_shadow()
+        return
     # O ponto de origem e o chao. Corpo pequeno, proporcao de gato frente ao jogador.
     draw_ellipse_shadow()
     var bob := 1.0 if int(step_time * 8.0) % 2 == 0 else 0.0
