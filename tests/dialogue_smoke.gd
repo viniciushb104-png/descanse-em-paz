@@ -32,6 +32,9 @@ func _run() -> void:
     game._close()
     var rooms: Node = game.get_node("RoomsRuntime")
     rooms.case_index = 0
+    rooms.pending_burial_id = ""
+    game.burial_queue.orders.clear()
+    game.burial_queue.initial_issued = false
     rooms._reset_dialogue()
     game.money = 5000
     if CASES.total()!=20 or DIALOGUES.total()!=20:

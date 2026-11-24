@@ -12,7 +12,7 @@ func _run() -> void:
     root.add_child(game)
     await process_frame
     game._close()
-    var panel := game.dialog_panel
+    var panel: Control = game.dialog_panel
     var overlay := panel.get_node("PortraitFrameArt") as TextureRect
     var plate := panel.get_node("NameplateArt") as TextureRect
     var plate_text := panel.get_node("PortraitNameplateText") as Label

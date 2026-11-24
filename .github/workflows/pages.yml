@@ -18,6 +18,8 @@ jobs:
   build:
     name: Validar e exportar Godot 4.7.2 para Web
     runs-on: ubuntu-latest
+    env:
+      XDG_DATA_HOME: ${{ runner.temp }}/godot-test-data
     steps:
       - name: Baixar codigo
         uses: actions/checkout@v4
@@ -30,9 +32,9 @@ jobs:
           unzip -q /tmp/godot.zip -d /tmp
           sudo install -m 755 /tmp/Godot_v4.7.2-stable_linux.x86_64 /usr/local/bin/godot
           curl -fsSL --retry 3 "$BASE/Godot_v4.7.2-stable_export_templates.tpz" -o /tmp/templates.tpz
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$XDG_DATA_HOME/godot/export_templates/4.7.2.stable"
           unzip -q /tmp/templates.tpz 'templates/*' -d /tmp/godot-templates
-          cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
+          cp /tmp/godot-templates/templates/* "$XDG_DATA_HOME/godot/export_templates/4.7.2.stable/"
           godot --version
 
       - name: Extrair e conferir os 43 sprites do gato
@@ -55,52 +57,52 @@ jobs:
         run: godot --headless --path . --editor --quit
 
       - name: Testar gato e animacoes PNG
-        run: godot --headless --path . --script res://tests/cemetery_cat_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-cemetery_cat_smoke" godot --headless --path . --script res://tests/cemetery_cat_smoke.gd
 
       - name: Testar aparicao e movimento do jogador
-        run: godot --headless --path . --script res://tests/smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-smoke" godot --headless --path . --script res://tests/smoke.gd
 
       - name: Validar piso e conexao dos caminhos
-        run: godot --headless --path . --script res://tests/ground_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-ground_smoke" godot --headless --path . --script res://tests/ground_smoke.gd
 
       - name: Testar dez sprites individuais e acesso ao B-13
-        run: godot --headless --path . --script res://tests/graves_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" godot --headless --path . --script res://tests/graves_smoke.gd
 
       - name: Testar arvores goticas e caminhos livres
-        run: godot --headless --path . --script res://tests/trees_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-trees_smoke" godot --headless --path . --script res://tests/trees_smoke.gd
 
       - name: Testar menu inicial e retorno ao jogo
-        run: godot --headless --path . --script res://tests/menu_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-menu_smoke" godot --headless --path . --script res://tests/menu_smoke.gd
 
       - name: Testar distrito, missões e legislação
-        run: godot --headless --path . --script res://tests/district_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_smoke" godot --headless --path . --script res://tests/district_smoke.gd
 
       - name: Testar interiores, estoque e vinte casos
-        run: godot --headless --path . --script res://tests/interior_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-interior_smoke" godot --headless --path . --script res://tests/interior_smoke.gd
 
       - name: Testar controle por toque e dialogos responsivos
-        run: godot --headless --path . --script res://tests/mobile_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-mobile_smoke" godot --headless --path . --script res://tests/mobile_smoke.gd
 
       - name: Testar diálogos e dificuldade progressiva
-        run: godot --headless --path . --script res://tests/dialogue_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_smoke" godot --headless --path . --script res://tests/dialogue_smoke.gd
 
       - name: Testar entrada direta e ritmo de dialogos
-        run: godot --headless --path . --script res://tests/pacing_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-pacing_smoke" godot --headless --path . --script res://tests/pacing_smoke.gd
 
       - name: Testar molduras e retratos de todos os personagens
-        run: godot --headless --path . --script res://tests/dialogue_frames_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_frames_smoke" godot --headless --path . --script res://tests/dialogue_frames_smoke.gd
 
       - name: Validar molduras PNG do lote 1 e fallbacks
-        run: godot --headless --path . --script res://tests/dialogue_lote1_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote1_smoke" godot --headless --path . --script res://tests/dialogue_lote1_smoke.gd
 
       - name: Testar seis molduras individuais do lote 2
-        run: godot --headless --path . --script res://tests/dialogue_lote2_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote2_smoke" godot --headless --path . --script res://tests/dialogue_lote2_smoke.gd
 
       - name: Testar seis panoramas do translado
-        run: godot --headless --path . --script res://tests/translado_panorama_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-translado_panorama_smoke" godot --headless --path . --script res://tests/translado_panorama_smoke.gd
 
       - name: Validar retratos expressivos e galeria do Diario
-        run: godot --headless --path . --script res://tests/portraits_expressions_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-portraits_expressions_smoke" godot --headless --path . --script res://tests/portraits_expressions_smoke.gd
 
       - name: Exportar versao Web sem threads
         run: |
