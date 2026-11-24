@@ -220,7 +220,6 @@ func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Butt
 
 func _build_menu() -> void:
     # A frase fica logo abaixo da placa, acima dos personagens.
-    _make_label("A morte é inevitável. A burocracia também.", Vector2(30, 190), Vector2(420, 30), 15, LILAC)
 
     # Botões grandes sobre o gramado à direita; preservam mouse, teclado e toque.
     continue_button = _add_memorial_button("CONTINUAR EXPEDIENTE", 298.0, true)
