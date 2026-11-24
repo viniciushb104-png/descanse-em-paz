@@ -15,7 +15,7 @@ const TITLES := ["SEPARAR FERRAMENTAS", "LIMPAR O JAZIGO", "PREPARAR O TERRENO",
 const TIPS := [
     "Toque em luvas, pa e sinalizacao para organizar o carrinho.",
     "Recolha os cinco montinhos de folhas, um por um.",
-    "Use a pa nos seis trechos marcados do solo.",
+    "Toque em um trecho de terra. Osvaldo caminha ate ele e cava.",
     "Arraste o controle dourado ate o fim, com calma.",
     "Finalize: nivelar, conferir a placa e acomodar flores."
 ]
@@ -31,6 +31,18 @@ var feedback: String = "Prepare o local com cuidado. Osvaldo esta supervisionand
 var last_action_at: int = -1000
 var last_slider_save_at: int = -1000
 var leave_button: Button
+const DIG_DIR := "res://assets/sprites/osvaldo_dig/"
+const DIG_NAMES := ["idle","raise","strike","effort","throw"]
+const DIG_TIMES := [0.10,0.16,0.13,0.14,0.20,0.12]
+var dig_frames: Array[Texture2D] = []
+var dig_clock := -1.0
+var dig_target := -1
+var dig_committed := false
+var dig_anchor := Vector2.ZERO
+var dig_hd_count := 0
+const DIG_FALLBACK = preload("res://assets/sprites/osvaldo_right_0.svg")
+const DIG_FALLBACK_MOVE = preload("res://assets/sprites/osvaldo_right_1.svg")
+const GRAVE_STAGES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 
 func configure(job: Dictionary) -> void:
     order = job.duplicate(true)
@@ -51,6 +63,7 @@ func snapshot() -> Dictionary:
 
 func _ready() -> void:
     name = "OficioDeOsvaldo"
+    _load_dig_frames()
     mouse_filter = Control.MOUSE_FILTER_STOP
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -140,12 +153,14 @@ func _input(event: InputEvent) -> void:
         lowering = clampf(lowering - 0.14, 0.0, 1.0)
         _progress()
     elif phase != 3 and event.keycode >= KEY_1 and event.keycode <= KEY_6:
-        activate_target(int(event.keycode - KEY_1))
+        _request_target(int(event.keycode - KEY_1))
     else:
         return
     get_viewport().set_input_as_handled()
 
 func _press(p: Vector2) -> void:
+    if dig_clock >= 0.0:
+        return
     if Time.get_ticks_msec() - last_action_at < 110:
         return
     var zones := _zones()
@@ -158,7 +173,7 @@ func _press(p: Vector2) -> void:
             dragging = true
             _move_slider(p)
         else:
-            activate_target(idx)
+            _request_target(idx)
         return
     feedback = "Clique nas ferramentas ou areas destacadas."
     mistakes += 1
@@ -187,8 +202,90 @@ func _release() -> void:
         feedback = "Continue movendo o controle ate o ponto dourado."
         _progress()
 
+func _load_dig_frames() -> void:
+    dig_frames.clear()
+    dig_hd_count = 0
+    for key in DIG_NAMES:
+        var path := DIG_DIR+str(key)+".webp"
+        var tex: Texture2D = DIG_FALLBACK
+        if ResourceLoader.exists(path):
+            var loaded := load(path) as Texture2D
+            if loaded != null:
+                tex = loaded
+                dig_hd_count += 1
+        elif key != "idle":
+            tex = DIG_FALLBACK_MOVE
+        dig_frames.append(tex)
+
+func _request_target(idx: int) -> void:
+    if ended or dig_clock >= 0.0:
+        return
+    if phase != 2:
+        activate_target(idx)
+        return
+    if idx < 0 or idx >= COUNTS[2] or completed[2].has(idx):
+        return
+    dig_target = idx
+    dig_committed = false
+    dig_clock = 0.0
+    feedback = "Osvaldo: Esta terra nao vai se aposentar sozinha!"
+    queue_redraw()
+
+func _process(delta: float) -> void:
+    if ended or dig_clock < 0.0:
+        return
+    dig_clock += delta
+    if dig_clock >= 0.48 and not dig_committed:
+        dig_committed = true
+        # Apply once, when the blade reaches the soil.
+        var done: Array = completed[2]
+        if not done.has(dig_target):
+            done.append(dig_target)
+            completed[2] = done
+            _progress()
+    if dig_clock >= 1.05:
+        var target: Rect2 = _zones()[dig_target]
+        dig_anchor = target.get_center()+Vector2(-38.0,22.0)
+        dig_clock = -1.0
+        dig_target = -1
+        if completed[2].size() == COUNTS[2]:
+            _advance()
+        else:
+            feedback = "Mais um trecho pronto. Osvaldo agradece."
+    queue_redraw()
+
+func _dig_pose() -> int:
+    if dig_clock < 0.20: return 0
+    if dig_clock < 0.36: return 1
+    if dig_clock < 0.49: return 2
+    if dig_clock < 0.68: return 3
+    if dig_clock < 0.88: return 4
+    return 0
+
+func _paint_digger() -> void:
+    if dig_frames.size()!=5:
+        return
+    var from := dig_anchor if dig_anchor != Vector2.ZERO else Vector2(220,346)
+    var foot := from
+    var pose := 0
+    if dig_clock >= 0.0 and dig_target >= 0:
+        var zone: Rect2 = _zones()[dig_target]
+        var destination := zone.get_center()+Vector2(-38.0,22.0)
+        foot = from.lerp(destination,clampf(dig_clock/0.20,0.0,1.0))
+        pose = _dig_pose()
+    var tex: Texture2D = dig_frames[pose]
+    var h := 98.0
+    var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
+    draw_texture_rect(tex,Rect2(foot.x-w*0.42,foot.y-h,w,h),false)
+    if dig_clock >= 0.48 and dig_clock < 0.83 and dig_target >= 0:
+        var zone: Rect2 = _zones()[dig_target]
+        var t := (dig_clock-0.48)/0.35
+        for i in range(10):
+            var p := zone.get_center()+Vector2(float(i-4)*9.0*t,-sin(t*PI)*28.0-float(i%3)*5.0)
+            draw_rect(Rect2(p,Vector2(4,4)),Color("#a96b41"))
+
 func activate_target(idx: int) -> void:
-    if ended or phase == 3 or idx < 0 or idx >= COUNTS[phase]:
+    if ended or dig_clock >= 0.0 or phase == 3 or idx < 0 or idx >= COUNTS[phase]:
         return
     var done: Array = completed[phase]
     if done.has(idx):
@@ -224,6 +321,8 @@ func _progress() -> void:
 func _leave() -> void:
     if ended:
         return
+    if phase == 2 and completed[2].size() == COUNTS[2]:
+        _advance()
     ended = true
     finished.emit(false, 0)
 
@@ -271,8 +370,12 @@ func _draw() -> void:
     draw_rect(Rect2(74,103,812,349),GOLD,false,2.0)
     _text(Vector2(105,139),"ETAPA %d/5  —  %s" % [phase + 1,TITLES[phase]],20,GOLD)
     _text(Vector2(105,170),TIPS[phase],16,PAPER)
-    draw_texture_rect_region(OSVALDO,Rect2(89,219,84,105),Rect2(3,92,52,65))
-    _text(Vector2(82,348),"OSVALDO",14,CYAN)
+    if phase != 2:
+        draw_texture_rect_region(OSVALDO,Rect2(89,219,84,105),Rect2(3,92,52,65))
+    if phase != 2:
+        _text(Vector2(82,348),"OSVALDO",14,CYAN)
+    else:
+        _text(Vector2(105,194),"ESCAVACAO  |  %d/5 artes HD" % dig_hd_count,14,CYAN)
     draw_rect(Rect2(102,413,750,12),Color("#352b3e"))
     draw_rect(Rect2(102,413,(float(phase) + float(completed[phase].size()) / float(COUNTS[phase])) / 5.0 * 750.0,12),GOLD)
 
@@ -300,13 +403,21 @@ func _draw() -> void:
             if phase == 1 and not done:
                 draw_circle(area.get_center()+Vector2(-11,2),12,Color("#b78952"))
                 draw_circle(area.get_center()+Vector2(11,1),9,Color("#df9953"))
-            elif phase == 2 and not done:
-                draw_rect(area.grow(-10),Color("#644b3b"))
+            elif phase == 2:
+                draw_rect(area.grow(-3),Color("#48513a"))
+                var stage := 3 if done else 0
+                if dig_clock >= 0.0 and idx == dig_target and not done:
+                    stage = 1 if dig_clock < 0.36 else 2
+                draw_texture_rect(GRAVE_STAGES[stage],area.grow(-5),false)
+                if not done:
+                    draw_rect(area,GOLD,false,2.0)
             else:
                 _text(area.position+Vector2(14,32),str(labels[idx]),16,PAPER)
             if done:
                 _text(area.position+Vector2(14,area.size.y-14),"FEITO",14,CYAN)
 
+    if phase == 2:
+        _paint_digger()
     draw_rect(Rect2(75,464,808,51),Color("#191326"))
     _text(Vector2(92,495),feedback,16,PAPER)
     draw_set_transform(Vector2.ZERO)
