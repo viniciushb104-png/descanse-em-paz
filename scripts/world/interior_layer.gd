@@ -194,7 +194,15 @@ func _paint_chapel() -> void:
     _text(Vector2(525,610),"SAIDA [E]",19,GOLD)
 
 func _chapel_npc(id: String, p: Vector2, label: String) -> void:
-    var path := "res://assets/sprites/chapel_npcs/"+id+"_front.png"
+    var direction := "front"
+    if id=="anselmo":
+        var delta: Vector2 = get_parent().player.global_position - (p+Vector2(0,36))
+        if delta.length()<160.0:
+            if absf(delta.x)>absf(delta.y):
+                direction = "right" if delta.x>0.0 else "left"
+            else:
+                direction = "front" if delta.y>=0.0 else "back"
+    var path := "res://assets/sprites/chapel_npcs/"+id+"_"+direction+".png"
     if ResourceLoader.exists(path):
         var tex := load(path) as Texture2D
         if tex != null:
@@ -218,3 +226,7 @@ func _chapel_npc(id: String, p: Vector2, label: String) -> void:
         for i in range(5):
             draw_circle(p+Vector2(13,27)+Vector2.from_angle(float(i)*1.26)*7,5,Color("#c38fce"))
     _text(p+Vector2(-40,-38),label,15,PAPER)
+
+func _process(_delta: float) -> void:
+    if room=="chapel":
+        queue_redraw()
