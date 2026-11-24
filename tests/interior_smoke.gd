@@ -28,15 +28,29 @@ func _run() -> void:
         quit(93)
         return
     r.show_case()
-    game._on_choice("case_pick_2")
+    var partial: int = -1
+    var first_scene: Dictionary = r.DIALOGUES.scene(0,0,"Sr. Afonso")
+    for n in range(3):
+        if int(first_scene["choices"][n]["grade"]) == 1:
+            partial = n
+    game._on_choice("case_pick_"+str(partial))
     game._on_choice("case_advance")
-    game._on_choice("case_pick_2")
+    var unsafe_option: int = -1
+    var second_scene: Dictionary = r.DIALOGUES.scene(0,1,"Sr. Afonso")
+    for n in range(3):
+        if int(second_scene["choices"][n]["grade"]) == 0:
+            unsafe_option = n
+    game._on_choice("case_pick_"+str(unsafe_option))
     if r.case_index != 0 or r.dialogue_step != 1:
         push_error("Atalho nao pode concluir caso")
         quit(94)
         return
     game._on_choice("case_retry")
-    game._on_choice("case_pick_0")
+    var safe_option: int = 0
+    for n in range(3):
+        if int(second_scene["choices"][n]["grade"]) == 2:
+            safe_option = n
+    game._on_choice("case_pick_"+str(safe_option))
     game._on_choice("case_advance")
     game._on_choice("case_finalize")
     if r.case_index != 1:
@@ -66,7 +80,12 @@ func _run() -> void:
             r.inventory[str(item["stock"])] = 6
         r.show_case()
         while r.dialogue_step < r.DIALOGUES.beat_keys(idx).size():
-            game._on_choice("case_pick_0")
+            var beat: Dictionary = r.DIALOGUES.scene(idx,r.dialogue_step,str(item["client"]))
+            var best: int = 0
+            for n in range(3):
+                if int(beat["choices"][n]["grade"]) == 2:
+                    best = n
+            game._on_choice("case_pick_"+str(best))
             game._on_choice("case_advance")
         game._on_choice("case_finalize")
         if r.case_index != idx+1:

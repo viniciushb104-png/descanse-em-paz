@@ -476,7 +476,13 @@ static func scene(index: int, step: int, client_name: String) -> Dictionary:
                 {"text":"Encerrar com resumo escrito, perguntar o que ficou em dúvida e confirmar consentimento.", "grade":2,"tone":"atencioso","insight":"confirmacao"},
                 {"text":"Confirmar o pedido rapidamente e esclarecer divergências somente se surgir reclamação.", "grade":0,"tone":"atalho","insight":""}
             ]
-    return {"speaker":client_name, "line":str(lines[mode]),"mode":mode,"choices":choices, "step":step,"total":keys.size(),"tier":tier(index)}
+    # Nao marque visualmente a escolha certa: ordenacao muda conforme caso/etapa.
+    # Duas abordagens responsaveis (humor ou seriedade) continuam possiveis.
+    var rotation: int = posmod(index + step * 2,3)
+    var rearranged: Array = []
+    for i in range(choices.size()):
+        rearranged.append(choices[(i+rotation)%choices.size()])
+    return {"speaker":client_name, "line":str(lines[mode]),"mode":mode,"choices":rearranged, "step":step,"total":keys.size(),"tier":tier(index)}
 
 static func reaction(index: int, step: int, choice_index: int, speaker: String) -> Dictionary:
     var current: Dictionary = scene(index,step,speaker)

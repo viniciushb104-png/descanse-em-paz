@@ -38,11 +38,21 @@ func _run() -> void:
         for step in range(beats):
             var scene: Dictionary = DIALOGUES.scene(idx,step,str(item["client"]))
             var choices: Array = scene["choices"]
-            if choices.size()!=3 or int(choices[0]["grade"]) != 2 or int(choices[1]["grade"]) != 2:
-                push_error("Caso sem escolhas validas: "+str(idx))
+            var good_count: int = 0
+            var selected: int = -1
+            var allowed_tone: String = "humor" if idx % 2 == 0 else "sereno"
+            for n in range(choices.size()):
+                var option: Dictionary = choices[n]
+                if int(option["grade"]) == 2:
+                    good_count += 1
+                    if selected < 0:
+                        selected = n
+                    if str(option["tone"]) == allowed_tone:
+                        selected = n
+            if choices.size()!=3 or good_count!=2 or selected<0:
+                push_error("Caso sem escolhas plurais responsaveis: "+str(idx))
                 quit(123)
                 return
-            var selected: int = idx % 2
             rooms.choose_dialogue_option(selected)
             if rooms.dialogue_step != step or not rooms.awaiting_reaction:
                 push_error("Fala nao teve repercussao: "+str(idx))
@@ -68,16 +78,30 @@ func _run() -> void:
     rooms.enter("funeraria")
     game._close()
     rooms.show_case()
-    rooms.choose_dialogue_option(0)
+    var first_scene: Dictionary = DIALOGUES.scene(19,0,"Familia de Aurora")
+    var safe: int = -1
+    for n in range(3):
+        if int(first_scene["choices"][n]["grade"]) == 2:
+            safe = n
+    rooms.choose_dialogue_option(safe)
     rooms.advance_dialogue()
     var before_compliance: int = game.compliance
-    rooms.choose_dialogue_option(2)
+    var second_scene: Dictionary = DIALOGUES.scene(19,1,"Familia de Aurora")
+    var dangerous: int = -1
+    for n in range(3):
+        if int(second_scene["choices"][n]["grade"]) == 0:
+            dangerous = n
+    rooms.choose_dialogue_option(dangerous)
     if rooms.dialogue_step != 1 or rooms.last_grade != 0 or game.compliance >= before_compliance:
         push_error("Atalho inseguro nao bloqueado")
         quit(128)
         return
     rooms.retry_dialogue()
-    rooms.choose_dialogue_option(1)
+    var repaired: int = -1
+    for n in range(3):
+        if int(second_scene["choices"][n]["grade"]) == 2:
+            repaired = n
+    rooms.choose_dialogue_option(repaired)
     rooms.advance_dialogue()
     if rooms.dialogue_step != 2:
         push_error("Reparacao nao permitiu prosseguir")
