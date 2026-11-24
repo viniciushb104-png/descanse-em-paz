@@ -123,6 +123,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _near_station() -> Dictionary:
     if rooms.inside():
         return rooms.nearest(player.global_position)
+    # Ambos os carros usam a mesma area visual de interacao.
+    for car_rect in DISTRICT_LAYOUT.HEARSE_AREAS:
+        if car_rect.grow(75).has_point(player.global_position):
+            return {"id":"carro","name":"Carro funerario - Translado do Alem","p":car_rect.get_center()}
     var nearest: Dictionary = {}
     var shortest := 98.0
     for station in STATIONS + DISTRICT_LAYOUT.STATIONS:
