@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.7"
+const BUILD_LABEL := "ARCADE 2.8"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -62,6 +62,8 @@ var hit_timer := 0.0
 var countdown := 3.0
 var obstacles: Array[Dictionary] = []
 var flash := 0.0
+var fuel := 100.0
+const ROUTE_CAR = preload("res://assets/sprites/hearse.svg")
 
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -160,6 +162,7 @@ func _physics_process(delta: float) -> void:
             _impact()
     var previous := distance
     distance += speed*delta
+    fuel = maxf(0.0,fuel - speed*delta/LENGTH*65.0*(1.0+0.25*ratio))
     var contact_offset := (1.0-(PLAYER_Y-HORIZON)/(VIEW.y-HORIZON))*DEPTH
     for obstacle in obstacles:
         var z: float = obstacle["z"]
@@ -170,7 +173,7 @@ func _physics_process(delta: float) -> void:
     if distance>=LENGTH:
         _finish(true)
         return
-    info.text = "TRANSLADO DO ALÉM   |   %03d km/h   |   Rota %d%%   |   Impactos %d" % [int(speed*0.68),int(distance/LENGTH*100.0),bumps]
+    info.text = "TRANSLADO DO ALÉM | "+BUILD_LABEL
     board.queue_redraw()
 
 func _impact() -> void:
@@ -214,11 +217,7 @@ func _paint() -> void:
         _traffic(p, t,int(obstacle["model"]))
     if not player_drawn:
         _player_car(Vector2(480.0+lateral*365.0,PLAYER_Y))
-    board.draw_rect(Rect2(8,6,385,69),Color(0.07,0.045,0.11,0.74))
-    board.draw_rect(Rect2(16,14,240,12),Color("#15131c"))
-    board.draw_rect(Rect2(16,14,240*clampf(distance/LENGTH,0,1),12),Color("#d8b477"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(16,45),"HOSPITAL - JARDIM DO ÚLTIMO SUSPIRO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#f3e5c8"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)]+" | "+BUILD_LABEL+" ("+str(roadside_hd_count)+"/8 HD)",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
+    _paint_hud()
     if countdown>0.0:
         board.draw_string(ThemeDB.fallback_font,Vector2(450,260),str(ceili(countdown)),HORIZONTAL_ALIGNMENT_LEFT,-1,70,Color("#f6cf84"))
     elif speed<1.0 and distance<1.0:
@@ -229,6 +228,60 @@ func _paint() -> void:
 
 # Cada arte é um panorama completo. O deslocamento nas curvas é limitado
 # à margem lateral da textura; não há repetição visível ou lua duplicada.
+func _hud_panel(r: Rect2) -> void:
+    board.draw_rect(r,Color("#bb9863"))
+    board.draw_rect(r.grow(-2.0),Color("#594064"))
+    board.draw_rect(r.grow(-5.0),Color("#21132e"))
+    for x in [r.position.x+7.0,r.end.x-7.0]:
+        board.draw_circle(Vector2(x,r.position.y+7.0),3.0,Color("#e7bd72"))
+        board.draw_circle(Vector2(x,r.end.y-7.0),3.0,Color("#e7bd72"))
+
+func _hud_text(pos: Vector2, value: String, size: int, tint: Color = Color("#f5d39b")) -> void:
+    board.draw_string(ThemeDB.fallback_font,pos,value,HORIZONTAL_ALIGNMENT_LEFT,-1,size,tint)
+
+func _paint_hud() -> void:
+    var progress := clampf(distance/LENGTH,0.0,1.0)
+    var kmh := speed*0.68
+    _hud_panel(Rect2(8,8,178,104))
+    _hud_panel(Rect2(194,8,572,104))
+    _hud_panel(Rect2(774,8,178,104))
+    var center := Vector2(55,68)
+    board.draw_arc(center,32.0,deg_to_rad(140),deg_to_rad(400),32,Color("#96729e"),5.0,true)
+    for i in range(11):
+        var angle := deg_to_rad(140.0+26.0*i)
+        var direction := Vector2(cos(angle),sin(angle))
+        board.draw_line(center+direction*25.0,center+direction*31.0,Color("#e6c18a"),2.0)
+    var angle := deg_to_rad(140.0+260.0*clampf(kmh/200.0,0.0,1.0))
+    board.draw_line(center,center+Vector2(cos(angle),sin(angle))*25.0,Color("#ff674b"),3.0,true)
+    board.draw_circle(center,4.0,Color("#edc87d"))
+    _hud_text(Vector2(96,42),"%03d" % int(kmh),28)
+    _hud_text(Vector2(100,62),"km/h",15)
+    _hud_text(Vector2(20,100),"Impactos: %d" % bumps,17,Color("#ff7565") if flash>0.0 else Color("#f5d39b"))
+    _hud_text(Vector2(207,29),REGION_NAMES[_panorama_index(distance)],18)
+    _hud_text(Vector2(674,29),"%d%%" % int(progress*100.0),21)
+    var start := 236.0
+    var span := 484.0
+    board.draw_rect(Rect2(start,59,span,10),Color("#4e345e"))
+    board.draw_rect(Rect2(start,59,span*progress,10),Color("#e1ab4e"))
+    for i in range(7):
+        var x := start+span*float(i)/6.0
+        board.draw_line(Vector2(x,70),Vector2(x,76),Color("#ad8eaf"),2.0)
+    var car_x := start+span*progress
+    var bounce := sin(distance*0.3)*1.5 if speed>1.0 else 0.0
+    board.draw_texture_rect(ROUTE_CAR,Rect2(car_x-20,37+bounce,40,20),false)
+    if brake_active:
+        board.draw_circle(Vector2(car_x+17,49+bounce),3,Color("#ff5745"))
+    _hud_text(Vector2(205,94),"Hospital",14)
+    var arrival := progress>=0.9
+    _hud_text(Vector2(555,94),"Cemiterio" if not arrival else "CHEGANDO!",18,Color("#9fe5a9") if arrival else Color("#f5d39b"))
+    _hud_text(Vector2(786,31),"COMBUSTIVEL",18)
+    for i in range(8):
+        var segment := Rect2(786+i*19,42,16,26)
+        board.draw_rect(segment,Color("#4b3456"))
+        var portion := clampf(fuel/100.0*8.0-float(i),0.0,1.0)
+        board.draw_rect(Rect2(segment.position,Vector2(segment.size.x,segment.size.y*portion)),Color("#dc5145") if fuel<=20.0 else Color("#e8af45"))
+    _hud_text(Vector2(786,93),"%d%%" % int(fuel),20)
+
 func _panorama_index(z: float) -> int:
     return clampi(floori(z/REGION_SPAN),0,PANORAMAS.size()-1)
 
