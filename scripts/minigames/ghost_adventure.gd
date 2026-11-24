@@ -4,6 +4,9 @@ signal phase_saved(next_phase: int)
 const TITLES = ["O Despertar dos Esquecidos","O Bosque das Lápides Perdidas","As Catacumbas do Silêncio","O Arquivo Assombrado","A Torre das Últimas Horas","Enfim, Descanse em Paz"]
 const LESSONS = ["Identifique a quadra e o jazigo antes de qualquer serviço.","Mantenha acessos livres e caminhos conservados.","Confira a identificação de cada espaço funerário.","Registros permitem localizar e conferir informações.","Planeje a manutenção e a segurança da equipe.","Identificação e respeito à memória orientam o atendimento."]
 const VIEW = Vector2(800,300)
+const TILES_ATLAS = preload("res://assets/minigames/ghost/tiles/tiles_atlas.png")
+const TILE_NAMES = ["ground","brick","moss","ledge","floating","grave","cross","tree","flowers","gate"]
+var terrain_art: Array[Texture2D] = []
 const GHOST_HD = {
     "idle": [preload("res://assets/minigames/ghost/idle_00.png")],
     "walk": [preload("res://assets/minigames/ghost/walk_00.png"),preload("res://assets/minigames/ghost/walk_01.png"),preload("res://assets/minigames/ghost/walk_02.png"),preload("res://assets/minigames/ghost/walk_03.png"),preload("res://assets/minigames/ghost/walk_04.png"),preload("res://assets/minigames/ghost/walk_05.png")],
@@ -75,6 +78,7 @@ func _ready() -> void:
     layout.add_child(board)
     board.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
     _load_ghost_art()
+    _load_terrain_art()
     board.draw.connect(_paint)
     var bar := HBoxContainer.new()
     layout.add_child(bar)
@@ -284,12 +288,26 @@ func _paint() -> void:
         var y:=160.0+float(i%3)*12.0
         board.draw_rect(Rect2(x,y,38,145),Color("#21182d"))
         board.draw_colored_polygon(PackedVector2Array([Vector2(x-7,y),Vector2(x+19,y-35),Vector2(x+45,y)]),Color("#21182d"))
-    for p in platforms:
-        var rect:=Rect2(p.position-Vector2(camera_x,0),p.size)
-        board.draw_rect(rect,Color("#534454"))
-        board.draw_rect(Rect2(rect.position,Vector2(rect.size.x,7)),Color("#9c9171"))
-        for j in range(int(rect.size.x/24)):
-            board.draw_rect(Rect2(rect.position+Vector2(j*24,12),Vector2(22,12)),Color("#67566d"),false,1.0)
+    for i in range(platforms.size()):
+        var p: Rect2=platforms[i]
+        var x := p.position.x-camera_x
+        if x+p.size.x<0.0 or x>VIEW.x:
+            continue
+        var kind := (i+phase)%3
+        if i%4==2:
+            _tile(3,Rect2(x,p.position.y,p.size.x,minf(58.0,p.size.y)))
+        elif i%4==3:
+            _tile(4,Rect2(x,p.position.y,p.size.x,minf(64.0,p.size.y)))
+        else:
+            var count := maxi(1,ceili(p.size.x/48.0))
+            var w := p.size.x/float(count)
+            for j in range(count):
+                _tile(kind,Rect2(x+j*w,p.position.y,w,p.size.y))
+        if i%3==0:
+            _tile(7,Rect2(x+10,p.position.y-89,85,89),Color(0.85,0.79,0.95,0.85))
+        elif i%3==1:
+            _tile(5+i%2,Rect2(x+14,p.position.y-44,40,44))
+        _tile(8,Rect2(x+p.size.x-35,p.position.y-22,30,22))
     for i in range(fragments.size()):
         if not i in collected:
             var p:=fragments[i]-Vector2(camera_x,0)
@@ -303,7 +321,7 @@ func _paint() -> void:
     var cp:=checkpoint-Vector2(camera_x,0)
     board.draw_line(cp,cp-Vector2(0,35),Color("#b18b64"),3)
     board.draw_circle(cp-Vector2(0,35),7,Color("#ffcf75"))
-    board.draw_rect(Rect2(goal_x-camera_x-12,194,24,46),Color("#9e7db0"))
+    _tile(9,Rect2(goal_x-camera_x-48,150,96,90))
     var p:=pos-Vector2(camera_x,0)
     var texture: Texture2D = _current_ghost_texture()
     var rect := Rect2(p-Vector2(26,46),Vector2(52,52))
@@ -341,3 +359,23 @@ func _current_ghost_texture() -> Texture2D:
         frame=int(elapsed*(14.0 if key=="run" else 9.0))
     var frames: Array = ghost_frames[key]
     return frames[frame%frames.size()]
+
+func _load_terrain_art() -> void:
+    terrain_art.clear()
+    for i in range(TILE_NAMES.size()):
+        var path := "res://assets/minigames/ghost/tiles/"+str(TILE_NAMES[i])+".png"
+        if ResourceLoader.exists(path):
+            var tex := load(path) as Texture2D
+            if tex!=null:
+                terrain_art.append(tex)
+                continue
+        var tile := AtlasTexture.new()
+        tile.atlas=TILES_ATLAS
+        tile.region=Rect2(i*32,0,32,32)
+        tile.filter_clip=true
+        terrain_art.append(tile)
+
+func _tile(index: int, rect: Rect2, tint: Color = Color.WHITE) -> void:
+    if index>=terrain_art.size():
+        return
+    board.draw_texture_rect(terrain_art[index],rect,false,tint)
