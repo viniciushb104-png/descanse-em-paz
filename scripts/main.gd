@@ -13,6 +13,7 @@ const DIALOGUE_CHARACTERS = preload("res://scripts/ui/dialogue_characters.gd")
 const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
 const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
 const PORTRAIT_EXPRESSIONS = preload("res://scripts/ui/portrait_expressions.gd")
+const CEMETERY_CAT = preload("res://scripts/world/cemetery_cat.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -72,8 +73,12 @@ var mobile_hud: Control
 var driving_layer: CanvasLayer
 var driving_completed: bool = false
 var driving_job: bool = false
+var cemetery_cat: Node2D
 
 func _ready() -> void:
+    cemetery_cat = CEMETERY_CAT.new()
+    cemetery_cat.name = "GatoDoCemiterio"
+    add_child(cemetery_cat)
     _build_ui()
     _load_game()
     rooms.apply_room()
@@ -141,6 +146,9 @@ func _near_station() -> Dictionary:
             return {"id":"carro","name":"Carro funerario - Translado do Alem","p":car_rect.get_center()}
     var nearest: Dictionary = {}
     var shortest := 98.0
+    if is_instance_valid(cemetery_cat) and player.global_position.distance_to(cemetery_cat.global_position) < 76.0:
+        shortest = player.global_position.distance_to(cemetery_cat.global_position)
+        nearest = {"id":"cemetery_cat","name":"Gato do Cemiterio (carinho)","p":cemetery_cat.global_position}
     for station in STATIONS + DISTRICT_LAYOUT.STATIONS:
         var distance: float = player.global_position.distance_to(station["p"])
         if distance < shortest:
@@ -191,6 +199,8 @@ func _interact(id: String) -> void:
     if rooms.offer_entry(id):
         return
     match id:
+        "cemetery_cat":
+            _show("Gato do Cemiterio", "Miau!", [{"text":"Fazer carinho","action":"cat_pet"}, {"text":"Deixar descansar","action":"close"}])
         "osvaldo":
             if stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
@@ -261,6 +271,12 @@ func _on_choice(action: String) -> void:
         var separator: int = info.find("_")
         if separator > 0:
             _portrait_preview(info.substr(0,separator),info.substr(separator+1))
+        return
+    if action == "cat_pet":
+        if is_instance_valid(cemetery_cat):
+            cemetery_cat.call("pet")
+        _close()
+        _notify("Prrrr... Miau! O gatinho adorou o carinho.", 2.7)
         return
     if action in ["drive_training","drive_job"]:
         driving_job = action == "drive_job"
