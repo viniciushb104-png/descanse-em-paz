@@ -183,8 +183,38 @@ func _paint_chapel() -> void:
     draw_rect(Rect2(548,191,54,29),Color("#5f403c"))
     if int(choices.get("tribute",-1))>=0:
         _text(Vector2(510,184),str(WAKE.OPTIONS["tribute"][int(choices["tribute"])]),14,PAPER)
-    _npc(Vector2(800,465),Color("#d9b5a0"),Color("#50465d"),"FAMILIA")
+    _chapel_npc("anselmo",Vector2(155,365),"ANSELMO")
+    if order.is_empty() or WAKE.done(order):
+        _chapel_npc("eudoxia",Vector2(800,465),"EUDOXIA")
+    else:
+        _npc(Vector2(800,465),Color("#d9b5a0"),Color("#50465d"),"FAMILIA")
     if bool(state["received"]):
         _npc(Vector2(452,355),Color("#c6a38e"),Color("#655468"),"")
         _npc(Vector2(700,355),Color("#d1baa8"),Color("#534f67"),"")
     _text(Vector2(525,610),"SAIDA [E]",19,GOLD)
+
+func _chapel_npc(id: String, p: Vector2, label: String) -> void:
+    var path := "res://assets/sprites/chapel_npcs/"+id+"_front.png"
+    if ResourceLoader.exists(path):
+        var tex := load(path) as Texture2D
+        if tex != null:
+            var h := 78.0
+            var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
+            draw_texture_rect(tex,Rect2(p.x-w/2,p.y-32,w,h),false)
+            _text(p+Vector2(-40,-38),label,15,PAPER)
+            return
+    # Distinct provisional costumes until the approved transparent PNGs arrive.
+    draw_circle(p,18,Color("#d9b5a0"))
+    if id=="anselmo":
+        draw_rect(Rect2(p.x-14,p.y-18,28,8),Color("#c1bacb"))
+        draw_rect(Rect2(p.x-16,p.y+16,32,43),Color("#593b70"))
+        draw_line(p+Vector2(0,18),p+Vector2(0,48),GOLD,2.0)
+        for dx in [-7.0,7.0]:
+            draw_arc(p+Vector2(dx,0),5,0,TAU,12,GOLD,2.0)
+    else:
+        draw_rect(Rect2(p.x-21,p.y-22,42,10),Color("#422945"))
+        draw_circle(p+Vector2(12,-22),7,Color("#af78ba"))
+        draw_colored_polygon(PackedVector2Array([p+Vector2(-14,15),p+Vector2(14,15),p+Vector2(27,57),p+Vector2(-27,57)]),Color("#4b345c"))
+        for i in range(5):
+            draw_circle(p+Vector2(13,27)+Vector2.from_angle(float(i)*1.26)*7,5,Color("#c38fce"))
+    _text(p+Vector2(-40,-38),label,15,PAPER)

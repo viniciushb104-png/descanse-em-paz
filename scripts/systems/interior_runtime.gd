@@ -163,6 +163,9 @@ func _end_transition() -> void:
     game()._refresh_ui()
 
 func interact(id: String) -> void:
+    if room=="chapel" and id=="chapel_attendant":
+        chapel_attendant()
+        return
     if room=="chapel" and id.begins_with("wake_"):
         wake_interact(id)
         return
@@ -496,6 +499,9 @@ func reject_case() -> void:
     show_case()
 
 func handle_choice(action: String) -> bool:
+    if action=="chapel_guide" and room=="chapel":
+        game()._show("Anselmo Velario","Confira flores, luz, musica, cadeiras e homenagem. Depois receba a familia, respeite a despedida e encerre a cerimonia junto ao caixao.",[{"text":"Entendi","action":"close"}])
+        return true
     if action.begins_with("wake_"):
         return wake_choice(action)
     if action.begins_with("case_pick_"):
@@ -551,6 +557,9 @@ func objective() -> String:
 
 func wake_interact(id: String) -> void:
     var order: Dictionary = game().burial_queue.pending()
+    if id=="wake_family" and (order.is_empty() or WAKE.done(order)):
+        chapel_visitor()
+        return
     if order.is_empty():
         game()._show("Capela do Ultimo Adeus","Nenhuma cerimonia agendada. O salao esta aberto para visita.",[{"text":"Voltar","action":"close"}])
         return
@@ -615,3 +624,17 @@ func wake_choice(action: String) -> bool:
     else:
         game()._notify("Preparacao registrada.",1.7)
     return true
+
+func chapel_attendant() -> void:
+    var order: Dictionary = game().burial_queue.pending()
+    var message := "Uma cadeira desalinhada e o principio do caos civilizacional. Hoje o salao esta aberto para visitas."
+    if not order.is_empty():
+        if WAKE.done(order):
+            message = "A despedida terminou. Osvaldo aguarda para o jazigo "+str(order["plot"])+"."
+        else:
+            message = "Temos uma cerimonia para "+str(order["customer"])+".\n"+WAKE.requests(order)+"\nPreparativos: %d/5." % WAKE.matches(order)
+    game()._show("Sr. Anselmo Velario",message,[{"text":"Como organizar uma cerimonia?","action":"chapel_guide"},{"text":"Ate logo","action":"close"}])
+
+func chapel_visitor() -> void:
+    var lines := ["Meu Astolfo sempre dizia que descansaria quando morresse. Conhecendo aquele homem, deve estar dormindo ate agora.","Se encontrar um fantasma de gravata xadrez, diga que ainda estou esperando meus vinte reais.","Trouxe crisantemos para Astolfo. O jovem Anselmo tem muito bom gosto, so precisa aprender a sorrir."]
+    game()._show("Dona Eudoxia Crisantemo",lines[randi_range(0,lines.size()-1)],[{"text":"Ate logo, Dona Eudoxia","action":"close"}])
