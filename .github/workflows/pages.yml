@@ -125,6 +125,9 @@ jobs:
       - name: Validar nove novas atividades do distrito
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_activities_smoke" bash tools/run_smoke.sh res://tests/district_activities_smoke.gd
 
+      - name: Validar expansao dos quatro quadrantes
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-expansion" bash tools/run_smoke.sh res://tests/expansion_smoke.gd
+
       - name: Testar campanha de plataforma do fantasma
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-ghost" bash tools/run_smoke.sh res://tests/ghost_adventure_smoke.gd
 

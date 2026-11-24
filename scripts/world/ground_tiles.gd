@@ -18,6 +18,7 @@ const DIRT_COLORS = [Color("#715243"),Color("#765645"),Color("#634a3e")]
 # Areas em unidades de tile. Ajuste estes retangulos para modificar o piso.
 # Os caminhos conectam as entradas de capela, oficina, jazigo B-13 e portao.
 const PATHS = [
+    Rect2i(70,0,7,13), Rect2i(56,45,33,7), Rect2i(65,50,8,20), Rect2i(82,56,8,5), Rect2i(58,66,35,3),
     Rect2i(22,13,4,58),
     Rect2i(16,14,3,4), # Baltazar
     Rect2i(49,32,18,3), # conexao conservacao/crematorio
@@ -69,7 +70,13 @@ static func hash_at(x: int, y: int, salt: int = 0) -> int:
     return absi(n ^ (n >> 13)) % 9973
 
 static func material_at(cell: Vector2i) -> int:
-    if cell.y<0 and cell.y>=-NORTH_ROWS and cell.x>=0 and cell.x<48:
+    if cell.y<0 and cell.y>=-NORTH_ROWS and cell.x>=0 and cell.x<WIDTH:
+        if cell.x>=48:
+            if (cell.x>=70 and cell.x<77) or (cell.y>=-28 and cell.y<-22) or (cell.y>=-13 and cell.y<-9) or (cell.y>=-50 and cell.y<-48):
+                return STONE
+            if cell.y<=-33 and ((cell.x>=51 and cell.x<69) or (cell.x>=77 and cell.x<94)):
+                return DIRT
+            return GRASS
         if cell.x>=22 and cell.x<27 or posmod(cell.y+6,6)<2:
             return STONE
         if cell.y<=-10 and ((cell.x>=5 and cell.x<20) or (cell.x>=30 and cell.x<46)):
@@ -108,9 +115,9 @@ const TEXTURES = [
 
 static func paint(ctx: Node2D) -> void:
     ctx.draw_rect(Rect2(0,0,WIDTH*TILE,HEIGHT*TILE),GREEN)
-    ctx.draw_rect(Rect2(0,-NORTH_ROWS*TILE,48*TILE,NORTH_ROWS*TILE),GREEN)
+    ctx.draw_rect(Rect2(0,-NORTH_ROWS*TILE,WIDTH*TILE,NORTH_ROWS*TILE),GREEN)
     for cy in range(-NORTH_ROWS,HEIGHT):
-        for cx in range(48 if cy<0 else WIDTH):
+        for cx in range(WIDTH):
             var cell := Vector2i(cx,cy)
             var material := material_at(cell)
             if material<0:

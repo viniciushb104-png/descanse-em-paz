@@ -19,7 +19,7 @@ const BLOCKS = [
     Rect2(18,80,24,800), Rect2(1490,80,24,430), Rect2(1490,700,24,180),
     Rect2(0,938,630,14), Rect2(910,938,626,14),
     Rect2(160,860,230,12), Rect2(960,870,120,12),
-    Rect2(1536,38,1536,14), Rect2(3040,48,24,1328),
+    Rect2(1536,38,704,14), Rect2(2464,38,608,14), Rect2(1510,-1650,24,740), Rect2(1510,-710,24,610), Rect2(1536,-1660,1536,12), Rect2(3040,48,24,1328),
     Rect2(1536,1380,224,12), Rect2(1968,1380,1104,12),
     Rect2(1660,470,120,12), Rect2(1880,470,120,12),
     Rect2(2700,1120,80,12), Rect2(2910,1120,70,12),
@@ -75,7 +75,9 @@ static func paint_cemetery(ctx: Node2D) -> void:
     horizontal(ctx,960,1080,880,["fence_ivy"],38)
 
 static func paint_district(ctx: Node2D) -> void:
-    horizontal(ctx,1536,3072,48,["wall","wall","wall_lamp"],44)
+    horizontal(ctx,1536,2240,48,["wall","wall","wall_lamp"],44)
+    horizontal(ctx,2464,3072,48,["wall","wall","wall_lamp"],44)
+    object(ctx,"arch",2352,48,120)
     side(ctx,3040,48,1376)
     horizontal(ctx,1536,1760,1390,["fence"],45)
     horizontal(ctx,1968,3072,1390,["fence","fence_ivy","fence"],45)

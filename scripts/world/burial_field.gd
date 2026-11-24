@@ -1,5 +1,6 @@
 extends Node2D
 ## Campo de trabalho: interacao contextual, sem CanvasLayer de minigame.
+const EXPANSION = preload("res://scripts/world/expansion_layout.gd")
 const BOUNDARIES = preload("res://scripts/world/boundary_art.gd")
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
@@ -53,6 +54,7 @@ static func plots() -> Array[Dictionary]:
         for col in range(6):
             result.append({"id":"%s-%02d" % [["C","D","E"][row],col+1],"p":Vector2(270+col*185,1560+row*228)})
     result.append_array(north_plots())
+    result.append_array(EXPANSION.plots())
     return result
 
 static func position_for(id: String) -> Vector2:
@@ -100,8 +102,8 @@ func near(pos: Vector2) -> Dictionary:
     return {}
 
 func blocked(pos: Vector2) -> bool:
-    if pos.y<0.0:
-        if pos.x<65.0 or pos.x>1510.0:
+    if pos.y<0.0 and pos.x<1510.0:
+        if pos.x<65.0:
             return true
         for p in north_old_positions():
             if Rect2(p-Vector2(24,20),Vector2(48,40)).has_point(pos):

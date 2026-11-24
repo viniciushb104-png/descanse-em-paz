@@ -73,6 +73,7 @@ func _ready() -> void:
         "maze": _grid_start()
         "flowers": _flowers()
         "platform": _platform()
+        "sequence": _sequence()
 func _button(label_text: String, parent: Node) -> Button:
     var button := Button.new()
     button.text = label_text
@@ -130,10 +131,31 @@ func _flip(i: int) -> void:
         buttons[i].text="?"
         buttons[previous].text="?"
         index=0
+func _sequence() -> void:
+    values = ["Conferir o registro","Identificar a placa","Limpar com cuidado","Registrar a restauracao"]
+    var shuffled := values.duplicate()
+    shuffled.shuffle()
+    for choice in shuffled:
+        var b := _button(str(choice),area)
+        b.pressed.connect(_sequence_pick.bind(str(choice),b))
+    status.text = "Organize as quatro etapas do memorial."
+func _sequence_pick(choice: String,b: Button) -> void:
+    if ended:
+        return
+    if choice != values[index]:
+        mistakes += 1
+        status.text = "A ordem importa. Reveja o proximo passo."
+        return
+    b.disabled = true
+    index += 1
+    status.text = "Etapas: %d/4" % index
+    if index == values.size():
+        _end(true)
 func _sorting() -> void:
     match activity_id:
         "finance": rows=[["Recebimento de serviço registrado","Entrada"],["Compra de urna com nota","Saída"],["Boleto já quitado","Revisar"],["Salário da equipe","Saída"],["Pagamento confirmado da família","Entrada"],["Cobrança sem comprovante","Revisar"]]
         "workshop": rows=[["Pneu danificado","Manutenção"],["Luzes funcionando","Conferido"],["Freio com falha","Manutenção"],["Documentação de inspeção conferida","Conferido"],["Vazamento identificado","Manutenção"],["Equipamento de segurança presente","Conferido"]]
+        "memorial_records": rows=[["Placa ilegivel e cadastro ausente","Pendência"],["Nome e numero conferidos","Conferido"],["Duas fichas com numeros divergentes","Pendência"],["Restauracao registrada","Conferido"],["Data sem fonte","Pendência"],["Autorizacao e registro conferidos","Conferido"]]
         _: rows=[["Identidade divergente entre registros","Pendência"],["Autorização fictícia ausente","Pendência"],["Cadastro e identidade conferidos","Conferido"],["Comprovante sem identificação","Pendência"],["Registro fictício completo","Conferido"],["Dados de jazigo inconsistentes","Pendência"]]
     rows.shuffle()
     var options: Array = ["Entrada","Saída","Revisar"] if activity_id=="finance" else (["Manutenção","Conferido"] if activity_id=="workshop" else ["Pendência","Conferido"])
@@ -164,9 +186,14 @@ func _grid_start() -> void:
         status.text="Coloque três caixas de duas células em prateleiras livres."
     elif mode=="garden":
         targets=[Vector2i(1,0),Vector2i(4,1),Vector2i(2,2),Vector2i(5,3),Vector2i(0,3)]
+        if activity_id=="nursery":
+            walls=[Vector2i(2,0),Vector2i(2,1),Vector2i(4,2)]
+            targets=[Vector2i(1,0),Vector2i(4,1),Vector2i(2,2),Vector2i(5,3),Vector2i(0,3),Vector2i(5,0)]
     else:
         walls=[Vector2i(1,0),Vector2i(1,1),Vector2i(3,1),Vector2i(3,2),Vector2i(4,2)]
         targets=[Vector2i(5,3)]
+        if activity_id=="crypt":
+            targets=[Vector2i(0,3),Vector2i(5,3)]
     for y in range(4):
         for x in range(6):
             var b := _button("",grid)
@@ -184,12 +211,15 @@ func _grid_render() -> void:
         elif p==cursor and mode!="stock":
             mark="Você"
         elif p in targets:
-            mark="Jazigo" if mode=="maze" else "Folhas"
+            if activity_id=="crypt":
+                mark="Chave" if p==Vector2i(0,3) else "Saida"
+            else:
+                mark="Jazigo" if mode=="maze" else ("Muda" if activity_id=="nursery" else "Folhas")
         buttons[i].text=mark
     if mode=="garden":
-        status.text="Toque numa célula vizinha para andar. Folhas restantes: %d" % targets.size()
+        status.text="Toque numa célula vizinha para andar. Restantes: %d" % targets.size()
     elif mode=="maze":
-        status.text="Toque numa célula vizinha. Não atravesse paredes."
+        status.text="Encontre a chave, depois a saida." if activity_id=="crypt" else "Toque numa célula vizinha. Não atravesse paredes."
     else:
         status.text="Caixas guardadas: %d/3. Preserve o corredor." % (occupied.size()/2)
 func _grid_pick(p: Vector2i) -> void:
@@ -208,6 +238,9 @@ func _grid_pick(p: Vector2i) -> void:
             return
     else:
         if absi(p.x-cursor.x)+absi(p.y-cursor.y)!=1 or p in walls:
+            return
+        if activity_id=="crypt" and p==Vector2i(5,3) and Vector2i(0,3) in targets:
+            status.text="A porta precisa da chave."
             return
         cursor=p
         if p in targets:

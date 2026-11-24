@@ -4,7 +4,7 @@ const ACTIVITY = preload("res://scripts/minigames/district_activity.gd")
 func _initialize() -> void:
     call_deferred("_run")
 func _run() -> void:
-    if CATALOG.ACTIVITIES.size()!=9:
+    if CATALOG.ACTIVITIES.size()!=13:
         quit(1)
         return
     for id in CATALOG.ACTIVITIES:
@@ -18,5 +18,5 @@ func _run() -> void:
             return
         activity.queue_free()
         await process_frame
-    print("Nove atividades carregadas.")
+    print("Treze atividades carregadas.")
     quit(0)

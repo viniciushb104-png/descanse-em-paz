@@ -6,12 +6,14 @@ const ACTIVITY_CATALOG = preload("res://scripts/systems/activity_catalog.gd")
 const ACTIVITY_GAME = preload("res://scripts/minigames/district_activity.gd")
 var activity_layer: CanvasLayer
 var activity_paid: Dictionary = {}
+var expansion_done: Dictionary = {}
 var ghost_phase := 0
 const GHOST_ADVENTURE = preload("res://scripts/minigames/ghost_adventure.gd")
 const WORLD := Vector2(3072.0, 2304.0)
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
 var burial_field: Node2D
+const EXPANSION = preload("res://scripts/world/expansion_layout.gd")
 const BOUNDARY_LAYOUT = preload("res://scripts/world/boundary_art.gd")
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
@@ -177,7 +179,7 @@ func _near_station() -> Dictionary:
     if is_instance_valid(cemetery_cat) and player.global_position.distance_to(cemetery_cat.global_position) < 76.0:
         shortest = player.global_position.distance_to(cemetery_cat.global_position)
         nearest = {"id":"cemetery_cat","name":"Gato do Cemiterio (carinho)","p":cemetery_cat.global_position}
-    for station in STATIONS + DISTRICT_LAYOUT.STATIONS:
+    for station in STATIONS + DISTRICT_LAYOUT.STATIONS + EXPANSION.STATIONS:
         var distance: float = player.global_position.distance_to(station["p"])
         if distance < shortest:
             shortest = distance
@@ -236,6 +238,10 @@ func _try_interact() -> void:
             _interact(str(station["id"]))
 
 func _interact(id: String) -> void:
+    var expansion_station: Dictionary = EXPANSION.station(id)
+    if not expansion_station.is_empty():
+        _expansion_offer(str(expansion_station["activity"]))
+        return
     if rooms.offer_entry(id):
         return
     match id:
@@ -249,7 +255,7 @@ func _interact(id: String) -> void:
             if burial_queue.has_pending():
                 _start_osvaldo_work()
             elif is_b13_buried():
-                _show("Seu Osvaldo","Sem ordens autorizadas agora. O escritorio manda os proximos clientes. Ate o alem tem expediente!",[{"text":"Memórias de Osvaldo","action":"activity_start_memory"},{"text":"Fantasma fora do lugar","action":"activity_start_ghost"},{"text":"Plantão da meia-noite","action":"activity_start_patrol"},{"text":"Voltar","action":"close"}])
+                _show("Seu Osvaldo","Sem ordens autorizadas agora. O escritorio manda os proximos clientes. Ate o alem tem expediente!",[{"text":"Nova ordem de sepultamento","action":"field_next"},{"text":"Memórias de Osvaldo","action":"activity_start_memory"},{"text":"Fantasma fora do lugar","action":"activity_start_ghost"},{"text":"Plantão da meia-noite","action":"activity_start_patrol"},{"text":"Voltar","action":"close"}])
             elif stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
             else:
@@ -325,7 +331,7 @@ func _on_choice(action: String) -> void:
         _notify("Siga ao jazigo marcado. E ou INTERAGIR para cavar.",4.0)
         return
     if action == "field_next":
-        _close()
+        _create_field_job()
         return
     if action == "field_finish":
         var order: Dictionary = burial_queue.pending()
@@ -488,6 +494,7 @@ func _save_game() -> void:
     var cfg := ConfigFile.new()
     cfg.set_value("save", "ghost_phase",ghost_phase)
     cfg.set_value("save", "activity_paid", activity_paid)
+    cfg.set_value("save", "expansion_done", expansion_done)
     cfg.set_value("save", "driving_completed", driving_completed)
     cfg.set_value("save", "stage", stage)
     cfg.set_value("save", "day", day)
@@ -508,6 +515,7 @@ func _load_game() -> void:
         return
     ghost_phase=clampi(int(cfg.get_value("save","ghost_phase",0)),0,5)
     activity_paid = cfg.get_value("save","activity_paid",{})
+    expansion_done = cfg.get_value("save","expansion_done",{})
     driving_completed = bool(cfg.get_value("save", "driving_completed", false))
     stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 12)
     day = maxi(1, int(cfg.get_value("save", "day", 1)))
@@ -936,7 +944,7 @@ func _refresh_ui() -> void:
     if is_instance_valid(burial_field) and burial_field.active and not rooms.inside():
         var job: Dictionary = burial_queue.pending()
         if not job.is_empty():
-            objective_label.text = "OFICIO DE OSVALDO | PA EQUIPADA\nJazigo %s - %d/6 pazadas | %s" % [str(job["plot"]),burial_field.count_for(str(job["plot"])),"Jardim ao norte" if str(job["plot"]).begins_with("N-") else ("Jardim ao sul" if str(job["plot"])!="B-13" else "Quadra B")]
+            objective_label.text = "OFICIO DE OSVALDO | PA EQUIPADA\nJazigo %s - %d/6 pazadas | %s" % [str(job["plot"]),burial_field.count_for(str(job["plot"])),"Necropole a leste" if str(job["plot"]).begins_with("L-") else ("Jardim ao norte" if str(job["plot"]).begins_with("N-") else ("Jardim ao sul" if str(job["plot"])!="B-13" else "Quadra B"))]
     if mobile_hud != null:
         mobile_hud.call("set_playable",not dialogue_open and not rooms.changing and (not is_instance_valid(burial_field) or burial_field.elapsed<0.0))
     if dialogue_open:
@@ -965,9 +973,7 @@ func is_walkable(world_position: Vector2) -> bool:
         return false
     if world_position.y < -1660.0 or world_position.y > 2245.0:
         return false
-    if world_position.y<92.0 and (world_position.x<650.0 or world_position.x>925.0) and world_position.y>=-100.0:
-        return false
-    if world_position.y<0.0 and world_position.x>1510.0:
+    if world_position.x<1536.0 and world_position.y<92.0 and (world_position.x<650.0 or world_position.x>925.0) and world_position.y>=-100.0:
         return false
     if Rect2(665,-335,230,135).has_point(world_position):
         return false
@@ -976,6 +982,8 @@ func is_walkable(world_position: Vector2) -> bool:
     if Rect2(1138, 168, 286, 203).has_point(world_position):
         return false
     if is_instance_valid(burial_field) and burial_field.blocked(world_position):
+        return false
+    if EXPANSION.is_blocked(world_position):
         return false
     if BOUNDARY_LAYOUT.is_blocked(world_position):
         return false
@@ -1021,7 +1029,7 @@ func _offer_field_job() -> void:
     for plot in BURIAL_FIELD.plots():
         var id: String = plot["id"]
         if id!="B-13" and not burial_queue.is_done("field_"+id):
-            _show("Seu Osvaldo","Temos outro atendimento ficticio conferido pelo escritorio: jazigo "+id+". Documentacao e autorizacao registradas. O jardim novo fica ao sul. Bora trabalhar antes que a terra cobre aluguel!",[{"text":"Aceitar ordem de servico","action":"field_next"},{"text":"Depois","action":"close"}])
+            _show("Seu Osvaldo","Temos outro atendimento ficticio conferido pelo escritorio: jazigo "+id+". Documentacao e autorizacao registradas. Confira o codigo do jazigo e as placas dos jardins. Bora trabalhar antes que a terra cobre aluguel!",[{"text":"Aceitar ordem de servico","action":"field_next"},{"text":"Depois","action":"close"}])
             return
     _show("Seu Osvaldo","Todos os jazigos ocupados! Ate o alem tem limite de lotacao.",[{"text":"Voltar","action":"close"}])
 
@@ -1102,6 +1110,14 @@ func _driving_finished(success: bool, bumps: int) -> void:
     _save_game()
     _show("Seu Osvaldo",comment+"\nImpactos: %d | Caixa: R$ %d | Confiança: %+d" % [bumps,balance,trust],[{"text":"Voltar ao expediente","action":"close"}])
 
+func _expansion_offer(id: String) -> void:
+    var item: Dictionary = ACTIVITY_CATALOG.ACTIVITIES[id]
+    if not EXPANSION.available(id,expansion_done):
+        var previous: String = EXPANSION.ORDER[EXPANSION.ORDER.find(id)-1]
+        _show(str(item["title"]),"Primeiro conclua: "+str(ACTIVITY_CATALOG.ACTIVITIES[previous]["title"]),[{"text":"Voltar","action":"close"}])
+        return
+    _show(str(item["title"]),str(item["intro"]),[{"text":"Aceitar missao","action":"activity_start_"+id},{"text":"Depois","action":"close"}])
+
 func _activity_menu() -> void:
     var options: Array = []
     for id in ACTIVITY_CATALOG.ACTIVITIES:
@@ -1112,6 +1128,9 @@ func _activity_menu() -> void:
 
 func _start_activity(id: String) -> void:
     if not ACTIVITY_CATALOG.ACTIVITIES.has(id) or is_instance_valid(activity_layer) or is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
+        return
+    if id in EXPANSION.ORDER and not EXPANSION.available(id,expansion_done):
+        _expansion_offer(id)
         return
     _close()
     dialogue_open = true
@@ -1140,6 +1159,8 @@ func _activity_finished(success: bool, quality: int, id: String) -> void:
     activity_layer.queue_free()
     activity_layer=null
     player.set_physics_process(true)
+    if success and id in EXPANSION.ORDER:
+        expansion_done[id] = true
     if success and id=="ghost":
         ghost_phase=0
     var item: Dictionary=ACTIVITY_CATALOG.ACTIVITIES[id]
