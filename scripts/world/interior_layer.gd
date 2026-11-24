@@ -193,6 +193,8 @@ func _paint_chapel() -> void:
         _npc(Vector2(700,355),Color("#d1baa8"),Color("#534f67"),"")
     _text(Vector2(525,610),"SAIDA [E]",19,GOLD)
 
+const ANSELMO_ART = preload("res://scripts/world/anselmo_art.gd")
+var anselmo_cache: Dictionary = {}
 func _chapel_npc(id: String, p: Vector2, label: String) -> void:
     var direction := "front"
     if id=="anselmo":
@@ -203,8 +205,16 @@ func _chapel_npc(id: String, p: Vector2, label: String) -> void:
             else:
                 direction = "front" if delta.y>=0.0 else "back"
     var path := "res://assets/sprites/chapel_npcs/"+id+"_"+direction+".png"
-    if ResourceLoader.exists(path):
-        var tex := load(path) as Texture2D
+    if id=="anselmo" or ResourceLoader.exists(path):
+        var tex: Texture2D
+        if id=="anselmo":
+            if not anselmo_cache.has(direction):
+                anselmo_cache[direction] = ANSELMO_ART.texture(direction)
+            tex = anselmo_cache[direction] as Texture2D
+            if tex==null:
+                tex = ANSELMO_ART.texture("front")
+        else:
+            tex = load(path) as Texture2D
         if tex != null:
             var h := 78.0
             var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
