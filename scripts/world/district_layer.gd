@@ -69,6 +69,9 @@ func _building(pos: Vector2,sz: Vector2,name: String,walls: Color,roof: Color,ha
 
 func _hearse(pos: Vector2,scale_factor: float) -> void:
     draw_texture_rect(preload("res://assets/sprites/hearse.svg"),Rect2(pos-Vector2(0,25)*scale_factor,Vector2(236,118)*scale_factor),false)
+    var sign_pos := pos+Vector2(12,92)*scale_factor
+    draw_rect(Rect2(sign_pos-Vector2(5,18),Vector2(205,25)),Color("#24192f"))
+    _text(sign_pos,"E · TRANSLADO DO ALEM",15,GOLD)
 
 func _sign(r: Rect2,a: String,b: String) -> void:
     _rect(r,Color("#493448"))
