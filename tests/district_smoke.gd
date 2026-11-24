@@ -53,5 +53,29 @@ func _run() -> void:
         push_error("Caixa invalido")
         quit(89)
         return
+    game._close()
+    for point in [Vector2(2200,585),Vector2(2210,1310)]:
+        if not game.is_walkable(point):
+            push_error("Acesso ao carro bloqueado")
+            quit(90)
+            return
+        game.player.global_position = point
+        if game._near_station().get("id","") != "carro":
+            push_error("Carro sem interacao")
+            quit(91)
+            return
+        game._try_interact()
+        if not game.dialogue_open or game.dialog_title.text != "Seu Osvaldo":
+            push_error("Dialogo do carro ausente")
+            quit(92)
+            return
+        game._on_choice("drive_training")
+        if not is_instance_valid(game.driving_layer):
+            push_error("Minigame nao abriu")
+            quit(93)
+            return
+        game._driving_finished(false,0)
+        game._close()
+        await process_frame
     print("DISTRICT OK: 7 estacoes, camera, 8 etapas e fontes oficiais.")
     quit(0)
