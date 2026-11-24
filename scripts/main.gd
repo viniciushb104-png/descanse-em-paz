@@ -14,6 +14,8 @@ const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
 const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
 const PORTRAIT_EXPRESSIONS = preload("res://scripts/ui/portrait_expressions.gd")
 const CEMETERY_CAT = preload("res://scripts/world/cemetery_cat.gd")
+const BURIAL_QUEUE = preload("res://scripts/systems/burial_service_queue.gd")
+const BURIAL_MINIGAME = preload("res://scripts/minigames/oficio_osvaldo.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -73,6 +75,9 @@ var mobile_hud: Control
 var driving_layer: CanvasLayer
 var driving_completed: bool = false
 var driving_job: bool = false
+var burial_queue = BURIAL_QUEUE.new()
+var burial_layer: CanvasLayer
+var burial_marker: Label
 var cemetery_cat: Node2D
 
 func _ready() -> void:
@@ -81,6 +86,9 @@ func _ready() -> void:
     add_child(cemetery_cat)
     _build_ui()
     _load_game()
+    if burial_queue.ensure_initial_order(stage, reserved_plot, day):
+        _save_game()
+    _build_burial_marker()
     rooms.apply_room()
     _ensure_valid_player_position()
     _refresh_ui()
@@ -96,6 +104,9 @@ func _process(delta: float) -> void:
     if visual_animation_elapsed >= 0.35:
         visual_animation_elapsed = 0.0
         $PropsLayer.queue_redraw()
+    if is_instance_valid(burial_marker):
+        burial_marker.visible = burial_queue.has_pending() and not rooms.inside() and not is_instance_valid(burial_layer)
+        burial_marker.position.y = 515.0 + sin(visual_animation_elapsed * 1.6) * 2.0
     if not dialogue_open:
         clock_minutes += delta * 1.8
         if clock_minutes >= 1080.0:
@@ -103,7 +114,7 @@ func _process(delta: float) -> void:
     _refresh_ui()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-    if is_instance_valid(driving_layer):
+    if is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
         return
     if not (event is InputEventKey):
         return
@@ -202,7 +213,9 @@ func _interact(id: String) -> void:
         "cemetery_cat":
             _show("Gato do Cemiterio", "Miau!", [{"text":"Fazer carinho","action":"cat_pet"}, {"text":"Deixar descansar","action":"close"}])
         "osvaldo":
-            if stage == 0:
+            if burial_queue.has_pending():
+                _start_osvaldo_work()
+            elif stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
             else:
                 _show("Seu Osvaldo", "O cemiterio nao se administra sozinho! Olhe o estado dos caminhos, os registros e o treinamento da equipe. E nao pise nas flores!", [{"text": "Ate mais", "action": "close"}])
@@ -320,7 +333,8 @@ func _on_choice(action: String) -> void:
             money += 720 - 250
             reputation = mini(100, reputation + 10)
             stage = 4
-            _show("Registro concluido", "Receita: +R$ 720. Custo direto: -R$ 250. Margem de contribuicao didatica: R$ 470 (nao e lucro final). Veja tambem as despesas fixas!", [{"text": "Ver manutencao", "action": "close"}])
+            burial_queue.ensure_initial_order(stage, reserved_plot, day)
+            _show("Registro concluido", "Receita: +R$ 720. Custo direto: -R$ 250. Margem didatica: R$ 470 antes das despesas fixas.\n\nA ordem de sepultamento B-13 foi agendada: procure Seu Osvaldo no cemiterio para preparar o jazigo.", [{"text": "Continuar expediente", "action": "close"}])
         "maintain":
             if money < 160:
                 _show("Saldo insuficiente", "Planeje o caixa antes de gastar.", [{"text": "Fechar", "action": "close"}])
@@ -421,6 +435,7 @@ func _save_game() -> void:
     cfg.set_value("save", "clock", clock_minutes)
     cfg.set_value("save", "map_version", MAP_SAVE_VERSION)
     rooms.save_state(cfg)
+    burial_queue.save_state(cfg)
     cfg.save("user://save.cfg")
 
 func _load_game() -> void:
@@ -436,6 +451,7 @@ func _load_game() -> void:
     reserved_plot = bool(cfg.get_value("save", "reserved_plot", false))
     clock_minutes = float(cfg.get_value("save", "clock", 480.0))
     rooms.load_state(cfg)
+    burial_queue.load_state(cfg)
     var saved_map_version: int = int(cfg.get_value("save", "map_version", 0))
     if saved_map_version != MAP_SAVE_VERSION:
         # Preserva a missao, os indicadores e o caixa, mas nao uma posicao
@@ -862,6 +878,76 @@ func is_walkable(world_position: Vector2) -> bool:
     return true
 
 
+
+
+func _build_burial_marker() -> void:
+    burial_marker = Label.new()
+    burial_marker.name = "OsvaldoServicoDisponivel"
+    burial_marker.text = "SERVICO!"
+    burial_marker.position = Vector2(725, 515)
+    burial_marker.size = Vector2(145, 32)
+    burial_marker.z_index = 24
+    burial_marker.add_theme_font_size_override("font_size", 20)
+    burial_marker.add_theme_color_override("font_color", GOLD)
+    burial_marker.add_theme_color_override("font_outline_color", NIGHT)
+    burial_marker.add_theme_constant_override("outline_size", 4)
+    burial_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(burial_marker)
+    burial_marker.visible = burial_queue.has_pending() and not rooms.inside()
+
+func is_b13_buried() -> bool:
+    return burial_queue.is_done(BURIAL_QUEUE.INITIAL_ORDER)
+
+func _start_osvaldo_work() -> void:
+    if is_instance_valid(burial_layer) or is_instance_valid(driving_layer) or rooms.inside():
+        return
+    var service: Dictionary = burial_queue.pending()
+    if service.is_empty():
+        return
+    _close()
+    dialogue_open = true
+    player.virtual_direction = Vector2.ZERO
+    player.velocity = Vector2.ZERO
+    player.set_physics_process(false)
+    burial_layer = CanvasLayer.new()
+    burial_layer.name = "OsvaldoMinigameLayer"
+    burial_layer.layer = 110
+    add_child(burial_layer)
+    var backdrop := ColorRect.new()
+    backdrop.color = NIGHT
+    burial_layer.add_child(backdrop)
+    backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    var activity := BURIAL_MINIGAME.new() as Control
+    activity.configure(service)
+    backdrop.add_child(activity)
+    activity.progress_changed.connect(_burial_progress.bind(str(service["id"])))
+    activity.finished.connect(_burial_finished.bind(str(service["id"])))
+    _refresh_ui()
+
+func _burial_progress(progress: Dictionary, service_id: String) -> void:
+    burial_queue.update_progress(service_id, progress)
+    _save_game()
+
+func _burial_finished(success: bool, quality: int, service_id: String) -> void:
+    if is_instance_valid(burial_layer):
+        burial_layer.queue_free()
+    burial_layer = null
+    player.set_physics_process(true)
+    player.virtual_direction = Vector2.ZERO
+    dialogue_open = false
+    var registered: bool = false
+    if success:
+        registered = burial_queue.complete(service_id)
+        if registered:
+            reputation = mini(100, reputation + (5 if quality >= 90 else 2))
+            compliance = mini(100, compliance + 2)
+    _save_game()
+    if registered:
+        _notify("Sepultamento registrado! Seu Osvaldo aprovou o servico. Qualidade: %d%%" % quality, 4.0)
+        $GravesLayer.queue_redraw()
+    else:
+        _notify("Servico guardado. Seu Osvaldo pode retomar as etapas depois.", 3.5)
+    _refresh_ui()
 
 func _start_driving() -> void:
     if is_instance_valid(driving_layer):
