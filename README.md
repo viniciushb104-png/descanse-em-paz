@@ -84,3 +84,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Caixas de dialogo centralizadas e rolaveis; botoes grandes com quebra de linha para casos longos.
 - Controles touch somem nos dialogos e nas transicoes de porta.
 - Android APK/AAB e publicacao na Google Play **ainda nao foram realizados**; `docs/MOBILE_V11.md` explica os proximos requisitos.
+
+## Versao 1.1.1 — Sprites do escritorio e da manutencao
+- 12 PNGs individuais extraidos do kit gótico do autor, com transparência.
+- Escritório com mesa, tapete, vitral, estante, armário e porta.
+- Oficina com bancada, painel de ferramentas, prateleiras, vitral, carrinho e porta.
+- Transição com 8 quadros de animação gótica de porta ao entrar/sair.
+- Fachadas e missões mantidas. Documentação: `docs/SPRITES_INTERIORES_V111.md`.

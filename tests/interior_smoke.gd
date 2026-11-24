@@ -9,7 +9,7 @@ func _run() -> void:
     await process_frame
     var r: Node = game.get_node("RoomsRuntime")
     if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=10:
-        push_error("20 casos ou 9 interiores ausentes")
+        push_error("20 casos ou 10 interiores ausentes")
         quit(91)
         return
     game._close()
@@ -71,12 +71,34 @@ func _run() -> void:
         push_error("Oficina sem interior proprio")
         quit(101)
         return
+    var maintenance_art: Node2D = game.get_node("InteriorLayer/RoomArtwork")
+    if maintenance_art.get_child_count() != 6 or not maintenance_art.has_node("Bancada"):
+        push_error("Sprites reais da oficina incompletos")
+        quit(103)
+        return
     r.leave()
     r.enter("office")
     game._close()
     if not game.get_node("InteriorLayer").has_node("RoomArtwork"):
         push_error("Escritorio sem interior proprio")
         quit(102)
+        return
+    var office_art: Node2D = game.get_node("InteriorLayer/RoomArtwork")
+    if office_art.get_child_count() != 6 or not office_art.has_node("Mesa"):
+        push_error("Sprites reais do escritorio incompletos")
+        quit(104)
+        return
+    for prop in office_art.get_children():
+        var sprite := prop as Sprite2D
+        if sprite == null or sprite.texture == null:
+            push_error("Sprite com textura ausente")
+            quit(105)
+            return
+    var transition: Node = game.get_node("DoorTransition")
+    var door: TextureRect = transition.get_node_or_null("GothicCurtain/AnimatedGothicDoor")
+    if door == null or door.texture == null:
+        push_error("Animacao gotica de porta ausente")
+        quit(106)
         return
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg")!=OK:
@@ -87,5 +109,5 @@ func _run() -> void:
         push_error("Progresso de casos nao persistiu")
         quit(100)
         return
-    print("INTERIORS OK: 9 salas, 20 casos, estoque, salvamento e transicoes.")
+    print("INTERIORS OK: 10 salas, 20 casos, estoque, salvamento e transicoes.")
     quit(0)

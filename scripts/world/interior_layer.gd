@@ -63,19 +63,21 @@ func _draw() -> void:
     draw_line(Vector2(634,570),Vector2(634,648),GOLD,3)
     _text(Vector2(70,78),str(info["title"]),26,PAPER)
     _text(Vector2(70,113),str(info["description"]),16,PAPER)
-    for n in range(5):
-        var x: float = 764.0+float(n)*59.0
-        draw_rect(Rect2(x,184,47,111),Color("#302935"))
-        for k in range(4):
-            var col := Color("#b69a7d")
-            if style in ["hospital","lab","inspection"]: col=Color("#acbfcd")
-            draw_rect(Rect2(x+6,190+float(k)*25.0,35,19),col.darkened(float((k+n)%3)*0.09))
+    if room not in ["office","maintenance"]:
+        for n in range(5):
+            var x: float = 764.0+float(n)*59.0
+            draw_rect(Rect2(x,184,47,111),Color("#302935"))
+            for k in range(4):
+                var col := Color("#b69a7d")
+                if style in ["hospital","lab","inspection"]: col=Color("#acbfcd")
+                draw_rect(Rect2(x+6,190+float(k)*25.0,35,19),col.darkened(float((k+n)%3)*0.09))
     for lamp_x in [447.0,680.0]:
         draw_line(Vector2(lamp_x,73),Vector2(lamp_x,125),INK,4)
         draw_circle(Vector2(lamp_x,144),15,GOLD)
-    _decor(style)
-    draw_rect(Rect2(215,270,184,35),Color("#654656"))
-    draw_rect(Rect2(871,298,190,39),Color("#674b52"))
+    if room not in ["office","maintenance"]:
+        _decor(style)
+        draw_rect(Rect2(215,270,184,35),Color("#654656"))
+        draw_rect(Rect2(871,298,190,39),Color("#674b52"))
     _npc(Vector2(294,326),Color("#d9b5a0"),Color("#403245"),"ATENDENTE")
     var coat := Color("#584051")
     match customer_profile:
