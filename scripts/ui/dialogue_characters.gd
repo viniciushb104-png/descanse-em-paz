@@ -324,19 +324,6 @@ const CHARACTERS = {
     ],
     "portrait": "res://assets/portraits/client_13.png"
   },
-  "client_14": {
-    "name": "Fiscal Marcela",
-    "role": "Atendimento 14",
-    "profile": "fiscal",
-    "accent": "#bac7b6",
-    "shade": "#475e5b",
-    "motif": "leaf",
-    "accessory": "glasses",
-    "aliases": [
-      "Fiscal Marcela"
-    ],
-    "portrait": "res://assets/portraits/client_14.png"
-  },
   "client_15": {
     "name": "Motorista Tiburcio",
     "role": "Atendimento 15",
@@ -622,6 +609,20 @@ const CHARACTERS = {
       "Irmã de Aurora"
     ],
     "portrait": "res://assets/portraits/support_20.png"
+  },
+  "administrador": {
+    "name": "Administrador",
+    "role": "Gestão de Santa Mortalha",
+    "profile": "profissional",
+    "accent": "#d9bb87",
+    "shade": "#53435e",
+    "motif": "scales",
+    "accessory": "tie",
+    "aliases": [
+      "Administrador",
+      "Protagonista"
+    ],
+    "portrait": "res://assets/portraits/administrador.png"
   }
 }
 
