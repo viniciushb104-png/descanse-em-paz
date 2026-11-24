@@ -11,6 +11,7 @@ const BUILDINGS = [
     Rect2(2464,151,288,260),
     Rect2(2785,153,255,258)
 ]
+const HEARSE_AREAS = [Rect2(2083,434,236,118), Rect2(2110,1171,212.4,106.2)]
 const STATIONS = [
     {"id":"hospital","name":"Hospital Santa Ultima Hora","p":Vector2(1813,446)},
     {"id":"garagem","name":"Garagem funeraria","p":Vector2(1818,1116)},
