@@ -13,8 +13,8 @@ func _run() -> void:
         return
     for i in range(6):
         var tex: Texture2D = ARCADE.PANORAMAS[i]
-        if tex==null or tex.get_width()!=288 or tex.get_height()!=96:
-            push_error("Textura panoramica invalida")
+        if tex==null or tex.get_width()!=1536 or tex.get_height()!=512:
+            push_error("Textura panoramica HD invalida")
             quit(102)
             return
         game.distance = (float(i)+0.5)*ARCADE.REGION_SPAN
@@ -35,5 +35,5 @@ func _run() -> void:
             push_error("Escala de perspectiva incorreta")
             quit(105)
             return
-    print("TRANSLADO PANORAMAS OK: 6 texturas, 6 regioes e transicao.")
+    print("TRANSLADO PANORAMAS OK: 6 texturas HD, 6 regioes e transicao.")
     quit(0)

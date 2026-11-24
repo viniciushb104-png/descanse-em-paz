@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.4"
+const BUILD_LABEL := "ARCADE 2.5 HD"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -240,10 +240,18 @@ func _paint_panorama() -> void:
     var index := _panorama_index(distance)
     var blend := _panorama_blend(distance)
     var drift := clampf(-_curve(distance)*35.0-lateral*14.0,-55.0,55.0)
-    var area := Rect2(-60.0+drift,0.0,1080.0,HORIZON)
-    board.draw_texture_rect(PANORAMAS[index],area,false)
+    var area := Rect2(0.0,0.0,VIEW.x,HORIZON)
+    _draw_panorama_region(PANORAMAS[index],area,drift,1.0)
     if blend>0.0 and index+1<PANORAMAS.size():
-        board.draw_texture_rect(PANORAMAS[index+1],area,false,Color(1.0,1.0,1.0,blend))
+        _draw_panorama_region(PANORAMAS[index+1],area,drift,blend)
+
+func _draw_panorama_region(tex: Texture2D, area: Rect2, drift: float, alpha: float) -> void:
+    # Preserve the aspect ratio; crop vertically rather than squash buildings.
+    var scale_factor := (area.size.x+120.0)/float(tex.get_width())
+    var source_size := area.size/scale_factor
+    var source_x := (float(tex.get_width())-source_size.x)/2.0-drift/scale_factor
+    var source_y := (float(tex.get_height())-source_size.y)*0.62
+    board.draw_texture_rect_region(tex,area,Rect2(Vector2(source_x,source_y),source_size),Color(1.0,1.0,1.0,alpha))
 
 func _traffic_width(t: float, model: int) -> float:
     var player_depth := (PLAYER_Y-HORIZON)/(VIEW.y-HORIZON)
