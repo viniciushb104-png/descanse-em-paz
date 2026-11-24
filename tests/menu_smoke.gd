@@ -64,7 +64,7 @@ func _run() -> void:
         return
     # Evita o problema visual da v1.2.2: logo em tamanho nativo cobria personagens.
     if logo.size.x > 340.0 or logo.size.x < 260.0 or logo.position.x > 30.0 or logo.position.y > 18.0:
-        push_error("Logo grande demais ou fora do canto superior esquerdo.")
+        push_error("Logo grande demais ou fora do canto: size=%s position=%s" % [str(logo.size),str(logo.position)])
         quit(88)
         return
     if logo.position.y + logo.size.y > 185.0 or logo.position.x + logo.size.x > 370.0:

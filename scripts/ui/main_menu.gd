@@ -159,29 +159,28 @@ func _install_background() -> void:
 func _install_logo() -> void:
     menu_logo = TextureRect.new()
     menu_logo.name = "HangingGameLogo"
+    # IMPORTANTE: ignorar o tamanho natural ANTES de atribuir a textura.
+    # Caso contrario o Control conserva o minimo nativo (850px) e fica gigante.
+    menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    menu_logo.stretch_mode = TextureRect.STRETCH_SCALE
+    menu_logo.custom_minimum_size = Vector2.ZERO
     menu_logo.texture = MENU_LOGO
-    # Canto superior esquerdo: a placa precisa ficar acima dos personagens,
-    # sem cobrir a arte do cemiterio nem os botoes do outro lado da tela.
-    # A proporcao vem diretamente do PNG, sem deformacao.
+
+    # Mantem a placa pequena, no alto e a esquerda, acima dos personagens.
     var logo_width: float = 312.0
     var logo_height: float = logo_width * float(MENU_LOGO.get_height()) / float(MENU_LOGO.get_width())
-    menu_logo.position = Vector2(20, 6)
-    menu_logo.size = Vector2(logo_width, logo_height)
-    menu_logo.custom_minimum_size = Vector2.ZERO
-    # Pendura a placa no meio da corrente superior.
-    menu_logo.pivot_offset = Vector2(menu_logo.size.x * 0.5, 4.0)
-    menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    # STRETCH_SCALE respeita rigorosamente as dimensoes do TextureRect.
-    # KEEP_ASPECT_CENTERED no menu anterior estava exibindo a arte gigante.
-    menu_logo.stretch_mode = TextureRect.STRETCH_SCALE
-    # Textura pintada suave; os demais elementos do jogo seguem pixel art.
+    menu_logo.set_anchors_preset(Control.PRESET_TOP_LEFT)
     menu_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
     menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
     menu_logo.z_index = 5
     menu_logo.modulate = Color.WHITE
     add_child(menu_logo)
-    menu_logo.show()
 
+    # Definir tamanho DEPOIS de adicionar ao pai garante geometria final.
+    menu_logo.size = Vector2(logo_width,logo_height)
+    menu_logo.position = Vector2(20,6)
+    menu_logo.pivot_offset = Vector2(logo_width * 0.5,4.0)
+    menu_logo.show()
 
 func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Button:
     var marker := GRAVE_MARKER_SCRIPT.new() as Control
