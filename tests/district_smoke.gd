@@ -12,7 +12,8 @@ func _run() -> void:
         push_error("DistrictLayer ausente")
         quit(81)
         return
-    if GROUND.WIDTH * GROUND.TILE != 3072 or GROUND.HEIGHT * GROUND.TILE != 1408:
+    # Dimensoes acompanham a expansao do cemiterio (sem usar limite antigo).
+    if GROUND.WIDTH * GROUND.TILE != int(DISTRICT.WORLD_SIZE.x) or GROUND.HEIGHT * GROUND.TILE != int(DISTRICT.WORLD_SIZE.y):
         push_error("Mapa nao expandido")
         quit(82)
         return
