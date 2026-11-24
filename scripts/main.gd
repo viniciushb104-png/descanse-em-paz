@@ -49,6 +49,8 @@ var dialogue_open: bool = false
 const SPAWN := Vector2(748, 714)
 const MAP_SAVE_VERSION := 4
 var rescue_notice: String = ""
+var location_hint: String = ""
+var location_hint_seconds: float = 0.0
 var visual_animation_elapsed: float = 0.0
 var status_label: Label
 var objective_label: Label
@@ -70,9 +72,10 @@ func _ready() -> void:
     if stage == 0:
         _show("Bem-vindo a Santa Mortalha!", "Voce herdou um cemiterio em crise. Um contador fantasma, um coveiro experiente e montanhas de papelada esperam por voce. Fale com Seu Osvaldo!\n\nWASD ou setas: mover | E: interagir | Esc: fechar.", [{"text": "Comecar expediente", "action": "close"}])
     else:
-        _show("Bem-vindo de volta!", "Seu progresso foi recuperado. A morte pode esperar; a burocracia, jamais.", [{"text": "Continuar", "action": "close"}])
+        _notify("Bem-vindo de volta! O expediente continua.",1.8)
 
 func _process(delta: float) -> void:
+    location_hint_seconds = maxf(0.0,location_hint_seconds-delta)
     visual_animation_elapsed += delta
     if visual_animation_elapsed >= 0.35:
         visual_animation_elapsed = 0.0
@@ -87,6 +90,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
     if not (event is InputEventKey):
         return
     if not event.pressed or event.echo:
+        return
+    if dialogue_open and event.keycode >= KEY_1 and event.keycode <= KEY_4:
+        var index: int = event.keycode - KEY_1
+        var choices: Array = options_box.get_children()
+        if index < choices.size():
+            (choices[index] as Button).pressed.emit()
+        get_viewport().set_input_as_handled()
+        return
+    if dialogue_open and event.keycode in [KEY_ENTER,KEY_KP_ENTER] and options_box.get_child_count() == 1:
+        (options_box.get_child(0) as Button).pressed.emit()
+        get_viewport().set_input_as_handled()
         return
     if event.keycode == KEY_ESCAPE:
         if dialogue_open:
@@ -112,6 +126,10 @@ func _near_station() -> Dictionary:
             shortest = distance
             nearest = station
     return nearest
+
+func _notify(message: String, duration: float = 1.5) -> void:
+    location_hint = message
+    location_hint_seconds = maxf(0.2,duration)
 
 func _open_journal() -> void:
     if dialogue_open or rooms.changing:
@@ -404,7 +422,7 @@ func _show(heading: String, body: String, choices: Array) -> void:
         child.queue_free()
     for choice in choices:
         var btn := Button.new()
-        btn.text = str(choice["text"])
+        btn.text = "%d · %s" % [options_box.get_child_count()+1,str(choice["text"])]
         btn.custom_minimum_size = Vector2(0, 54)
         btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         btn.add_theme_font_size_override("font_size", 17)
@@ -593,9 +611,14 @@ func _refresh_ui() -> void:
     elif not rescue_notice.is_empty():
         prompt_label.text = rescue_notice
         rescue_notice = ""
+    elif location_hint_seconds > 0.0:
+        prompt_label.text = location_hint
     else:
         var near := _near_station()
-        prompt_label.text = ("E  ·  " + str(near["name"])) if not near.is_empty() else "WASD / Setas: andar   ·   E: interagir   ·   R: resgatar"
+        var target: String = str(near.get("name",""))
+        if not near.is_empty() and not rooms.inside() and rooms.CATALOG.ROOMS.has(str(near["id"])):
+            target = "Entrar: " + target
+        prompt_label.text = ("E  ·  " + target) if not near.is_empty() else "WASD / Setas: andar   ·   E: interagir   ·   R: resgatar"
 
 
 func is_walkable(world_position: Vector2) -> bool:

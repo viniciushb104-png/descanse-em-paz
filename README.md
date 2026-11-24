@@ -98,3 +98,11 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Respostas parciais permitem revisão; atalhos inseguros bloqueiam a conclusão até serem corrigidos.
 - Retratos provisórios modulares podem ser substituídos por character sheets em PNG sem mudar o motor.
 - Decisões e reações persistem no save local. Narrativas em `scripts/systems/dialogue_scenes.gd`.
+
+## Versao 1.2.1 — Ritmo mais agil
+- E na porta entra direto na sala, sem pergunta. E na saida retorna ao mapa.
+- Animacao de porta mais rapida com os oito quadros originais preservados.
+- Resposta responsavel leva imediatamente a proxima fala; erros de risco exigem reparo, sem pular requisitos legais.
+- Conclusao responsavel registra automaticamente o caso, com fonte legal opcional.
+- Escolhas 1-4 e Enter para dialogos de uma opcao no PC; botoes touch mantidos.
+- Ver docs/RITMO_V121.md.

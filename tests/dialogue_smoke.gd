@@ -54,16 +54,10 @@ func _run() -> void:
                 quit(123)
                 return
             rooms.choose_dialogue_option(selected)
-            if rooms.dialogue_step != step or not rooms.awaiting_reaction:
-                push_error("Fala nao teve repercussao: "+str(idx))
+            if step < beats-1 and (rooms.dialogue_step != step+1 or rooms.awaiting_reaction):
+                push_error("Fala nao avancou automaticamente: "+str(idx))
                 quit(124)
                 return
-            rooms.advance_dialogue()
-        if rooms.case_index != idx:
-            push_error("Caso encerrou sem auditoria")
-            quit(125)
-            return
-        rooms.finish_case()
         if rooms.case_index != idx+1:
             push_error("Caso nao concluiu: "+str(idx))
             quit(126)
@@ -84,7 +78,6 @@ func _run() -> void:
         if int(first_scene["choices"][n]["grade"]) == 2:
             safe = n
     rooms.choose_dialogue_option(safe)
-    rooms.advance_dialogue()
     var before_compliance: int = game.compliance
     var second_scene: Dictionary = DIALOGUES.scene(19,1,"Familia de Aurora")
     var dangerous: int = -1
@@ -102,7 +95,6 @@ func _run() -> void:
         if int(second_scene["choices"][n]["grade"]) == 2:
             repaired = n
     rooms.choose_dialogue_option(repaired)
-    rooms.advance_dialogue()
     if rooms.dialogue_step != 2:
         push_error("Reparacao nao permitiu prosseguir")
         quit(129)

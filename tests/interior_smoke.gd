@@ -34,7 +34,6 @@ func _run() -> void:
         if int(first_scene["choices"][n]["grade"]) == 1:
             partial = n
     game._on_choice("case_pick_"+str(partial))
-    game._on_choice("case_advance")
     var unsafe_option: int = -1
     var second_scene: Dictionary = r.DIALOGUES.scene(0,1,"Sr. Afonso")
     for n in range(3):
@@ -51,8 +50,21 @@ func _run() -> void:
         if int(second_scene["choices"][n]["grade"]) == 2:
             safe_option = n
     game._on_choice("case_pick_"+str(safe_option))
-    game._on_choice("case_advance")
-    game._on_choice("case_finalize")
+    game._on_choice("case_review")
+    if r.dialogue_step != 0:
+        push_error("Revisao de resposta parcial nao voltou ao trecho")
+        quit(107)
+        return
+    var revised: Dictionary = r.DIALOGUES.scene(0,0,"Sr. Afonso")
+    for n in range(3):
+        if int(revised["choices"][n]["grade"]) == 2:
+            game._on_choice("case_pick_"+str(n))
+            break
+    var verified: Dictionary = r.DIALOGUES.scene(0,1,"Sr. Afonso")
+    for n in range(3):
+        if int(verified["choices"][n]["grade"]) == 2:
+            game._on_choice("case_pick_"+str(n))
+            break
     if r.case_index != 1:
         push_error("Caso nao avancou apos dialogo completo")
         quit(95)
@@ -86,8 +98,6 @@ func _run() -> void:
                 if int(beat["choices"][n]["grade"]) == 2:
                     best = n
             game._on_choice("case_pick_"+str(best))
-            game._on_choice("case_advance")
-        game._on_choice("case_finalize")
         if r.case_index != idx+1:
             push_error("Caso nao concluido: "+str(idx+1))
             quit(98)
