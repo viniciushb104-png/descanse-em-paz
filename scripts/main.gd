@@ -71,6 +71,7 @@ var dialog_portrait: Control
 var dialog_frame: Control
 var dialog_role: Label
 var dialog_nameplate_art: TextureRect
+var dialog_portrait_nameplate_text: Label
 var dialog_portrait_frame_art: TextureRect
 var options_box: VBoxContainer
 var mobile_hud: Control
@@ -584,8 +585,12 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
     dialog_frame.call("set_identity",actor)
     dialog_portrait.visible = has_actor
     dialog_role.visible = has_actor
-    dialog_nameplate_art.visible = illustrated
+    var new_frame: bool = DIALOGUE_ART.has_integrated_nameplate(identity)
+    dialog_nameplate_art.visible = illustrated and not new_frame
     dialog_portrait_frame_art.visible = illustrated
+    dialog_portrait_nameplate_text.visible = new_frame
+    if new_frame:
+        dialog_portrait_nameplate_text.text = str(actor.get("name",speaker))
     var speech_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
     var choices_scroll := dialog_panel.get_node("ChoicesScroll") as ScrollContainer
     if has_actor:
@@ -813,6 +818,27 @@ func _build_ui() -> void:
     dialog_nameplate_art.z_index = 2
     dialog_nameplate_art.visible = false
     dialog_panel.add_child(dialog_nameplate_art)
+
+    # Lote 2: nomes aplicados por codigo, sobre a placa vazia do proprio PNG.
+    # Sem desenhar texto no arquivo de arte e sem bloquear mouse/toque.
+    dialog_portrait_nameplate_text = Label.new()
+    dialog_portrait_nameplate_text.name = "PortraitNameplateText"
+    dialog_portrait_nameplate_text.position = Vector2(48, 245)
+    dialog_portrait_nameplate_text.size = Vector2(171, 27)
+    dialog_portrait_nameplate_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    dialog_portrait_nameplate_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    dialog_portrait_nameplate_text.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    dialog_portrait_nameplate_text.clip_text = true
+    dialog_portrait_nameplate_text.add_theme_font_size_override("font_size",12)
+    dialog_portrait_nameplate_text.add_theme_color_override("font_color",Color("#34212d"))
+    dialog_portrait_nameplate_text.add_theme_color_override("font_shadow_color",Color("#f8e7cb"))
+    dialog_portrait_nameplate_text.add_theme_constant_override("shadow_offset_x",1)
+    dialog_portrait_nameplate_text.add_theme_constant_override("shadow_offset_y",1)
+    dialog_portrait_nameplate_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_portrait_nameplate_text.z_index = 3
+    dialog_portrait_nameplate_text.visible = false
+    dialog_panel.add_child(dialog_portrait_nameplate_text)
+
     dialog_title.z_index = 3
     dialog_role.z_index = 3
     body_scroll.z_index = 3

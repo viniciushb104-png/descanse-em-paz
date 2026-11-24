@@ -66,7 +66,7 @@ func _run() -> void:
                 quit(189)
                 return
         game._on_choice("portrait_gallery")
-    game._show_character("Dra. Penélope","Atendimento geral","medica",[{"text":"Fechar","action":"close"}])
+    game._show_character("Sr. Afonso","Atendimento geral","calmo",[{"text":"Fechar","action":"close"}])
     if ornament.visible or nameplate.visible or bool(portrait.get("embedded_frame")):
         push_error("Fallback dos demais NPCs alterado")
         quit(190)

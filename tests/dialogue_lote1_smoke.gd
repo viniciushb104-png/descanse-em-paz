@@ -56,7 +56,7 @@ func _run() -> void:
             push_error("Opcoes desapareceram: "+identity)
             quit(177)
             return
-    game._show_character("Dra. Penélope","Atendimento do hospital","medica",[{"text":"Fechar","action":"close"}])
+    game._show_character("Sr. Afonso","Atendimento padrao","calmo",[{"text":"Fechar","action":"close"}])
     if bool(frame.get("sprite_mode")) or ornament.visible or plate.visible:
         push_error("Fallback dos personagens sem PNG ficou quebrado")
         quit(178)
