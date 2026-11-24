@@ -347,6 +347,10 @@ func _paint_coffin(p: Vector2, scale_factor: float = 1.0) -> void:
     draw_line(p + Vector2(-42,0) * scale_factor, p + Vector2(42,0) * scale_factor, GOLD, 2.0, false)
 
 func _draw() -> void:
+    # A conclusao pode emitir finished e ainda receber um ultimo redraw.
+    # Nunca indexar TITLES/TIPS/COUNTS com phase == 5.
+    if ended or phase < 0 or phase >= TITLES.size():
+        return
     var k: float = minf(size.x / VIEW.x, size.y / VIEW.y)
     if k <= 0.0:
         return

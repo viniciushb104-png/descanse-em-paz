@@ -104,5 +104,9 @@ func _run() -> void:
     if reloaded.complete(str(job["id"])):
         _fail("Sepultamento foi creditado duas vezes.", 115)
         return
+    # O frame posterior ao sinal finished tambem precisa ser seguro.
+    resumed.queue_redraw()
+    await process_frame
+    await process_frame
     print("OSVALDO OK: bloqueio legal, B-13, cinco etapas, persistencia e conclusao unica.")
     quit(0)
