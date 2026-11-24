@@ -5,6 +5,8 @@ const LAYOUT = preload("res://scripts/world/graves_layout.gd")
 var b13_frame: Line2D
 var b13_status_label: Label
 var last_reserved: bool = false
+var last_buried: bool = false
+var b13_final_tomb: Sprite2D
 
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -17,6 +19,16 @@ func _ready() -> void:
         sprite.scale = Vector2.ONE * float(item["scale"])
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         add_child(sprite)
+    # O jazigo finalizado substitui visualmente a cova inicial.
+    # Reutiliza uma arte ja aprovada, sem editar suas fachadas ou o mapa.
+    b13_final_tomb = Sprite2D.new()
+    b13_final_tomb.name = "B13SepulturaConcluida"
+    b13_final_tomb.texture = preload("res://assets/props/tumulos/Tumulo_01.png")
+    b13_final_tomb.centered = false
+    b13_final_tomb.position = Vector2(1093, 652)
+    b13_final_tomb.scale = Vector2.ONE * 0.82
+    b13_final_tomb.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    add_child(b13_final_tomb)
     # Identificador B-13 e borda pertencem ao JOGO, nao ao PNG.
     b13_frame = Line2D.new()
     b13_frame.name = "B13Highlight"
@@ -43,9 +55,17 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
     var level: Node = get_parent()
     var now_reserved: bool = bool(level.get("reserved_plot"))
-    if now_reserved != last_reserved:
+    var now_buried: bool = bool(level.call("is_b13_buried"))
+    if now_reserved != last_reserved or now_buried != last_buried:
         _update_highlight()
 
 func _update_highlight() -> void:
     last_reserved = bool(get_parent().get("reserved_plot"))
-    b13_frame.default_color = Color("#f8d06c") if last_reserved else Color("#83ccd0")
+    last_buried = bool(get_parent().call("is_b13_buried"))
+    b13_frame.default_color = Color("#9bdcba") if last_buried else (Color("#f8d06c") if last_reserved else Color("#83ccd0"))
+    b13_status_label.text = "B-13  CONCLUIDO" if last_buried else "B-13"
+    if is_instance_valid(b13_final_tomb):
+        b13_final_tomb.visible = last_buried
+    var original := get_node_or_null("Cova_01") as Sprite2D
+    if original != null:
+        original.visible = not last_buried
