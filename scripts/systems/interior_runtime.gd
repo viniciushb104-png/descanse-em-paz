@@ -231,7 +231,12 @@ func _show_beat() -> void:
     var speaking_profile: String = str(beat.get("profile",""))
     if speaking_profile.is_empty():
         speaking_profile = str(item["profile"])
-    game()._show_character(str(beat["speaker"]),chapter+"\n\n"+spoken_line,speaking_profile,responses)
+    var emotion_by_mode: Dictionary = {
+        "warm":"alegre", "verify":"preocupado",
+        "deep":"surpreso", "plan":"ironico", "close":"alegre"
+    }
+    var emotion: String = str(emotion_by_mode.get(str(beat["mode"]),"alegre"))
+    game()._show_character(str(beat["speaker"]),chapter+"\n\n"+spoken_line,speaking_profile,responses,emotion)
 
 func choose_dialogue_option(index: int) -> void:
     var item: Dictionary = CASES.active(case_index)
@@ -282,7 +287,8 @@ func _show_reaction() -> void:
     var speaking_profile: String = str(last.get("profile",""))
     if speaking_profile.is_empty():
         speaking_profile = str(item["profile"])
-    game()._show_character(str(last.get("speaker",item["client"])),last_reaction,speaking_profile,response)
+    var reaction_expression: String = "preocupado" if last_grade == 0 else "alegre"
+    game()._show_character(str(last.get("speaker",item["client"])),last_reaction,speaking_profile,response,reaction_expression)
 
 func advance_dialogue() -> void:
     if not awaiting_reaction:
