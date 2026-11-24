@@ -3,6 +3,25 @@ const CASES = preload("res://scripts/systems/customer_cases.gd")
 const ROOM_CATALOG = preload("res://scripts/world/interior_catalog.gd")
 func _initialize() -> void:
     call_deferred("_run")
+func _finish_field_case(game: Node, runtime: Node, idx: int) -> bool:
+    if not int(idx+1) in runtime.BURIAL_CASES:
+        return true
+    if runtime.case_index!=idx:
+        return false
+    runtime.authorize_burial()
+    var key: String = runtime.pending_burial_id
+    if key.is_empty() or runtime.case_index!=idx:
+        return false
+    var previous_money: int = game.money
+    runtime.authorize_burial()
+    if game.money!=previous_money:
+        return false
+    # Simulate completed field work, then assert single credit.
+    if not game.burial_queue.complete(key) or not runtime.complete_burial(key):
+        return false
+    game._save_game()
+    return runtime.case_index==idx+1 and not runtime.complete_burial(key)
+
 func _run() -> void:
     var game: Node2D = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
@@ -52,7 +71,7 @@ func _run() -> void:
     game._on_choice("case_pick_"+str(safe_option))
     # Uma escolha inicial parcial nao invalida todo o caso; o conjunto
     # das duas decisoes ainda pode atingir o criterio responsavel.
-    if r.case_index != 1:
+    if not _finish_field_case(game,r,0) or r.case_index != 1:
         push_error("Caso nao avancou apos dialogo completo")
         quit(95)
         return
@@ -85,7 +104,7 @@ func _run() -> void:
                 if int(beat["choices"][n]["grade"]) == 2:
                     best = n
             game._on_choice("case_pick_"+str(best))
-        if r.case_index != idx+1:
+        if not _finish_field_case(game,r,idx) or r.case_index != idx+1:
             push_error("Caso nao concluido: "+str(idx+1))
             quit(98)
             return

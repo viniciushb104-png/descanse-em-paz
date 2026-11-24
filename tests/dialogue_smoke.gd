@@ -6,6 +6,25 @@ const CATALOG = preload("res://scripts/world/interior_catalog.gd")
 func _initialize() -> void:
     call_deferred("_run")
 
+func _finish_field_case(game: Node, runtime: Node, idx: int) -> bool:
+    if not int(idx+1) in runtime.BURIAL_CASES:
+        return true
+    if runtime.case_index!=idx:
+        return false
+    runtime.authorize_burial()
+    var key: String = runtime.pending_burial_id
+    if key.is_empty() or runtime.case_index!=idx:
+        return false
+    var previous_money: int = game.money
+    runtime.authorize_burial()
+    if game.money!=previous_money:
+        return false
+    # Simulate completed field work, then assert single credit.
+    if not game.burial_queue.complete(key) or not runtime.complete_burial(key):
+        return false
+    game._save_game()
+    return runtime.case_index==idx+1 and not runtime.complete_burial(key)
+
 func _run() -> void:
     var game: Node2D = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
@@ -58,7 +77,7 @@ func _run() -> void:
                 push_error("Fala nao avancou automaticamente: "+str(idx))
                 quit(124)
                 return
-        if rooms.case_index != idx+1:
+        if not _finish_field_case(game,rooms,idx) or rooms.case_index != idx+1:
             push_error("Caso nao concluiu: "+str(idx))
             quit(126)
             return

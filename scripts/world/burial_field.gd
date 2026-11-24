@@ -2,6 +2,13 @@ extends Node2D
 ## Campo de trabalho: interacao contextual, sem CanvasLayer de minigame.
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 const TOMB = preload("res://assets/props/tumulos/Tumulo_01.png")
+const OLD_TOMBS = [preload("res://assets/props/tumulos/Tumulo_01.png"),preload("res://assets/props/tumulos/Tumulo_02.png"),preload("res://assets/props/tumulos/Tumulo_03.png"),preload("res://assets/props/tumulos/Tumulo_04.png"),preload("res://assets/props/tumulos/Tumulo_05.png"),preload("res://assets/props/tumulos/Tumulo_06.png")]
+static func old_positions() -> Array[Vector2]:
+    var result: Array[Vector2] = []
+    for row in range(3):
+        for col in range(5):
+            result.append(Vector2(362+col*185,1560+row*228))
+    return result
 const TREE = preload("res://assets/trees/Arvore_01.png")
 const LAMP = preload("res://assets/sprites/lantern.svg")
 const FLOWERS = preload("res://assets/sprites/flowers.svg")
@@ -63,6 +70,9 @@ func near(pos: Vector2) -> Dictionary:
     return {}
 
 func blocked(pos: Vector2) -> bool:
+    for p in old_positions():
+        if Rect2(p-Vector2(28,25),Vector2(56,50)).has_point(pos):
+            return true
     for plot in plots():
         if plot["id"]!="B-13" and Rect2(plot["p"]-Vector2(40,34),Vector2(80,68)).has_point(pos):
             return true
@@ -92,7 +102,7 @@ func strike() -> void:
     if p==Vector2.ZERO or game.player.global_position.distance_to(p)>=112.0:
         return
     if count_for(id)>=6:
-        game._show("Seu Osvaldo","A cova esta pronta, chefe. A familia autorizou o servico. Vamos concluir com respeito; ate o Baltazar tira o chapeu.",[{"text":"Concluir sepultamento","action":"field_finish"},{"text":"Depois","action":"close"}])
+        game._on_choice("field_finish")
         return
     target = id
     order_id = str(order["id"])
@@ -132,7 +142,14 @@ func _sprite(tex: Texture2D,p: Vector2,h: float) -> void:
 func _draw() -> void:
     if game==null:
         return
-    draw_rect(Rect2(100,1410,1300,835),Color("#283b31"),false,6.0)
+    var old := old_positions()
+    for i in range(old.size()):
+        var p: Vector2 = old[i]
+        _sprite(OLD_TOMBS[i%OLD_TOMBS.size()],p+Vector2(0,25),85.0)
+        if i%3==0:
+            _sprite(FLOWERS,p+Vector2(21,27),25.0)
+        if i%4==0:
+            _sprite(PUMPKIN,p+Vector2(-30,24),27.0)
     for row in range(3):
         var y := 1560.0+row*228.0
         draw_string(ThemeDB.fallback_font,Vector2(125,y-80),"QUADRA "+["C - LANTERNAS","D - SAUDADES","E - ETERNIDADE"][row],HORIZONTAL_ALIGNMENT_LEFT,-1,24,Color("#e4b875"))
@@ -145,8 +162,7 @@ func _draw() -> void:
         var hits := count_for(id)
         if id!="B-13" or (hits>0 and hits<7):
             if hits==0:
-                draw_rect(Rect2(p-Vector2(40,34),Vector2(80,68)),Color("#46533e"))
-                draw_rect(Rect2(p-Vector2(40,34),Vector2(80,68)),Color("#8d8066"),false,2.0)
+                _sprite(GRAVES[0],p+Vector2(0,34),72.0)
             elif hits==7:
                 _sprite(TOMB,p+Vector2(0,34),94)
                 _sprite(FLOWERS,p+Vector2(32,35),23)
@@ -156,7 +172,8 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font,p+Vector2(-25,-47),id,HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("#e4b875"))
         var order := current()
         if active and not order.is_empty() and str(order["plot"])==id:
-            draw_rect(Rect2(p-Vector2(51,48),Vector2(102,96)),Color("#f5cb74"),false,3.0)
+            draw_circle(p+Vector2(0,-66),5.0,Color("#f5cb74"))
+            draw_line(p+Vector2(0,-60),p+Vector2(0,-48),Color("#f5cb74"),2.0)
             draw_string(ThemeDB.fallback_font,p+Vector2(-40,65),"%d/6 PAZADAS" % mini(hits,6),HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color("#f5cb74"))
     for x in range(180,1400,220):
         _sprite(PUMPKIN,Vector2(x,2220),38)

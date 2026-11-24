@@ -40,6 +40,7 @@ func _ready() -> void:
         Vector2(1095,655)
     ])
     add_child(b13_frame)
+    b13_frame.visible = false
     b13_status_label = Label.new()
     b13_status_label.name = "B13Label"
     b13_status_label.text = "B-13"

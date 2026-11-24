@@ -235,7 +235,7 @@ func _interact(id: String) -> void:
             if burial_queue.has_pending():
                 _start_osvaldo_work()
             elif is_b13_buried():
-                _offer_field_job()
+                _show("Seu Osvaldo","Sem ordens autorizadas agora. O escritorio manda os proximos clientes. Ate o alem tem expediente!",[{"text":"Voltar","action":"close"}])
             elif stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
             else:
@@ -301,7 +301,7 @@ func _on_choice(action: String) -> void:
         _notify("Siga ao jazigo marcado. E ou INTERAGIR para cavar.",4.0)
         return
     if action == "field_next":
-        _create_field_job()
+        _close()
         return
     if action == "field_finish":
         var order: Dictionary = burial_queue.pending()
@@ -1014,6 +1014,8 @@ func _burial_finished(success: bool, quality: int, service_id: String) -> void:
             compliance = mini(100, compliance + 2)
             if service_id.begins_with("field_"):
                 money += 180
+            if service_id.begins_with("case_"):
+                rooms.complete_burial(service_id)
     _save_game()
     if registered:
         _notify("Sepultamento registrado! Seu Osvaldo aprovou o servico. Qualidade: %d%%" % quality, 4.0)

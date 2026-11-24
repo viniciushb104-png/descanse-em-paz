@@ -7,6 +7,9 @@ const DIALOGUES = preload("res://scripts/systems/dialogue_scenes.gd")
 var room: String = ""
 var return_point := Vector2(748,714)
 var case_index: int = 0
+var pending_burial_id := ""
+const BURIAL_CASES := [1,5,16]
+const FIELD = preload("res://scripts/world/burial_field.gd")
 var inventory: Dictionary = {"caixao":2,"urna":1}
 var skip_entry: bool = false
 var changing: bool = false
@@ -29,6 +32,7 @@ func save_state(cfg: ConfigFile) -> void:
     cfg.set_value("save","current_room",room)
     cfg.set_value("save","return_point",return_point)
     cfg.set_value("save","case_index",case_index)
+    cfg.set_value("save","case_pending_burial",pending_burial_id)
     cfg.set_value("save","stock",inventory)
     cfg.set_value("save","case_dialogue_step",dialogue_step)
     cfg.set_value("save","case_dialogue_grades",dialogue_grades)
@@ -44,6 +48,7 @@ func load_state(cfg: ConfigFile) -> void:
         room = ""
     return_point = cfg.get_value("save","return_point",Vector2(748,714))
     case_index = clampi(int(cfg.get_value("save","case_index",0)),0,CASES.total())
+    pending_burial_id = str(cfg.get_value("save","case_pending_burial",""))
     inventory = cfg.get_value("save","stock",{"caixao":2,"urna":1})
     for product in ["caixao","urna"]:
         inventory[product] = maxi(0,int(inventory.get(product,0)))
@@ -199,6 +204,9 @@ func show_board() -> void:
         [{"text":"Fechar","action":"close"}])
 
 func show_case() -> void:
+    if not pending_burial_id.is_empty():
+        game()._show("Sepultamento pendente","O atendimento ainda nao terminou. Procure Seu Osvaldo no cemiterio.",[{"text":"Voltar","action":"close"}])
+        return
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         show_board()
@@ -369,6 +377,9 @@ func purchase(kind: String) -> void:
     stock_menu()
 
 func finish_case() -> void:
+    if not pending_burial_id.is_empty():
+        show_case()
+        return
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         show_board()
@@ -387,27 +398,39 @@ func finish_case() -> void:
     if not inside() or room != str(item["room"]):
         game()._show("Local incorreto","Encontre a pessoa na sala indicada pelo livro de casos.",[{"text":"Voltar","action":"close"}])
         return
+    var burial_required := int(item["id"]) in BURIAL_CASES
+    var chosen_plot := ""
+    if burial_required:
+        for plot in FIELD.plots():
+            var id: String = plot["id"]
+            if id=="B-13":
+                continue
+            var used := false
+            for order in game().burial_queue.orders:
+                if str(order["plot"])==id:
+                    used = true
+                    break
+            if not used:
+                chosen_plot = id
+                break
+        if chosen_plot.is_empty():
+            game()._show("Sem jazigos livres","Nao ha vaga para este atendimento.",[{"text":"Voltar","action":"close"}])
+            return
     var needed: String = str(item["stock"])
     if not needed.is_empty():
         if int(inventory.get(needed,0)) <= 0:
             game()._show("Estoque insuficiente","Precisamos de um(a) "+needed+". Va ao Emporio e compre suprimentos antes de concluir.",[{"text":"Entendi","action":"close"}])
             return
+    if burial_required:
+        var id := "case_%d" % int(item["id"])
+        # Confirmação explícita do contrato fictício antes de liberar o campo.
+        game()._show("Ordem de sepultamento", "A familia solicita enterro no jazigo "+chosen_plot+". Confirme que a documentacao e a autorizacao ficticias foram conferidas.",[{"text":"Conferir e autorizar","action":"case_authorize_burial"},{"text":"Depois","action":"close"}])
+        return
+    if not needed.is_empty():
         inventory[needed] = int(inventory[needed])-1
     game().money += int(item["reward"])
     game().reputation = mini(100,game().reputation+3)
     game().compliance = mini(100,game().compliance+2)
-    # Futuras historias so abrem ordens com metadados explicitos de
-    # sepultamento. Comprar caixao ou encerrar conversa NAO basta.
-    var work: Dictionary = item.get("burial_order", {})
-    if not work.is_empty():
-        game().burial_queue.enqueue(
-            "case_%d" % int(item["id"]),
-            str(item["client"]),
-            str(work.get("plot", "")),
-            int(game().day),
-            bool(work.get("documents_checked", false)),
-            bool(work.get("authorized", false))
-        )
     case_index += 1
     _reset_dialogue()
     game()._save_game()
@@ -415,6 +438,53 @@ func finish_case() -> void:
     game()._show("Atendimento concluido",str(item["client"])+" recebeu orientacao responsavel.\nCaixa ficticio: +R$ %d  |  Reputacao +3  |  Conformidade +2.\n\nFonte: %s" % [int(item["reward"]),str(LEGAL.ITEMS[str(item["lesson"])]["source"])],
         [{"text":"Voltar ao jogo","action":"close"},{"text":"Estudar este assunto","action":"legal_"+str(item["lesson"])}])
     game()._refresh_ui()
+
+func authorize_burial() -> void:
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty() or not pending_burial_id.is_empty() or not int(item["id"]) in BURIAL_CASES or not inside() or room!=str(item["room"]):
+        return
+    var steps: int = DIALOGUES.beat_keys(case_index).size()
+    var score := 0
+    for grade in dialogue_grades:
+        score += int(grade)
+    if dialogue_step<steps or dialogue_grades.size()<steps or awaiting_reaction or score<DIALOGUES.required_score(case_index):
+        return
+    var needed: String = item["stock"]
+    if int(inventory.get(needed,0))<=0:
+        return
+    for plot in FIELD.plots():
+        var id: String = plot["id"]
+        if id=="B-13":
+            continue
+        var used := false
+        for order in game().burial_queue.orders:
+            if str(order["plot"])==id:
+                used = true
+                break
+        if used:
+            continue
+        var key := "case_%d" % int(item["id"])
+        if game().burial_queue.enqueue(key,str(item["client"]),id,int(game().day),true,true):
+            inventory[needed] = int(inventory[needed])-1
+            pending_burial_id = key
+            game()._save_game()
+            game()._show("Servico agendado","Jazigo "+id+" reservado. A recompensa sera liberada somente apos o sepultamento. Procure Osvaldo.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
+            return
+
+func complete_burial(service_id: String) -> bool:
+    if pending_burial_id.is_empty() or service_id!=pending_burial_id or not game().burial_queue.is_done(service_id):
+        return false
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty():
+        return false
+    game().money += int(item["reward"])
+    game().reputation = mini(100,game().reputation+3)
+    game().compliance = mini(100,game().compliance+2)
+    pending_burial_id = ""
+    case_index += 1
+    _reset_dialogue()
+    update_client()
+    return true
 
 func reject_case() -> void:
     # Legacy API removed: clients are resolved through multi-step conversations.
@@ -450,6 +520,9 @@ func handle_choice(action: String) -> bool:
         "case_review":
             review_dialogue()
             return true
+        "case_authorize_burial":
+            authorize_burial()
+            return true
         "case_finalize":
             finish_case()
             return true
@@ -462,6 +535,8 @@ func handle_choice(action: String) -> bool:
     return false
 
 func objective() -> String:
+    if not pending_burial_id.is_empty():
+        return "Atendimento em andamento: conclua o sepultamento com Osvaldo."
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         return "Campanha completa: 20 casos atendidos!"
