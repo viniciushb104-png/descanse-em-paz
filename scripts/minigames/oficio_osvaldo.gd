@@ -149,7 +149,8 @@ func _press(p: Vector2) -> void:
         return
     var zones := _zones()
     for idx in range(zones.size()):
-        if not (zones[idx] as Rect2).has_point(p):
+        var candidate: Rect2 = zones[idx]
+        if not candidate.has_point(p):
             continue
         last_action_at = Time.get_ticks_msec()
         if phase == 3:
