@@ -4,6 +4,10 @@ signal phase_saved(next_phase: int)
 const TITLES = ["O Despertar dos Esquecidos","O Bosque das Lápides Perdidas","As Catacumbas do Silêncio","O Arquivo Assombrado","A Torre das Últimas Horas","Enfim, Descanse em Paz"]
 const LESSONS = ["Identifique a quadra e o jazigo antes de qualquer serviço.","Mantenha acessos livres e caminhos conservados.","Confira a identificação de cada espaço funerário.","Registros permitem localizar e conferir informações.","Planeje a manutenção e a segurança da equipe.","Identificação e respeito à memória orientam o atendimento."]
 const VIEW = Vector2(800,300)
+const GHOST_ATLAS = preload("res://assets/minigames/ghost/ghost_atlas.png")
+var ghost_frames: Dictionary = {}
+var facing_left := false
+var defeat_timer := 0.0
 var phase := 0
 var hp := 3
 var deaths := 0
@@ -58,6 +62,8 @@ func _ready() -> void:
     board.custom_minimum_size=Vector2(0,150)
     board.mouse_filter=Control.MOUSE_FILTER_IGNORE
     layout.add_child(board)
+    board.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
+    _load_ghost_art()
     board.draw.connect(_paint)
     var bar := HBoxContainer.new()
     layout.add_child(bar)
@@ -119,6 +125,8 @@ func _notification(what: int) -> void:
         jump_request=false
 func _load_phase() -> void:
     hp=3
+    defeat_timer=0.0
+    facing_left=false
     pos=Vector2(35,240)
     checkpoint=pos
     vel=Vector2.ZERO
@@ -162,14 +170,23 @@ func _damage() -> void:
     pos=checkpoint
     vel=Vector2.ZERO
     if hp<=0:
-        hp=3
+        defeat_timer=0.72
         message.text="Baltazar: Até os fantasmas merecem outra chance!"
 func _physics_process(delta: float) -> void:
     if ended or paused or not is_instance_valid(board):
         return
     elapsed+=delta
+    if defeat_timer>0.0:
+        defeat_timer=maxf(0.0,defeat_timer-delta)
+        if defeat_timer<=0.0:
+            hp=3
+            invulnerable=1.2
+        _refresh()
+        return
     invulnerable=maxf(0.0,invulnerable-delta)
     var direction:=int(right or Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-int(left or Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
+    if direction!=0:
+        facing_left=direction<0
     var running:=run_held or Input.is_physical_key_pressed(KEY_SHIFT)
     vel.x=move_toward(vel.x,float(direction)*(250.0 if running else 170.0),950.0*delta)
     if grounded and jump_request:
@@ -267,8 +284,55 @@ func _paint() -> void:
     board.draw_circle(cp-Vector2(0,35),7,Color("#ffcf75"))
     board.draw_rect(Rect2(goal_x-camera_x-12,194,24,46),Color("#9e7db0"))
     var p:=pos-Vector2(camera_x,0)
-    if invulnerable<=0.0 or int(elapsed*12.0)%2==0:
-        board.draw_circle(p-Vector2(0,20),13,Color("#e9dff5"))
-        board.draw_colored_polygon(PackedVector2Array([p+Vector2(-13,-20),p+Vector2(13,-20),p+Vector2(13,-2),p+Vector2(5,-7),p+Vector2(0,0),p+Vector2(-7,-7),p+Vector2(-13,-2)]),Color("#e9dff5"))
-        board.draw_circle(p+Vector2(-4,-22),2.5,Color("#322340"))
-        board.draw_circle(p+Vector2(5,-22),2.5,Color("#322340"))
+    var texture: Texture2D = _current_ghost_texture()
+    var rect := Rect2(p-Vector2(26,46),Vector2(52,52))
+    if facing_left:
+        rect.position.x+=rect.size.x
+        rect.size.x=-rect.size.x
+    var tint := Color.WHITE
+    if invulnerable>0.0 and int(elapsed*12.0)%2!=0:
+        tint.a=0.65
+    board.draw_texture_rect(texture,rect,false,tint)
+
+func _load_ghost_art() -> void:
+    var ranges := {"idle":Vector2i(0,1),"walk":Vector2i(1,6),"run":Vector2i(7,6),"jump":Vector2i(13,5),"float":Vector2i(18,6),"hurt":Vector2i(24,5),"defeat":Vector2i(29,6),"fall":Vector2i(35,1)}
+    for key in ranges:
+        var pair: Vector2i = ranges[key]
+        var frames: Array[Texture2D] = []
+        for i in range(pair.y):
+            var path := "res://assets/minigames/ghost/%s_%02d.png" % [key,i]
+            if ResourceLoader.exists(path):
+                var texture := load(path) as Texture2D
+                if texture!=null:
+                    frames.append(texture)
+                    continue
+            var tile := AtlasTexture.new()
+            tile.atlas=GHOST_ATLAS
+            tile.region=Rect2((pair.x+i)*32,0,32,32)
+            tile.filter_clip=true
+            frames.append(tile)
+        ghost_frames[key]=frames
+
+func _current_ghost_texture() -> Texture2D:
+    var key := "idle"
+    var frame := 0
+    if defeat_timer>0.0:
+        key="defeat"
+        frame=clampi(int((0.72-defeat_timer)*9.0),0,5)
+    elif invulnerable>0.65:
+        key="hurt"
+        frame=clampi(int((1.2-invulnerable)*9.0),0,4)
+    elif not grounded:
+        if vel.y<0.0:
+            key="jump"
+            frame=clampi(int((vel.y+365.0)/90.0),0,3)
+        elif float_left>0.0 and (jump_held or Input.is_physical_key_pressed(KEY_SPACE)):
+            key="float"
+            frame=int(elapsed*9.0)
+        else:
+            key="fall"
+    elif absf(vel.x)>8.0:
+        key="run" if absf(vel.x)>185.0 else "walk"
+        frame=int(elapsed*(14.0 if key=="run" else 9.0))
+    var frames: Array = ghost_frames[key]
+    return frames[frame%frames.size()]
