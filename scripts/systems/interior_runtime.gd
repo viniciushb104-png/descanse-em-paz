@@ -3,12 +3,21 @@ extends Node
 const CATALOG = preload("res://scripts/world/interior_catalog.gd")
 const CASES = preload("res://scripts/systems/customer_cases.gd")
 const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
+const DIALOGUES = preload("res://scripts/systems/dialogue_scenes.gd")
 var room: String = ""
 var return_point := Vector2(748,714)
 var case_index: int = 0
 var inventory: Dictionary = {"caixao":2,"urna":1}
 var skip_entry: bool = false
 var changing: bool = false
+## Progress along one conversation, preserved in save.cfg.
+var dialogue_step: int = 0
+var dialogue_grades: Array = []
+var awaiting_reaction: bool = false
+var last_grade: int = -1
+var last_reaction: String = ""
+var humor_used: bool = false
+var repairs: int = 0
 
 func game() -> Node2D:
     return get_parent() as Node2D
@@ -21,6 +30,13 @@ func save_state(cfg: ConfigFile) -> void:
     cfg.set_value("save","return_point",return_point)
     cfg.set_value("save","case_index",case_index)
     cfg.set_value("save","stock",inventory)
+    cfg.set_value("save","case_dialogue_step",dialogue_step)
+    cfg.set_value("save","case_dialogue_grades",dialogue_grades)
+    cfg.set_value("save","case_awaiting_reaction",awaiting_reaction)
+    cfg.set_value("save","case_last_grade",last_grade)
+    cfg.set_value("save","case_last_reaction",last_reaction)
+    cfg.set_value("save","case_humor_used",humor_used)
+    cfg.set_value("save","case_repairs",repairs)
 
 func load_state(cfg: ConfigFile) -> void:
     room = str(cfg.get_value("save","current_room",""))
@@ -31,6 +47,20 @@ func load_state(cfg: ConfigFile) -> void:
     inventory = cfg.get_value("save","stock",{"caixao":2,"urna":1})
     for product in ["caixao","urna"]:
         inventory[product] = maxi(0,int(inventory.get(product,0)))
+    var max_steps: int = DIALOGUES.beat_keys(case_index).size()
+    dialogue_step = clampi(int(cfg.get_value("save","case_dialogue_step",0)),0,max_steps)
+    dialogue_grades = cfg.get_value("save","case_dialogue_grades",[])
+    if not dialogue_grades is Array:
+        dialogue_grades = []
+    while dialogue_grades.size() > max_steps:
+        dialogue_grades.pop_back()
+    # Old saves have no dialogue state; their completed cases remain completed.
+    dialogue_step = mini(dialogue_step,dialogue_grades.size())
+    awaiting_reaction = bool(cfg.get_value("save","case_awaiting_reaction",false))
+    last_grade = int(cfg.get_value("save","case_last_grade",-1))
+    last_reaction = str(cfg.get_value("save","case_last_reaction",""))
+    humor_used = bool(cfg.get_value("save","case_humor_used",false))
+    repairs = maxi(0,int(cfg.get_value("save","case_repairs",0)))
 
 func apply_room() -> void:
     for item in ["GroundLayer","TreeLayer","PropsLayer","GravesLayer","DistrictLayer"]:
@@ -154,10 +184,14 @@ func interact(id: String) -> void:
 func show_board() -> void:
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
-        game()._show("Livro de ocorrencias","Todos os 20 casos foram concluidos. Santa Mortalha agradece seu cuidado.",[{"text":"Fechar","action":"close"}])
+        game()._show("Livro de ocorrencias", "Todos os 20 casos foram concluidos. Agora cada pasta registra o que foi aprendido, nao so o que foi cobrado.",[{"text":"Fechar","action":"close"}])
         return
-    game()._show("Atendimento %02d / %02d" % [case_index+1,CASES.total()],
-        str(item["client"])+" ("+str(item["profile"])+").\nLocal: "+str(CATALOG.ROOMS[item["room"]]["title"])+"\n"+str(item["context"]),
+    var tier: int = DIALOGUES.tier(case_index)
+    var tier_name: String = ["","Acolhimento","Contexto","Investigacao","Responsabilidade"][tier]
+    game()._show("Pasta %02d/%02d - %s" % [case_index+1,CASES.total(),tier_name],
+        str(item["client"])+" - "+str(item["profile"])+".\nLocal: "+str(CATALOG.ROOMS[item["room"]]["title"])+
+        "\nSituacao: "+str(item["context"])+
+        "\n\nEtapa da conversa: %d/%d. O humor pode acolher, mas nao substitui informacao ou documentos." % [dialogue_step,DIALOGUES.beat_keys(case_index).size()],
         [{"text":"Fechar","action":"close"}])
 
 func show_case() -> void:
@@ -165,12 +199,128 @@ func show_case() -> void:
     if item.is_empty():
         show_board()
         return
-    if str(item["room"]) != room:
-        game()._show("Sala de espera","O proximo cliente aguarda em: "+str(CATALOG.ROOMS[item["room"]]["title"])+".",[{"text":"Fechar","action":"close"}])
+    if not inside() or str(item["room"]) != room:
+        game()._show("Sala de espera","O proximo cliente aguarda em "+str(CATALOG.ROOMS[item["room"]]["title"])+".",[{"text":"Fechar","action":"close"}])
         return
-    game()._show(str(item["client"])+" | Caso %02d" % (case_index+1),
-        str(item["context"])+"\n\nQual e a conduta adequada?",
-        [{"text":str(item["best"]),"action":"case_best"},{"text":str(item["bad"]),"action":"case_bad"},{"text":"Fechar","action":"close"}])
+    if awaiting_reaction:
+        _show_reaction()
+    elif dialogue_step >= DIALOGUES.beat_keys(case_index).size():
+        _audit()
+    else:
+        _show_beat()
+
+func _show_beat() -> void:
+    var item: Dictionary = CASES.active(case_index)
+    var beat: Dictionary = DIALOGUES.scene(case_index,dialogue_step,str(item.get("client","Cliente")))
+    if beat.is_empty():
+        _audit()
+        return
+    var responses: Array = []
+    for index in range((beat["choices"] as Array).size()):
+        var option: Dictionary = beat["choices"][index]
+        responses.append({"text":str(option["text"]),"action":"case_pick_"+str(index)})
+    responses.append({"text":"Consultar o livro de ocorrencias","action":"case_board"})
+    var chapter: String = "Dificuldade %d/4 | Conversa %d/%d" % [int(beat["tier"]),dialogue_step+1,int(beat["total"])]
+    game()._show_character(str(item["client"]),chapter+"\n\n"+str(beat["line"]),str(item["profile"]),responses)
+
+func choose_dialogue_option(index: int) -> void:
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty() or not inside() or room != str(item["room"]) or awaiting_reaction:
+        return
+    var beat: Dictionary = DIALOGUES.scene(case_index,dialogue_step,str(item["client"]))
+    if beat.is_empty() or index < 0 or index >= (beat["choices"] as Array).size():
+        return
+    var reaction: Dictionary = DIALOGUES.reaction(case_index,dialogue_step,index,str(item["client"]))
+    if reaction.is_empty():
+        return
+    last_grade = int(reaction["score"])
+    last_reaction = str(reaction["line"])
+    if last_grade > 0:
+        if dialogue_grades.size() == dialogue_step:
+            dialogue_grades.append(last_grade)
+        elif dialogue_step < dialogue_grades.size():
+            dialogue_grades[dialogue_step] = last_grade
+        if str(reaction["tone"]) == "humor":
+            humor_used = true
+    else:
+        # A hypothetical shortcut is blocked before any non-compliant service occurs.
+        repairs += 1
+        game().reputation = maxi(0,game().reputation-1)
+        game().compliance = maxi(0,game().compliance-2)
+    awaiting_reaction = true
+    game()._save_game()
+    _show_reaction()
+    game()._refresh_ui()
+
+func _show_reaction() -> void:
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty():
+        return
+    var response: Array = [{"text":"Reconsiderar e esclarecer o passo","action":"case_retry"}] if last_grade == 0 else [{"text":"Continuar conversa","action":"case_advance"}]
+    response.append({"text":"Retomar mais tarde","action":"close"})
+    game()._show_character(str(item["client"]),last_reaction,str(item["profile"]),response)
+
+func advance_dialogue() -> void:
+    if not awaiting_reaction:
+        return
+    awaiting_reaction = false
+    if last_grade > 0:
+        dialogue_step += 1
+    last_grade = -1
+    last_reaction = ""
+    game()._save_game()
+    show_case()
+
+func retry_dialogue() -> void:
+    if not awaiting_reaction or last_grade != 0:
+        return
+    awaiting_reaction = false
+    last_grade = -1
+    last_reaction = ""
+    game()._save_game()
+    show_case()
+
+func _audit() -> void:
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty():
+        return
+    var total_steps: int = DIALOGUES.beat_keys(case_index).size()
+    if dialogue_step < total_steps or dialogue_grades.size() < total_steps:
+        _show_beat()
+        return
+    var achieved: int = 0
+    for grade in dialogue_grades:
+        achieved += int(grade)
+    if achieved < DIALOGUES.required_score(case_index):
+        game()._show("Revisao do atendimento",
+            "Voce ouviu o cliente, mas algumas partes ficaram incompletas. O trabalho profissional exige juntar clareza, procedimento e respeito.\n\nReleia as pistas e retome a conversa; nenhuma contratacao sera executada precipitadamente.",
+            [{"text":"Revisar trechos pendentes","action":"case_review"},{"text":"Consultar a referencia","action":"legal_"+str(item["lesson"])},{"text":"Voltar depois","action":"close"}])
+        return
+    var summary: String = "Os fatos foram conferidos. Seu acolhimento %s foi uma boa escolha. Agora finalize o atendimento e registre os itens combinados." % ("com humor respeitoso" if humor_used else "atencioso")
+    game()._show("Analise concluida",summary,[{"text":"Concluir com registro","action":"case_finalize"},{"text":"Consultar fundamento legal","action":"legal_"+str(item["lesson"])},{"text":"Voltar depois","action":"close"}])
+
+func review_dialogue() -> void:
+    var first_partial: int = -1
+    for idx in range(dialogue_grades.size()):
+        if int(dialogue_grades[idx]) < 2:
+            first_partial = idx
+            break
+    dialogue_step = maxi(0,first_partial)
+    dialogue_grades.resize(dialogue_step)
+    awaiting_reaction = false
+    last_grade = -1
+    last_reaction = ""
+    game()._save_game()
+    show_case()
+
+func _reset_dialogue() -> void:
+    dialogue_step = 0
+    dialogue_grades.clear()
+    awaiting_reaction = false
+    last_grade = -1
+    last_reaction = ""
+    humor_used = false
+    repairs = 0
 
 func stock_menu() -> void:
     game()._show("Gervasio Caixote - Emporio","Estoque: %d caixoes, %d urnas cinerarias. Valores ficticios de suprimentos. Comprar exige conferir procedencia, condicoes e nota fiscal." % [int(inventory["caixao"]),int(inventory["urna"])],
@@ -193,6 +343,17 @@ func finish_case() -> void:
     if item.is_empty():
         show_board()
         return
+    # Completion requires the whole conversation, not a single 'correct' button.
+    var steps: int = DIALOGUES.beat_keys(case_index).size()
+    if dialogue_step < steps or dialogue_grades.size() < steps or awaiting_reaction:
+        show_case()
+        return
+    var total_grade: int = 0
+    for grade in dialogue_grades:
+        total_grade += int(grade)
+    if total_grade < DIALOGUES.required_score(case_index):
+        _audit()
+        return
     if not inside() or room != str(item["room"]):
         game()._show("Local incorreto","Encontre a pessoa na sala indicada pelo livro de casos.",[{"text":"Voltar","action":"close"}])
         return
@@ -206,6 +367,7 @@ func finish_case() -> void:
     game().reputation = mini(100,game().reputation+3)
     game().compliance = mini(100,game().compliance+2)
     case_index += 1
+    _reset_dialogue()
     game()._save_game()
     update_client()
     game()._show("Atendimento concluido","O atendimento de "+str(item["client"])+" foi responsavel.\nCaixa ficticio: +R$ %d; reputacao +3; conformidade +2.\n\nFonte educativa: %s" % [int(item["reward"]),str(LEGAL.ITEMS[str(item["lesson"])]["source"])],
@@ -213,15 +375,15 @@ func finish_case() -> void:
     game()._refresh_ui()
 
 func reject_case() -> void:
-    var item: Dictionary = CASES.active(case_index)
-    if item.is_empty():
-        return
-    game().reputation = maxi(0,game().reputation-3)
-    game().compliance = maxi(0,game().compliance-4)
-    game()._save_game()
-    game()._show("Conduta inadequada","Essa alternativa prejudica o cliente. O caso continua pendente.\n\n"+LEGAL.info(str(item["lesson"])),[{"text":"Tentar novamente","action":"close"}])
+    # Legacy API removed: clients are resolved through multi-step conversations.
+    show_case()
 
 func handle_choice(action: String) -> bool:
+    if action.begins_with("case_pick_"):
+        var number: String = action.trim_prefix("case_pick_")
+        if number.is_valid_int():
+            choose_dialogue_option(int(number))
+        return true
     if action.begins_with("enter_"):
         enter(action.trim_prefix("enter_"))
         return true
@@ -237,11 +399,17 @@ func handle_choice(action: String) -> bool:
         "case_board":
             show_board()
             return true
-        "case_best":
-            finish_case()
+        "case_advance":
+            advance_dialogue()
             return true
-        "case_bad":
-            reject_case()
+        "case_retry":
+            retry_dialogue()
+            return true
+        "case_review":
+            review_dialogue()
+            return true
+        "case_finalize":
+            finish_case()
             return true
         "stock_caixao":
             purchase("caixao")
@@ -255,4 +423,4 @@ func objective() -> String:
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         return "Campanha completa: 20 casos atendidos!"
-    return "Caso %02d/%02d: %s.\nLocal: %s" % [case_index+1,CASES.total(),str(item["client"]),str(CATALOG.ROOMS[item["room"]]["title"])]
+    return "Caso %02d/%02d | Nivel %d/4: %s.\nLocal: %s" % [case_index+1,CASES.total(),DIALOGUES.tier(case_index),str(item["client"]),str(CATALOG.ROOMS[item["room"]]["title"])]
