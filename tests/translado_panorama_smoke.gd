@@ -35,5 +35,14 @@ func _run() -> void:
             push_error("Escala de perspectiva incorreta")
             quit(105)
             return
+    for tex in [ARCADE.ROAD_ASPHALT,ARCADE.ROAD_COBBLES,ARCADE.ROAD_SHOULDER,ARCADE.ROAD_CURB,ARCADE.ROAD_MARKINGS,ARCADE.ROAD_FINISH,ARCADE.ROAD_CURVE,ARCADE.ROAD_CEMETERY]:
+        if tex == null or tex.get_width() < 1 or tex.get_height() < 1:
+            push_error("Arte de estrada ausente")
+            quit(106)
+            return
+    if game._surface_at(750.0)!=ARCADE.ROAD_COBBLES or game._surface_at(1200.0)!=ARCADE.ROAD_ASPHALT:
+        push_error("Piso incorreto")
+        quit(107)
+        return
     print("TRANSLADO PANORAMAS OK: 6 texturas HD, 6 regioes e transicao.")
     quit(0)

@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.5 HD"
+const BUILD_LABEL := "ARCADE 2.6"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -21,6 +21,14 @@ var control_buttons := {}
 var brake_active := false
 const HEARSE = preload("res://assets/sprites/hearse_arcade/rear.png")
 const TRAFFIC = [preload("res://assets/sprites/traffic/red.png"),preload("res://assets/sprites/traffic/blue.png"),preload("res://assets/sprites/traffic/wagon.png"),preload("res://assets/sprites/traffic/pickup.png"),preload("res://assets/sprites/traffic/van.png"),preload("res://assets/sprites/traffic/taxi.png")]
+const ROAD_ASPHALT = preload("res://assets/road/asphalt.webp")
+const ROAD_COBBLES = preload("res://assets/road/cobbles.webp")
+const ROAD_SHOULDER = preload("res://assets/road/shoulder.webp")
+const ROAD_CURB = preload("res://assets/road/curb.webp")
+const ROAD_MARKINGS = preload("res://assets/road/markings.webp")
+const ROAD_FINISH = preload("res://assets/road/finish.webp")
+const ROAD_CURVE = preload("res://assets/road/curve.webp")
+const ROAD_CEMETERY = preload("res://assets/road/cemetery.webp")
 const PANORAMAS = [
     preload("res://assets/panoramas/translado/bg_bairro.webp"),
     preload("res://assets/panoramas/translado/bg_cidade.webp"),
@@ -50,6 +58,8 @@ func _ready() -> void:
     info.add_theme_font_size_override("font_size",22)
     frame.add_child(info)
     board = Control.new()
+    board.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+    board.clip_contents = true
     board.size_flags_vertical = Control.SIZE_EXPAND_FILL
     board.custom_minimum_size = Vector2(0,200)
     board.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -168,19 +178,9 @@ func _paint() -> void:
     board.draw_set_transform((board.size-VIEW*k)/2.0,0.0,Vector2.ONE*k)
     board.draw_rect(Rect2(Vector2.ZERO,VIEW),Color("#251d40"))
     _paint_panorama()
-    for i in range(48):
-        var a := float(i)/48.0
-        var b := float(i+1)/48.0
-        var z := distance+(1.0-a)*DEPTH
-        var stripe := int(z/24.0)%2==0
-        var p := _road_point(a,0)
-        var q := _road_point(b,0)
-        board.draw_rect(Rect2(0,p.y,960,q.y-p.y+1),Color("#34463e") if stripe else Color("#2d3c38"))
-        _quad(_road_point(a,-1.08),_road_point(a,1.08),_road_point(b,1.08),_road_point(b,-1.08),Color("#b5a38f") if stripe else Color("#694759"))
-        _quad(_road_point(a,-1),_road_point(a,1),_road_point(b,1),_road_point(b,-1),Color("#555263") if stripe else Color("#504e60"))
-        if stripe:
-            for lane in [-0.33,0.33]:
-                _quad(_road_point(a,lane-0.012),_road_point(a,lane+0.012),_road_point(b,lane+0.012),_road_point(b,lane-0.012),Color("#c5b692"))
+    _paint_road()
+    _paint_finish()
+    _paint_signs()
     for i in range(15,0,-1):
         var z := floorf(distance/48.0)*48.0+float(i)*48.0
         var t := 1.0-(z-distance)/DEPTH
@@ -203,13 +203,6 @@ func _paint() -> void:
             _player_car(Vector2(480.0+lateral*365.0,PLAYER_Y))
             player_drawn = true
         _traffic(p, t,int(obstacle["model"]))
-    var finish_ahead := LENGTH-distance
-    if finish_ahead<DEPTH:
-        var t := 1.0-finish_ahead/DEPTH
-        var p := _road_point(t,0)
-        var w := (_road_point(t,1)-_road_point(t,-1)).length()
-        board.draw_rect(Rect2(p.x-w/2,p.y-5,w,9),Color("#90d6a6"))
-        board.draw_string(ThemeDB.fallback_font,p+Vector2(-36,-12),"CHEGADA",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("#e8ffdd"))
     if not player_drawn:
         _player_car(Vector2(480.0+lateral*365.0,PLAYER_Y))
     board.draw_rect(Rect2(8,6,385,69),Color(0.07,0.045,0.11,0.74))
@@ -252,6 +245,62 @@ func _draw_panorama_region(tex: Texture2D, area: Rect2, drift: float, alpha: flo
     var source_x := (float(tex.get_width())-source_size.x)/2.0-drift/scale_factor
     var source_y := (float(tex.get_height())-source_size.y)*0.62
     board.draw_texture_rect_region(tex,area,Rect2(Vector2(source_x,source_y),source_size),Color(1.0,1.0,1.0,alpha))
+
+# UVs advance in world coordinates, not in screen coordinates.
+func _road_strip(a: float,b: float,left: float,right: float,tex: Texture2D,tiles: float,period: float,tint: Color = Color.WHITE) -> void:
+    var va := (distance+(1.0-a)*DEPTH)/period
+    var vb := (distance+(1.0-b)*DEPTH)/period
+    var points := PackedVector2Array([_road_point(a,left),_road_point(a,right),_road_point(b,right),_road_point(b,left)])
+    var uv := PackedVector2Array([Vector2(0,va),Vector2(tiles,va),Vector2(tiles,vb),Vector2(0,vb)])
+    board.draw_polygon(points,PackedColorArray([tint,tint,tint,tint]),uv,tex)
+
+func _surface_at(z: float) -> Texture2D:
+    var region := _panorama_index(z)
+    return ROAD_COBBLES if region in [1,5] else ROAD_ASPHALT
+
+func _paint_road() -> void:
+    for i in range(64):
+        var a := float(i)/64.0
+        var b := float(i+1)/64.0
+        var z := distance+(1.0-(a+b)*0.5)*DEPTH
+        var p := _road_point(a,0.0)
+        var q := _road_point(b,0.0)
+        var light := lerpf(0.58,1.0,a)
+        var tint := Color(light,light,light,1.0)
+        board.draw_rect(Rect2(0,p.y,VIEW.x,q.y-p.y+1),Color("#3a4237"))
+        _road_strip(a,b,-5.0,5.0,ROAD_SHOULDER,22.0,72.0,tint)
+        if _panorama_index(z) in [0,1,5]:
+            _road_strip(a,b,-1.19,-1.0,ROAD_CURB,1.0,100.0,tint)
+            _road_strip(a,b,1.0,1.19,ROAD_CURB,1.0,100.0,tint)
+        _road_strip(a,b,-1.0,1.0,_surface_at(z),6.0,65.0,tint)
+        if int(z/24.0)%2==0:
+            for lane in [-0.33,0.33]:
+                _quad(_road_point(a,lane-0.012),_road_point(a,lane+0.012),_road_point(b,lane+0.012),_road_point(b,lane-0.012),Color("#c5b692"))
+                _road_strip(a,b,lane-0.012,lane+0.012,ROAD_MARKINGS,1.0,48.0)
+
+func _paint_finish() -> void:
+    var ahead := LENGTH-distance
+    if ahead<0.0 or ahead>DEPTH:
+        return
+    var t := 1.0-ahead/DEPTH
+    var p := _road_point(t,0.0)
+    var w := (_road_point(t,1.0)-_road_point(t,-1.0)).length()
+    var height := maxf(3.0,32.0*t)
+    board.draw_texture_rect(ROAD_FINISH,Rect2(p.x-w/2,p.y-height/2,w,height),false)
+    board.draw_string(ThemeDB.fallback_font,p+Vector2(-36,-height-5),"CHEGADA",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("#e8ffdd"))
+
+func _paint_signs() -> void:
+    for z in [180.0,620.0,1100.0,1650.0,2200.0,2720.0]:
+        var ahead := float(z)-distance
+        if ahead<0.0 or ahead>DEPTH:
+            continue
+        var t := 1.0-ahead/DEPTH
+        var p := _road_point(t,1.32)
+        var tex: Texture2D = ROAD_CEMETERY if z==2720.0 else ROAD_CURVE
+        var h := lerpf(5.0,132.0,t)
+        var w := h*float(tex.get_width())/float(tex.get_height())
+        board.draw_texture_rect(tex,Rect2(p.x-w/2,p.y-h,w,h),false,Color.WHITE,false)
+        # Direction sign retains its original readable orientation.
 
 func _traffic_width(t: float, model: int) -> float:
     var player_depth := (PLAYER_Y-HORIZON)/(VIEW.y-HORIZON)
