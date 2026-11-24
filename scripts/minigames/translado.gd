@@ -17,6 +17,7 @@ var touch_keys := {}
 var control_buttons := {}
 var brake_active := false
 const HEARSE = preload("res://assets/sprites/hearse_arcade/rear.png")
+const TRAFFIC = [preload("res://assets/sprites/traffic/red.png"),preload("res://assets/sprites/traffic/blue.png"),preload("res://assets/sprites/traffic/wagon.png"),preload("res://assets/sprites/traffic/pickup.png"),preload("res://assets/sprites/traffic/van.png"),preload("res://assets/sprites/traffic/taxi.png")]
 var info: Label
 var board: Control
 var hit_timer := 0.0
@@ -27,7 +28,7 @@ var flash := 0.0
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     for i in range(1,14):
-        obstacles.append({"z":float(i)*205.0+120.0,"lane": [-0.63,0.63,0.0,0.63,-0.63][i%5],"hit":false})
+        obstacles.append({"z":float(i)*205.0+120.0,"lane": [-0.63,0.63,0.0,0.63,-0.63][i%5],"hit":false,"model":(i-1)%TRAFFIC.size()})
     var frame := VBoxContainer.new()
     add_child(frame)
     frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -190,7 +191,7 @@ func _paint() -> void:
             continue
         var t := 1.0-ahead/DEPTH
         var p := _road_point(t,float(obstacle["lane"]))
-        _traffic(p, maxf(0.08,t))
+        _traffic(p, maxf(0.08,t),int(obstacle["model"]))
     var finish_ahead := LENGTH-distance
     if finish_ahead<DEPTH:
         var t := 1.0-finish_ahead/DEPTH
@@ -210,13 +211,12 @@ func _paint() -> void:
         board.draw_rect(Rect2(0,0,960,480),Color(0.9,0.25,0.2,flash*0.45))
     board.draw_set_transform(Vector2.ZERO)
 
-func _traffic(p: Vector2,t: float) -> void:
-    var w := 70.0*t
-    var h := 46.0*t
-    board.draw_rect(Rect2(p.x-w/2,p.y-h,w,h),Color("#2d283a"))
-    board.draw_rect(Rect2(p.x-w*0.36,p.y-h*0.85,w*0.72,h*0.36),Color("#807790"))
-    board.draw_rect(Rect2(p.x-w*0.44,p.y-h*0.25,w*0.18,h*0.15),Color("#e36a58"))
-    board.draw_rect(Rect2(p.x+w*0.26,p.y-h*0.25,w*0.18,h*0.15),Color("#e36a58"))
+func _traffic(p: Vector2,t: float,model: int) -> void:
+    var tex: Texture2D = TRAFFIC[model]
+    var w := (100.0 if model in [2,3,4] else 88.0)*t
+    var h := w*float(tex.get_height())/float(tex.get_width())
+    board.draw_rect(Rect2(p.x-w*0.4,p.y-2*t,w*0.8,5*t),Color(0,0,0,0.28))
+    board.draw_texture_rect(tex,Rect2(p.x-w/2,p.y-h,w,h),false)
 
 func _player_car(p: Vector2) -> void:
     var x := p.x+steering*5.0
