@@ -77,6 +77,9 @@ jobs:
       - name: Testar seis panoramas do translado
         run: godot --headless --path . --script res://tests/translado_panorama_smoke.gd
 
+      - name: Validar retratos expressivos e galeria do Diario
+        run: godot --headless --path . --script res://tests/portraits_expressions_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

@@ -131,3 +131,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Baltazar, Seu Osvaldo e Madame Amália trocam imagens automaticamente. Para os demais, mantemos as molduras anteriores.
 - Rostos dinâmicos permanecem visíveis atrás das molduras vazias; textos não são pintados nos PNGs.
 - Testes de leitura e alternativas no PC/mobile, `tests/dialogue_lote1_smoke.gd`. Documentação: `docs/DIALOGUE_LOTE_01_V127.md`.
+
+## Versão 1.2.8 — Retratos expressivos de Baltazar, Osvaldo e Amália
+- 12 PNGs transparentes em `assets/portraits/expressions/`, quatro emoções por personagem, otimizados a 352×352.
+- Sem molduras duplicadas: Osvaldo e Baltazar já usam ornamentos integrados, e Amália conserva a moldura externa do lote 1.
+- Galeria interativa pelo Diário (tecla J no PC, botão Diário no celular), sem interferir no progresso.
+- Expressões contextuais nos diálogos e fallback para os demais personagens. Teste dedicado em `tests/portraits_expressions_smoke.gd`.

@@ -34,15 +34,16 @@ func _run() -> void:
             push_error("O PNG correto nao acompanha o personagem: "+identity)
             quit(172)
             return
-        if not ornament.visible or not plate.visible or not portrait.visible or not game.dialog_role.visible:
-            push_error("Ornamento ou retrato invisivel: "+identity)
+        var expected_separate_frame: bool = identity == "amalia"
+        if ornament.visible != expected_separate_frame or not plate.visible or not portrait.visible or not game.dialog_role.visible:
+            push_error("Moldura duplicada ou retrato invisivel: "+identity)
             quit(173)
             return
         if portrait.position.x+portrait.size.x >= body.position.x or body.size.y<90.0:
             push_error("Retrato cobriu a fala: "+identity)
             quit(174)
             return
-        if choices.position.y <= portrait.position.y+portrait.size.y:
+        if Rect2(portrait.position,portrait.size).intersects(Rect2(choices.position,choices.size)):
             push_error("Respostas colidiram com a imagem: "+identity)
             quit(175)
             return

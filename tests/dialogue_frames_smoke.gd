@@ -30,7 +30,7 @@ func _run() -> void:
         push_error("Retrato invadiu a area da fala")
         quit(143)
         return
-    if choices_scroll.position.y <= portrait.position.y+portrait.size.y:
+    if Rect2(portrait.position,portrait.size).intersects(Rect2(choices_scroll.position,choices_scroll.size)):
         push_error("Escolhas colidiram com a moldura do retrato")
         quit(144)
         return
