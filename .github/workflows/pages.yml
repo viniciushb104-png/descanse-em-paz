@@ -63,6 +63,9 @@ jobs:
       - name: Validar piso e conexao dos caminhos
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-ground_smoke" godot --headless --path . --script res://tests/ground_smoke.gd
 
+      - name: Validar lobby ornamental, placas, iluminacao e interiores
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-lobby_smoke" godot --headless --path . --script res://tests/lobby_smoke.gd
+
       - name: Testar dez sprites individuais e acesso ao B-13
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" godot --headless --path . --script res://tests/graves_smoke.gd
 
