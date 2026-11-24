@@ -197,7 +197,7 @@ func _interact(id: String) -> void:
             else:
                 _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "carro":
-            _show("Seu Osvaldo", "Ô chefe! Este é o carro da Última Viagem. Treine à vontade, mas não transforme translado em recrutamento! Serviço bem feito rende dinheiro e confiança.", [{"text":"Treinar sem custos", "action":"drive_training"}, {"text":"Aceitar translado remunerado", "action":"drive_job"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+            _show("Seu Osvaldo", "Ô chefe! Este é o carro da Última Viagem. Use W ou seta para cima para acelerar, A/D para virar e S ou espaço para frear. Desvie dos carros e chegue ao destino. E não transforme translado em recrutamento!", [{"text":"Treinar sem custos", "action":"drive_training"}, {"text":"Aceitar translado remunerado", "action":"drive_job"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "preparo":
             if stage == 8:
                 _show("Dona Clotilde Eternelia", "Aqui nao existe formula milagrosa! Conservacao e tanatopraxia exigem condicoes sanitarias, pessoal competente, licencas aplicaveis e residuos sob controle.", [{"text":"Conferir estrutura e equipe (R$ 90)", "action":"preparo_certo"}, {"text":"Trabalhar sem controle sanitario", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
