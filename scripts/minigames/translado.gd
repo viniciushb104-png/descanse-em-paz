@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.6"
+const BUILD_LABEL := "ARCADE 2.7"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -39,6 +39,23 @@ const PANORAMAS = [
 ]
 const REGION_NAMES := ["Bairro gótico","Centro de Santa Mortalha","Montanhas da Névoa","Castelo das Almas","Floresta dos Esquecidos","Jardim do Último Suspiro"]
 const REGION_SPAN := LENGTH / 6.0
+const ROADSIDE_DIR := "res://assets/roadside/"
+const ROADSIDE_NAMES := ["lamp","tree","pumpkins","fence","mausoleum","house","vegetation","ghost"]
+const ROADSIDE_FALLBACKS = [
+    preload("res://assets/sprites/lantern.svg"),
+    preload("res://assets/trees/Arvore_01.png"),
+    preload("res://assets/sprites/pumpkin.svg"),
+    preload("res://assets/sprites/fence.svg"),
+    preload("res://assets/props/tumulos/Tumulo_01.png"),
+    preload("res://assets/sprites/office.svg"),
+    preload("res://assets/sprites/flowers_grass.svg"),
+    preload("res://assets/sprites/baltazar_down_0.svg")
+]
+# Heights measured relative to a hearse at the same distance.
+const ROADSIDE_HEIGHTS := [105.0,230.0,45.0,85.0,170.0,240.0,35.0,70.0]
+const REGION_DECOR := [[5,0,2,3,6],[0,5,3,2,6],[1,6,0,2],[1,3,0,6],[1,6,7,2],[4,3,2,0,6,7]]
+var roadside: Array[Texture2D] = []
+var roadside_hd_count := 0
 var info: Label
 var board: Control
 var hit_timer := 0.0
@@ -48,6 +65,7 @@ var flash := 0.0
 
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _load_roadside()
     for i in range(1,14):
         obstacles.append({"z":float(i)*205.0+120.0,"lane": [-0.63,0.63,0.0,0.63,-0.63][i%5],"hit":false,"model":(i-1)%TRAFFIC.size()})
     var frame := VBoxContainer.new()
@@ -181,16 +199,7 @@ func _paint() -> void:
     _paint_road()
     _paint_finish()
     _paint_signs()
-    for i in range(15,0,-1):
-        var z := floorf(distance/48.0)*48.0+float(i)*48.0
-        var t := 1.0-(z-distance)/DEPTH
-        if t<0.0 or t>1.0:
-            continue
-        for side in [-1.0,1.0]:
-            var p := _road_point(t,side*1.17)
-            var h := 14.0+65.0*t
-            board.draw_rect(Rect2(p.x-2*t,p.y-h,4*t+1,h),Color("#22202e"))
-            board.draw_rect(Rect2(p.x-5*t,p.y-h-8*t,10*t+1,10*t+1),Color("#f5c875"))
+    _paint_roadside()
     var player_drawn := false
     for i in range(obstacles.size()-1,-1,-1):
         var obstacle: Dictionary = obstacles[i]
@@ -209,7 +218,7 @@ func _paint() -> void:
     board.draw_rect(Rect2(16,14,240,12),Color("#15131c"))
     board.draw_rect(Rect2(16,14,240*clampf(distance/LENGTH,0,1),12),Color("#d8b477"))
     board.draw_string(ThemeDB.fallback_font,Vector2(16,45),"HOSPITAL - JARDIM DO ÚLTIMO SUSPIRO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#f3e5c8"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)]+" | "+BUILD_LABEL,HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
+    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)]+" | "+BUILD_LABEL+" ("+str(roadside_hd_count)+"/8 HD)",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
     if countdown>0.0:
         board.draw_string(ThemeDB.fallback_font,Vector2(450,260),str(ceili(countdown)),HORIZONTAL_ALIGNMENT_LEFT,-1,70,Color("#f6cf84"))
     elif speed<1.0 and distance<1.0:
@@ -301,6 +310,49 @@ func _paint_signs() -> void:
         var w := h*float(tex.get_width())/float(tex.get_height())
         board.draw_texture_rect(tex,Rect2(p.x-w/2,p.y-h,w,h),false,Color.WHITE,false)
         # Direction sign retains its original readable orientation.
+
+func _load_roadside() -> void:
+    roadside.clear()
+    roadside_hd_count = 0
+    for i in range(ROADSIDE_NAMES.size()):
+        var path: String = ROADSIDE_DIR + ROADSIDE_NAMES[i] + ".webp"
+        var tex: Texture2D = ROADSIDE_FALLBACKS[i]
+        if ResourceLoader.exists(path):
+            var loaded := load(path) as Texture2D
+            if loaded != null:
+                tex = loaded
+                roadside_hd_count += 1
+        roadside.append(tex)
+
+func _roadside_kind(z: float, slot: int, side: int) -> int:
+    var options: Array = REGION_DECOR[_panorama_index(z)]
+    return int(options[posmod(slot*3+side*7,options.size())])
+
+func _paint_roadside() -> void:
+    if roadside.size()!=ROADSIDE_NAMES.size():
+        return
+    var base_slot := floori(distance/65.0)
+    # Farthest first. Objects stay fixed in world coordinates.
+    for i in range(10,0,-1):
+        var slot := base_slot+i
+        var z := float(slot)*65.0
+        var ahead := z-distance
+        if ahead<0.0 or ahead>DEPTH:
+            continue
+        var t := 1.0-ahead/DEPTH
+        var perspective := lerpf(0.045,1.0,t)
+        for side in [-1,1]:
+            var kind := _roadside_kind(z,slot,side)
+            var tex: Texture2D = roadside[kind]
+            var h: float = ROADSIDE_HEIGHTS[kind]*perspective
+            var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
+            # Anchor the inner edge outside the roadway, including broad houses.
+            var edge := _road_point(t,float(side)*1.18)
+            var x := edge.x if side>0 else edge.x-w
+            var y := edge.y
+            if kind==7:
+                y -= (20.0+sin(distance*0.035+float(slot))*7.0)*perspective
+            board.draw_texture_rect(tex,Rect2(x,y-h,w,h),false)
 
 func _traffic_width(t: float, model: int) -> float:
     var player_depth := (PLAYER_Y-HORIZON)/(VIEW.y-HORIZON)
