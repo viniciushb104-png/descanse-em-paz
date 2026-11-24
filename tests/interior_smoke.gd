@@ -78,7 +78,7 @@ func _run() -> void:
         if not str(item["stock"]).is_empty():
             r.inventory[str(item["stock"])] = 6
         r.show_case()
-        while r.dialogue_step < r.DIALOGUES.beat_keys(idx).size():
+        while r.case_index == idx and r.dialogue_step < r.DIALOGUES.beat_keys(idx).size():
             var beat: Dictionary = r.DIALOGUES.scene(idx,r.dialogue_step,str(item["client"]))
             var best: int = 0
             for n in range(3):
