@@ -184,7 +184,7 @@ func interact(id: String) -> void:
             if room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show("Catalogo Umbra","Caixoes: %d em estoque. Urnas cinerarias: %d. Escolhas opcionais devem ser explicadas e nunca impostas." % [int(inventory["caixao"]),int(inventory["urna"])],[{"text":"Consultar normas de consumo","action":"legal_valores"},{"text":"Fechar","action":"close"}])
+                game()._show("Catalogo Umbra","Caixoes: %d em estoque. Urnas cinerarias: %d. Escolhas opcionais devem ser explicadas e nunca impostas." % [int(inventory["caixao"]),int(inventory["urna"])],[{"text":"Montar homenagem floral","action":"activity_start_flowers"},{"text":"Consultar normas de consumo","action":"legal_valores"},{"text":"Fechar","action":"close"}])
             else:
                 var lesson: String = "registro"
                 match room:
@@ -367,7 +367,7 @@ func _reset_dialogue() -> void:
 
 func stock_menu() -> void:
     game()._show("Gervasio Caixote - Emporio","Estoque: %d caixoes, %d urnas cinerarias. Valores ficticios de suprimentos. Comprar exige conferir procedencia, condicoes e nota fiscal." % [int(inventory["caixao"]),int(inventory["urna"])],
-        [{"text":"Comprar 2 caixoes: R$ 240","action":"stock_caixao"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
+        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar 2 caixoes: R$ 240","action":"stock_caixao"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
 
 func purchase(kind: String) -> void:
     if not inside() or room != "fornecedor" or not inventory.has(kind):

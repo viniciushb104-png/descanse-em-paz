@@ -2,6 +2,10 @@ extends Node2D
 ## Vertical slice 0.1: exploracao, documentacao, finanças e manutencao.
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
+const ACTIVITY_CATALOG = preload("res://scripts/systems/activity_catalog.gd")
+const ACTIVITY_GAME = preload("res://scripts/minigames/district_activity.gd")
+var activity_layer: CanvasLayer
+var activity_paid: Dictionary = {}
 const WORLD := Vector2(3072.0, 2304.0)
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
@@ -122,7 +126,7 @@ func _process(delta: float) -> void:
     _refresh_ui()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-    if is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
+    if is_instance_valid(activity_layer) or is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
         return
     if not (event is InputEventKey):
         return
@@ -198,7 +202,7 @@ func _open_journal() -> void:
         work_note = "\n\nORDEM DE SEPULTAMENTO: %s\nServico liberado! Procure Seu Osvaldo no cemitério e interaja para preparar o jazigo. O trabalho pode ser retomado depois." % str(order.get("plot", "B-13"))
     elif burial_queue.is_done(BURIAL_QUEUE.INITIAL_ORDER):
         work_note = "\n\nJazigo B-13: servico concluido e registrado."
-    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n" + mission + "\n\nAtendimentos concluidos: %d/20." % rooms.case_index + work_note + "\n\nConsulte os atendentes e o Arquivo Legal. Os valores sao ficticios.", [{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
+    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n" + mission + "\n\nAtendimentos concluidos: %d/20." % rooms.case_index + work_note + "\n\nConsulte os atendentes e o Arquivo Legal. Os valores sao ficticios.", [{"text":"Atividades de Santa Mortalha","action":"activities"},{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
 func _portrait_gallery() -> void:
     _show("GALERIA DE RETRATOS","Teste visual das expressoes. O progresso e o dinheiro nao serao alterados.",[
         {"text":"Baltazar — contador fantasma","action":"portrait_select_baltazar"},
@@ -242,7 +246,7 @@ func _interact(id: String) -> void:
             if burial_queue.has_pending():
                 _start_osvaldo_work()
             elif is_b13_buried():
-                _show("Seu Osvaldo","Sem ordens autorizadas agora. O escritorio manda os proximos clientes. Ate o alem tem expediente!",[{"text":"Voltar","action":"close"}])
+                _show("Seu Osvaldo","Sem ordens autorizadas agora. O escritorio manda os proximos clientes. Ate o alem tem expediente!",[{"text":"Memórias de Osvaldo","action":"activity_start_memory"},{"text":"Fantasma fora do lugar","action":"activity_start_ghost"},{"text":"Plantão da meia-noite","action":"activity_start_patrol"},{"text":"Voltar","action":"close"}])
             elif stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
             else:
@@ -268,7 +272,7 @@ func _interact(id: String) -> void:
             if stage == 4:
                 _show("Manutencao preventiva", "Revisar caminhos, vegetacao e drenagem reduz riscos. Investimento didatico: R$ 160. Deseja autorizar?", [{"text": "Autorizar R$ 160", "action": "maintain"}, {"text": "Deixar para depois", "action": "close"}])
             else:
-                _show("Area de manutencao", "Visitas e trabalho seguros exigem caminhos, drenagem, sinalizacao e vegetacao bem cuidados.", [{"text": "Fechar", "action": "close"}])
+                _show("Area de manutencao", "Visitas e trabalho seguros exigem caminhos, drenagem, sinalizacao e vegetacao bem cuidados.", [{"text":"Cuidar do jardim","action":"activity_start_garden"},{"text": "Fechar", "action": "close"}])
         "hospital":
             if stage == 5:
                 _show("Dra. Penelope Alvorada", "A familia precisa entender o que o hospital pode emitir. Eu sou medica, nao cartorio, apesar da minha pilha de papeis parecer um!", [{"text":"Conferir a Declaracao de Obito", "action":"hospital_certo"}, {"text":"Pedir ao hospital que invente certidao", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
@@ -278,7 +282,7 @@ func _interact(id: String) -> void:
             if stage == 7:
                 _show("Arquimedes Ossario", "A limousine preta esta pronta. Mas antes: registro de rota, condicoes do veiculo, documentacao e normas de transporte. Fantasma sem carteira nao dirige!", [{"text":"Inspecionar frota (R$ 80)", "action":"garagem_certo"}, {"text":"Ignorar os requisitos", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             else:
-                _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+                _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Oficina interativa","action":"activity_start_workshop"},{"text":"Treinar direção", "action":"drive_training"}, {"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "carro":
             _show("Seu Osvaldo", "Ô chefe! Este é o carro da Última Viagem. Use W ou seta para cima para acelerar, A/D para virar e S ou espaço para frear. Desvie dos carros e chegue ao destino. E não transforme translado em recrutamento!", [{"text":"Treinar sem custos", "action":"drive_training"}, {"text":"Aceitar translado remunerado", "action":"drive_job"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "preparo":
@@ -295,13 +299,19 @@ func _interact(id: String) -> void:
             if stage == 10:
                 _show("Marcela Meia-Noite, Fiscal", "Licenciamento ambiental do cemiterio e gerenciamento de residuos nao sao aderecos goticos. Vamos conferir o plano e as exigencias!", [{"text":"Regularizar plano (R$ 140)", "action":"ambiente_certo"}, {"text":"Ignorar o licenciamento", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             else:
-                _show("Posto de Fiscalizacao", "O cemiterio tem impactos ambientais; setores tecnicos exigem gerenciamento de residuos. Regras locais variam.", [{"text":"Consultar normas", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
+                _show("Posto de Fiscalizacao", "O cemiterio tem impactos ambientais; setores tecnicos exigem gerenciamento de residuos. Regras locais variam.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Consultar normas", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
         "biblioteca":
-            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Escolha a estante!", [{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}])
+            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Escolha a estante!", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}])
         "ghost":
-            _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
+            _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text":"Organizar as contas","action":"activity_start_finance"},{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action == "activities":
+        _activity_menu()
+        return
+    if action.begins_with("activity_start_"):
+        _start_activity(action.trim_prefix("activity_start_"))
+        return
     if action == "field_begin":
         if not WAKE.done(burial_queue.pending()):
             _close()
@@ -473,6 +483,7 @@ func _next_day() -> void:
 
 func _save_game() -> void:
     var cfg := ConfigFile.new()
+    cfg.set_value("save", "activity_paid", activity_paid)
     cfg.set_value("save", "driving_completed", driving_completed)
     cfg.set_value("save", "stage", stage)
     cfg.set_value("save", "day", day)
@@ -491,6 +502,7 @@ func _load_game() -> void:
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg") != OK:
         return
+    activity_paid = cfg.get_value("save","activity_paid",{})
     driving_completed = bool(cfg.get_value("save", "driving_completed", false))
     stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 12)
     day = maxi(1, int(cfg.get_value("save", "day", 1)))
@@ -1082,3 +1094,45 @@ func _driving_finished(success: bool, bumps: int) -> void:
         comment = "Muito bem! O para-lama agradece. Agora tente um serviço de verdade."
     _save_game()
     _show("Seu Osvaldo",comment+"\nImpactos: %d | Caixa: R$ %d | Confiança: %+d" % [bumps,balance,trust],[{"text":"Voltar ao expediente","action":"close"}])
+
+func _activity_menu() -> void:
+    var options: Array = []
+    for id in ACTIVITY_CATALOG.ACTIVITIES:
+        var item: Dictionary = ACTIVITY_CATALOG.ACTIVITIES[id]
+        options.append({"text":str(item["title"])+" | "+str(item["place"]),"action":"activity_start_"+id})
+    options.append({"text":"Voltar","action":"close"})
+    _show("Atividades de Santa Mortalha","Treine os desafios livremente. Uma recompensa por atividade por dia. As missões principais e a capela continuam independentes.",options)
+
+func _start_activity(id: String) -> void:
+    if not ACTIVITY_CATALOG.ACTIVITIES.has(id) or is_instance_valid(activity_layer) or is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
+        return
+    _close()
+    dialogue_open = true
+    player.virtual_direction=Vector2.ZERO
+    player.velocity=Vector2.ZERO
+    player.set_physics_process(false)
+    activity_layer=CanvasLayer.new()
+    activity_layer.layer=101
+    add_child(activity_layer)
+    var activity = ACTIVITY_GAME.new()
+    activity.setup(id)
+    activity_layer.add_child(activity)
+    activity.finished.connect(_activity_finished.bind(id))
+    if mobile_hud!=null:
+        mobile_hud.call("set_playable",false)
+
+func _activity_finished(success: bool, quality: int, id: String) -> void:
+    if not is_instance_valid(activity_layer):
+        return
+    activity_layer.queue_free()
+    activity_layer=null
+    player.set_physics_process(true)
+    var item: Dictionary=ACTIVITY_CATALOG.ACTIVITIES[id]
+    var reward := 0
+    if success and int(activity_paid.get(id,-1))!=day:
+        reward=int(round(float(item["reward"])*maxf(0.4,float(quality)/100.0)))
+        activity_paid[id]=day
+        money+=reward
+        reputation=mini(100,reputation+1)
+    _save_game()
+    _show(str(item["title"]),("Concluído! Qualidade %d%% | R$ %d" % [quality,reward] if success else "Treino encerrado.")+"\n\n"+str(item["lesson"]),[{"text":"Voltar ao expediente","action":"close"}])
