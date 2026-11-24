@@ -4,7 +4,7 @@ signal finished(success: bool, bumps: int)
 const LENGTH := 3000.0
 const MAX_SPEED := 180.0
 const VIEW := Vector2(960,480)
-const HORIZON := 144.0
+const HORIZON := 196.0
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -18,6 +18,16 @@ var control_buttons := {}
 var brake_active := false
 const HEARSE = preload("res://assets/sprites/hearse_arcade/rear.png")
 const TRAFFIC = [preload("res://assets/sprites/traffic/red.png"),preload("res://assets/sprites/traffic/blue.png"),preload("res://assets/sprites/traffic/wagon.png"),preload("res://assets/sprites/traffic/pickup.png"),preload("res://assets/sprites/traffic/van.png"),preload("res://assets/sprites/traffic/taxi.png")]
+const PANORAMAS = [
+    preload("res://assets/panoramas/translado/bg_bairro.webp"),
+    preload("res://assets/panoramas/translado/bg_cidade.webp"),
+    preload("res://assets/panoramas/translado/bg_montanhas.webp"),
+    preload("res://assets/panoramas/translado/bg_castelo.webp"),
+    preload("res://assets/panoramas/translado/bg_floresta.webp"),
+    preload("res://assets/panoramas/translado/bg_cemiterio.webp")
+]
+const REGION_NAMES := ["Bairro gótico","Centro de Santa Mortalha","Montanhas da Névoa","Castelo das Almas","Floresta dos Esquecidos","Jardim do Último Suspiro"]
+const REGION_SPAN := LENGTH / 6.0
 var info: Label
 var board: Control
 var hit_timer := 0.0
@@ -153,14 +163,7 @@ func _paint() -> void:
     board.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     board.draw_set_transform((board.size-VIEW*k)/2.0,0.0,Vector2.ONE*k)
     board.draw_rect(Rect2(Vector2.ZERO,VIEW),Color("#251d40"))
-    board.draw_circle(Vector2(780,55),38,Color("#efdbad"))
-    board.draw_circle(Vector2(795,43),33,Color("#251d40"))
-    for i in range(18):
-        var x := float(i)*61.0-fposmod(distance*0.022,61.0)
-        var h := 22.0+float((i*37)%66)
-        board.draw_rect(Rect2(x,HORIZON-h,38,h),Color("#181827"))
-        board.draw_colored_polygon(PackedVector2Array([Vector2(x-5,HORIZON-h),Vector2(x+19,HORIZON-h-22),Vector2(x+43,HORIZON-h)]),Color("#181827"))
-        board.draw_rect(Rect2(x+14,HORIZON-h+13,6,10),Color("#b38b54"))
+    _paint_panorama()
     for i in range(48):
         var a := float(i)/48.0
         var b := float(i+1)/48.0
@@ -200,9 +203,11 @@ func _paint() -> void:
         board.draw_rect(Rect2(p.x-w/2,p.y-5,w,9),Color("#90d6a6"))
         board.draw_string(ThemeDB.fallback_font,p+Vector2(-36,-12),"CHEGADA",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("#e8ffdd"))
     _player_car(Vector2(480.0+lateral*365.0,430.0))
+    board.draw_rect(Rect2(8,6,385,69),Color(0.07,0.045,0.11,0.74))
     board.draw_rect(Rect2(16,14,240,12),Color("#15131c"))
     board.draw_rect(Rect2(16,14,240*clampf(distance/LENGTH,0,1),12),Color("#d8b477"))
     board.draw_string(ThemeDB.fallback_font,Vector2(16,45),"HOSPITAL → JARDIM DO ÚLTIMO SUSPIRO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#f3e5c8"))
+    board.draw_string(ThemeDB.fallback_font,Vector2(16,66),REGION_NAMES[_panorama_index(distance)],HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("#d9b6ed"))
     if countdown>0.0:
         board.draw_string(ThemeDB.fallback_font,Vector2(450,260),str(ceili(countdown)),HORIZONTAL_ALIGNMENT_LEFT,-1,70,Color("#f6cf84"))
     elif speed<1.0 and distance<1.0:
@@ -210,6 +215,26 @@ func _paint() -> void:
     if flash>0.0:
         board.draw_rect(Rect2(0,0,960,480),Color(0.9,0.25,0.2,flash*0.45))
     board.draw_set_transform(Vector2.ZERO)
+
+# Cada arte é um panorama completo. O deslocamento nas curvas é limitado
+# à margem lateral da textura; não há repetição visível ou lua duplicada.
+func _panorama_index(z: float) -> int:
+    return clampi(floori(z/REGION_SPAN),0,PANORAMAS.size()-1)
+
+func _panorama_blend(z: float) -> float:
+    var index := _panorama_index(z)
+    if index >= PANORAMAS.size()-1:
+        return 0.0
+    return smoothstep(0.78,1.0,clampf(z/REGION_SPAN-float(index),0.0,1.0))
+
+func _paint_panorama() -> void:
+    var index := _panorama_index(distance)
+    var blend := _panorama_blend(distance)
+    var drift := clampf(-_curve(distance)*35.0-lateral*14.0,-55.0,55.0)
+    var area := Rect2(-60.0+drift,-4.0,1080.0,HORIZON+40.0)
+    board.draw_texture_rect(PANORAMAS[index],area,false)
+    if blend>0.0 and index+1<PANORAMAS.size():
+        board.draw_texture_rect(PANORAMAS[index+1],area,false,Color(1.0,1.0,1.0,blend))
 
 func _traffic(p: Vector2,t: float,model: int) -> void:
     var tex: Texture2D = TRAFFIC[model]

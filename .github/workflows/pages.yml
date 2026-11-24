@@ -74,6 +74,9 @@ jobs:
       - name: Validar molduras PNG do lote 1 e fallbacks
         run: godot --headless --path . --script res://tests/dialogue_lote1_smoke.gd
 
+      - name: Testar seis panoramas do translado
+        run: godot --headless --path . --script res://tests/translado_panorama_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web
