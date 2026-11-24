@@ -4,16 +4,19 @@ extends Control
 ## Cada personagem tem paleta, metal e brasao definidos em dialogue_characters.gd.
 const INK := Color("#180f20")
 const PAPER := Color("#f7e8d0")
+const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
 var accent: Color = Color("#caa574")
 var shade: Color = Color("#4d314e")
 var motif: String = "book"
 var show_portrait: bool = false
+var sprite_mode: bool = false
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func set_identity(character: Dictionary) -> void:
     show_portrait = not character.is_empty()
+    sprite_mode = DIALOGUE_ART.supports(str(character.get("id","")))
     accent = Color(str(character.get("accent","#caa574")))
     shade = Color(str(character.get("shade","#4d314e")))
     motif = str(character.get("motif","book"))
@@ -23,6 +26,11 @@ func _draw() -> void:
     var w: float = size.x
     var h: float = size.y
     if w <= 100.0 or h <= 100.0:
+        return
+    if sprite_mode:
+        # Preserva a proporcao 727:299; deixa espaco inferior para o mapa.
+        var art_height: float = minf(h, w * 299.0 / 727.0)
+        draw_texture_rect(DIALOGUE_ART.BASE,Rect2(0,0,w,art_height),false)
         return
     draw_rect(Rect2(Vector2.ZERO,size),Color("#140e1a"),true)
     draw_rect(Rect2(6,6,w-12,h-12),INK.lerp(shade,0.33),true)

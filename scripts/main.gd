@@ -11,6 +11,7 @@ const MOBILE_HUD = preload("res://scripts/ui/mobile_hud.gd")
 const CLIENT_PORTRAIT = preload("res://scripts/ui/client_portrait.gd")
 const DIALOGUE_CHARACTERS = preload("res://scripts/ui/dialogue_characters.gd")
 const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
+const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -63,6 +64,8 @@ var dialog_body: Label
 var dialog_portrait: Control
 var dialog_frame: Control
 var dialog_role: Label
+var dialog_nameplate_art: TextureRect
+var dialog_portrait_frame_art: TextureRect
 var options_box: VBoxContainer
 var mobile_hud: Control
 var driving_layer: CanvasLayer
@@ -438,6 +441,7 @@ func _show(heading: String, body: String, choices: Array) -> void:
         child.queue_free()
     var character: Dictionary = DIALOGUE_CHARACTERS.resolve(heading)
     var accent := Color(str(character.get("accent","#d8b882")))
+    var illustrated: bool = DIALOGUE_ART.supports(str(character.get("id","")))
     for choice in choices:
         var btn := Button.new()
         btn.text = "%d · %s" % [options_box.get_child_count()+1,str(choice["text"])]
@@ -458,35 +462,78 @@ func _show(heading: String, body: String, choices: Array) -> void:
         btn.add_theme_stylebox_override("hover",selected)
         btn.add_theme_stylebox_override("pressed",selected)
         btn.add_theme_stylebox_override("focus",selected)
+        if illustrated:
+            # Texto permanece nativo: evita corte, permite teclado e toque.
+            btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+            btn.add_theme_stylebox_override("normal",DIALOGUE_ART.answer_style())
+            btn.add_theme_stylebox_override("hover",DIALOGUE_ART.answer_style(Color("#d7c8de")))
+            btn.add_theme_stylebox_override("pressed",DIALOGUE_ART.answer_style(Color("#bda7d1")))
+            btn.add_theme_stylebox_override("focus",DIALOGUE_ART.answer_style(Color("#eee0b8")))
         btn.pressed.connect(_on_choice.bind(str(choice["action"])))
         options_box.add_child(btn)
 
 func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String = "") -> void:
     var has_actor: bool = not actor.is_empty()
+    var identity: String = str(actor.get("id",""))
+    var illustrated: bool = DIALOGUE_ART.supports(identity)
     dialog_frame.call("set_identity",actor)
     dialog_portrait.visible = has_actor
     dialog_role.visible = has_actor
+    dialog_nameplate_art.visible = illustrated
+    dialog_portrait_frame_art.visible = illustrated
     var speech_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
+    var choices_scroll := dialog_panel.get_node("ChoicesScroll") as ScrollContainer
     if has_actor:
         dialog_portrait.call("set_actor",speaker,mood)
-        dialog_title.position = Vector2(194,21)
-        dialog_title.size = Vector2(502,35)
         dialog_title.add_theme_font_size_override("font_size",23)
         dialog_title.add_theme_color_override("font_color",Color(str(actor["accent"])).lightened(0.16))
         dialog_role.text = str(actor["role"]).to_upper()
         dialog_role.add_theme_color_override("font_color",Color(str(actor["accent"])))
+    else:
+        dialog_title.add_theme_font_size_override("font_size",23)
+        dialog_title.add_theme_color_override("font_color",Color("#dfbd87"))
+    if illustrated:
+        dialog_portrait_frame_art.texture = DIALOGUE_ART.portrait(identity)
+        dialog_nameplate_art.texture = DIALOGUE_ART.nameplate(identity)
+        # O rosto provisório fica atrás do ornamento; nenhuma borda o encobre.
+        dialog_portrait.position = Vector2(79,108)
+        dialog_portrait.size = Vector2(117,119)
+        dialog_title.position = Vector2(344,25)
+        dialog_title.size = Vector2(236,32)
+        dialog_title.add_theme_font_size_override("font_size",19)
+        dialog_title.add_theme_color_override("font_color",Color("#f8e8ca"))
+        dialog_role.position = Vector2(611,51)
+        dialog_role.size = Vector2(213,23)
+        speech_scroll.position = Vector2(295,105)
+        speech_scroll.size = Vector2(535,108)
+        dialog_body.custom_minimum_size.x = 501.0
+        choices_scroll.position = Vector2(294,234)
+        choices_scroll.size = Vector2(561,123)
+        options_box.custom_minimum_size.x = 531.0
+    elif has_actor:
+        dialog_portrait.position = Vector2(34,85)
+        dialog_portrait.size = Vector2(118,132)
+        dialog_title.position = Vector2(194,21)
+        dialog_title.size = Vector2(502,35)
+        dialog_role.position = Vector2(694,25)
+        dialog_role.size = Vector2(156,27)
         speech_scroll.position = Vector2(191,92)
         speech_scroll.size = Vector2(667,125)
         dialog_body.custom_minimum_size.x = 625.0
+        choices_scroll.position = Vector2(33,248)
+        choices_scroll.size = Vector2(825,140)
+        options_box.custom_minimum_size.x = 790.0
     else:
         dialog_title.position = Vector2(48,21)
         dialog_title.size = Vector2(755,35)
-        dialog_title.add_theme_font_size_override("font_size",23)
-        dialog_title.add_theme_color_override("font_color",Color("#dfbd87"))
         speech_scroll.position = Vector2(33,92)
         speech_scroll.size = Vector2(825,125)
         dialog_body.custom_minimum_size.x = 782.0
+        choices_scroll.position = Vector2(33,248)
+        choices_scroll.size = Vector2(825,140)
+        options_box.custom_minimum_size.x = 790.0
     speech_scroll.scroll_vertical = 0
+    choices_scroll.scroll_vertical = 0
 
 func _show_character(speaker: String, words: String, mood: String, choices: Array) -> void:
     _show(speaker, words, choices)
@@ -627,6 +674,35 @@ func _build_ui() -> void:
     dialog_portrait.visible = false
     dialog_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
     dialog_panel.add_child(dialog_portrait)
+    dialog_portrait.z_index = 1
+
+    # Ornamentos PNG acima do busto, sem capturar mouse ou toque.
+    dialog_portrait_frame_art = TextureRect.new()
+    dialog_portrait_frame_art.name = "PortraitFrameArt"
+    dialog_portrait_frame_art.position = Vector2(22,60)
+    dialog_portrait_frame_art.size = Vector2(224,235)
+    dialog_portrait_frame_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    dialog_portrait_frame_art.stretch_mode = TextureRect.STRETCH_SCALE
+    dialog_portrait_frame_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    dialog_portrait_frame_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_portrait_frame_art.z_index = 2
+    dialog_portrait_frame_art.visible = false
+    dialog_panel.add_child(dialog_portrait_frame_art)
+
+    dialog_nameplate_art = TextureRect.new()
+    dialog_nameplate_art.name = "NameplateArt"
+    dialog_nameplate_art.position = Vector2(298,0)
+    dialog_nameplate_art.size = Vector2(272,100)
+    dialog_nameplate_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    dialog_nameplate_art.stretch_mode = TextureRect.STRETCH_SCALE
+    dialog_nameplate_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    dialog_nameplate_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_nameplate_art.z_index = 2
+    dialog_nameplate_art.visible = false
+    dialog_panel.add_child(dialog_nameplate_art)
+    dialog_title.z_index = 3
+    dialog_role.z_index = 3
+    body_scroll.z_index = 3
 
     var choices_scroll := ScrollContainer.new()
     choices_scroll.name = "ChoicesScroll"
@@ -634,6 +710,7 @@ func _build_ui() -> void:
     choices_scroll.size = Vector2(825,140)
     choices_scroll.follow_focus = true
     dialog_panel.add_child(choices_scroll)
+    choices_scroll.z_index = 3
     options_box = VBoxContainer.new()
     options_box.name = "OptionsBox"
     options_box.custom_minimum_size = Vector2(790,0)

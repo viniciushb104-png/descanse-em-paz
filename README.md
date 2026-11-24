@@ -125,3 +125,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Retratos provisórios diferenciados, prontos para troca por PNG transparente de cada personagem em `assets/portraits/<id>.png`.
 - Compatível com diálogos antigos, textos longos, teclado e celular horizontal.
 - Detalhes: `docs/CAIXAS_DIALOGOS_V126.md`.
+
+## Versão 1.2.7 — Molduras ilustradas
+- Integração dos oito PNGs transparentes aprovados: base, três molduras de retrato, três placas vazias e botão ornamental.
+- Baltazar, Seu Osvaldo e Madame Amália trocam imagens automaticamente. Para os demais, mantemos as molduras anteriores.
+- Rostos dinâmicos permanecem visíveis atrás das molduras vazias; textos não são pintados nos PNGs.
+- Testes de leitura e alternativas no PC/mobile, `tests/dialogue_lote1_smoke.gd`. Documentação: `docs/DIALOGUE_LOTE_01_V127.md`.
