@@ -18,18 +18,16 @@ func _run() -> void:
         push_error("Lobby fechou o ponto de entrada do jogador")
         quit(172)
         return
-    for station in ["office","osvaldo","maintenance","ghost","plot","chapel"]:
-        var found := false
-        for target in game.STATIONS:
-            if target["id"] == station:
-                found = true
-                if not game.is_walkable(target["p"]):
-                    push_error("Sinalizacao ou decoracao bloqueou "+station)
-                    quit(173)
-                    return
-        if not found:
-            push_error("Interacao desapareceu: "+station)
-            quit(174)
+    # Pontos de interacao conhecidos: independente do acesso a const do script.
+    var points := {
+        "office":Vector2(425,476), "osvaldo":Vector2(778,638),
+        "maintenance":Vector2(1270,407), "ghost":Vector2(572,500),
+        "plot":Vector2(1125,630), "chapel":Vector2(780,-175)
+    }
+    for station in points:
+        if not game.is_walkable(points[station]):
+            push_error("Sinalizacao ou decoracao bloqueou "+str(station))
+            quit(173)
             return
     game.clock_minutes = 1080
     if decor.current_darkness() < 0.99:
