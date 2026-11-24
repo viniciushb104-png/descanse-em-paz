@@ -6,6 +6,8 @@ const ACTIVITY_CATALOG = preload("res://scripts/systems/activity_catalog.gd")
 const ACTIVITY_GAME = preload("res://scripts/minigames/district_activity.gd")
 var activity_layer: CanvasLayer
 var activity_paid: Dictionary = {}
+var ghost_phase := 0
+const GHOST_ADVENTURE = preload("res://scripts/minigames/ghost_adventure.gd")
 const WORLD := Vector2(3072.0, 2304.0)
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
@@ -483,6 +485,7 @@ func _next_day() -> void:
 
 func _save_game() -> void:
     var cfg := ConfigFile.new()
+    cfg.set_value("save", "ghost_phase",ghost_phase)
     cfg.set_value("save", "activity_paid", activity_paid)
     cfg.set_value("save", "driving_completed", driving_completed)
     cfg.set_value("save", "stage", stage)
@@ -502,6 +505,7 @@ func _load_game() -> void:
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg") != OK:
         return
+    ghost_phase=clampi(int(cfg.get_value("save","ghost_phase",0)),0,5)
     activity_paid = cfg.get_value("save","activity_paid",{})
     driving_completed = bool(cfg.get_value("save", "driving_completed", false))
     stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 12)
@@ -1114,8 +1118,14 @@ func _start_activity(id: String) -> void:
     activity_layer=CanvasLayer.new()
     activity_layer.layer=101
     add_child(activity_layer)
-    var activity = ACTIVITY_GAME.new()
-    activity.setup(id)
+    var activity: Control
+    if id=="ghost":
+        activity=GHOST_ADVENTURE.new()
+        activity.setup(ghost_phase)
+        activity.phase_saved.connect(_ghost_phase_saved)
+    else:
+        activity=ACTIVITY_GAME.new()
+        activity.setup(id)
     activity_layer.add_child(activity)
     activity.finished.connect(_activity_finished.bind(id))
     if mobile_hud!=null:
@@ -1127,6 +1137,8 @@ func _activity_finished(success: bool, quality: int, id: String) -> void:
     activity_layer.queue_free()
     activity_layer=null
     player.set_physics_process(true)
+    if success and id=="ghost":
+        ghost_phase=0
     var item: Dictionary=ACTIVITY_CATALOG.ACTIVITIES[id]
     var reward := 0
     if success and int(activity_paid.get(id,-1))!=day:
@@ -1136,3 +1148,7 @@ func _activity_finished(success: bool, quality: int, id: String) -> void:
         reputation=mini(100,reputation+1)
     _save_game()
     _show(str(item["title"]),("Concluído! Qualidade %d%% | R$ %d" % [quality,reward] if success else "Treino encerrado.")+"\n\n"+str(item["lesson"]),[{"text":"Voltar ao expediente","action":"close"}])
+
+func _ghost_phase_saved(next_phase: int) -> void:
+    ghost_phase=next_phase
+    _save_game()
