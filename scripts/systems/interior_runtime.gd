@@ -80,7 +80,7 @@ func apply_room() -> void:
     else:
         camera.zoom = Vector2(0.75,0.75)
         camera.limit_right = 3072
-        camera.limit_bottom = 1408
+        camera.limit_bottom = 2304
     update_client()
 
 func update_client() -> void:

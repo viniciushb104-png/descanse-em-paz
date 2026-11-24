@@ -1,6 +1,6 @@
 extends RefCounted
 ## Distrito dos Eternos: pontos de interacao e colisoes fixos.
-const WORLD_SIZE := Vector2(3072, 1408)
+const WORLD_SIZE := Vector2(3072, 2304)
 const BUILDINGS = [
     Rect2(1654,148,353,254),
     Rect2(1609,758,337,233),

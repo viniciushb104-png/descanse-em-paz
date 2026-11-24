@@ -2,7 +2,9 @@ extends Node2D
 ## Vertical slice 0.1: exploracao, documentacao, finanças e manutencao.
 ## Os valores sao ficticios; requisitos reais variam conforme municipio e servico.
 
-const WORLD := Vector2(3072.0, 1408.0)
+const WORLD := Vector2(3072.0, 2304.0)
+const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
+var burial_field: Node2D
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
@@ -88,6 +90,9 @@ func _ready() -> void:
     _load_game()
     if burial_queue.ensure_initial_order(stage, reserved_plot, day):
         _save_game()
+    burial_field = BURIAL_FIELD.new()
+    burial_field.name = "BurialField"
+    add_child(burial_field)
     _build_burial_marker()
     rooms.apply_room()
     _ensure_valid_player_position()
@@ -151,6 +156,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _near_station() -> Dictionary:
     if rooms.inside():
         return rooms.nearest(player.global_position)
+    if is_instance_valid(burial_field):
+        var field_station: Dictionary = burial_field.near(player.global_position)
+        if not field_station.is_empty():
+            return field_station
     # Ambos os carros usam a mesma area visual de interacao.
     for car_rect in DISTRICT_LAYOUT.HEARSE_AREAS:
         if car_rect.grow(75).has_point(player.global_position):
@@ -202,7 +211,7 @@ func _portrait_preview(identity: String, expression: String) -> void:
     _show_character(str(person["name"]),"PREVIA DOS RETRATOS\n\nConfira a expressao atual no canto esquerdo. Esta galeria nao altera as missoes.",str(person["profile"]),options,expression)
 
 func _try_interact() -> void:
-    if dialogue_open or rooms.changing:
+    if dialogue_open or rooms.changing or (is_instance_valid(burial_field) and burial_field.elapsed>=0.0):
         return
     var station := _near_station()
     if not station.is_empty():
@@ -215,6 +224,8 @@ func _interact(id: String) -> void:
     if rooms.offer_entry(id):
         return
     match id:
+        "field_dig":
+            burial_field.strike()
         "cemetery_cat":
             if is_instance_valid(cemetery_cat):
                 cemetery_cat.call("meow")
@@ -222,6 +233,8 @@ func _interact(id: String) -> void:
         "osvaldo":
             if burial_queue.has_pending():
                 _start_osvaldo_work()
+            elif is_b13_buried():
+                _offer_field_job()
             elif stage == 0:
                 _show("Seu Osvaldo, o coveiro", "Opa, chefe! Antes de um sepultamento, precisamos conferir documentos, disponibilidade de jazigo e registros. O balcao fica no escritorio. E nada de atalhos!", [{"text": "Entendido!", "action": "talk"}])
             else:
@@ -281,6 +294,22 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action == "field_begin":
+        _close()
+        burial_field.begin()
+        _notify("Siga ao jazigo marcado. E ou INTERAGIR para cavar.",4.0)
+        return
+    if action == "field_next":
+        _create_field_job()
+        return
+    if action == "field_finish":
+        var order: Dictionary = burial_queue.pending()
+        if not order.is_empty() and burial_field.count_for(str(order["plot"]))>=6 and burial_field.near(player.global_position).get("id","")=="field_dig":
+            _close()
+            _burial_finished(true,100,str(order["id"]))
+            burial_field.active = false
+            burial_field.queue_redraw()
+        return
     if action == "portrait_gallery":
         _portrait_gallery()
         return
@@ -847,8 +876,12 @@ func _refresh_ui() -> void:
     var minutes: int = int(clock_minutes)
     status_label.text = "SANTA MORTALHA  |  Dia %d  |  %02d:%02d\nCaixa R$ %d  ·  Reputacao %d/100  ·  Conformidade %d/100" % [day, int(minutes / 60.0), minutes % 60, money, reputation, compliance]
     objective_label.text = "MISSÃO DO EXPEDIENTE\n" + (rooms.objective() if stage >= 12 else OBJECTIVES[stage])
+    if is_instance_valid(burial_field) and burial_field.active and not rooms.inside():
+        var job: Dictionary = burial_queue.pending()
+        if not job.is_empty():
+            objective_label.text = "OFICIO DE OSVALDO | PA EQUIPADA\nJazigo %s - %d/6 pazadas | %s" % [str(job["plot"]),burial_field.count_for(str(job["plot"])),"Jardim ao sul" if str(job["plot"])!="B-13" else "Quadra B"]
     if mobile_hud != null:
-        mobile_hud.call("set_playable",not dialogue_open and not rooms.changing)
+        mobile_hud.call("set_playable",not dialogue_open and not rooms.changing and (not is_instance_valid(burial_field) or burial_field.elapsed<0.0))
     if dialogue_open:
         prompt_label.text = ""
     elif not rescue_notice.is_empty():
@@ -873,11 +906,13 @@ func is_walkable(world_position: Vector2) -> bool:
     # somente o corpo da administracao e do galpao, nao suas entradas.
     if world_position.x < 58.0 or world_position.x > 3025.0:
         return false
-    if world_position.y < 92.0 or world_position.y > 1350.0:
+    if world_position.y < 92.0 or world_position.y > 2245.0:
         return false
     if Rect2(196, 150, 418, 280).has_point(world_position):
         return false
     if Rect2(1138, 168, 286, 203).has_point(world_position):
+        return false
+    if is_instance_valid(burial_field) and burial_field.blocked(world_position):
         return false
     if GRAVE_LAYOUT.is_blocked(world_position):
         return false
@@ -909,30 +944,30 @@ func is_b13_buried() -> bool:
     return burial_queue.is_done(BURIAL_QUEUE.INITIAL_ORDER)
 
 func _start_osvaldo_work() -> void:
-    if is_instance_valid(burial_layer) or is_instance_valid(driving_layer) or rooms.inside():
-        return
     var service: Dictionary = burial_queue.pending()
-    if service.is_empty():
+    if service.is_empty() or rooms.inside():
         return
-    _close()
-    dialogue_open = true
-    player.virtual_direction = Vector2.ZERO
-    player.velocity = Vector2.ZERO
-    player.set_physics_process(false)
-    burial_layer = CanvasLayer.new()
-    burial_layer.name = "OsvaldoMinigameLayer"
-    burial_layer.layer = 110
-    add_child(burial_layer)
-    var backdrop := ColorRect.new()
-    backdrop.color = NIGHT
-    burial_layer.add_child(backdrop)
-    backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    var activity := BURIAL_MINIGAME.new() as Control
-    activity.configure(service)
-    backdrop.add_child(activity)
-    activity.progress_changed.connect(_burial_progress.bind(str(service["id"])))
-    activity.finished.connect(_burial_finished.bind(str(service["id"])))
-    _refresh_ui()
+    _show("Seu Osvaldo","Chefe, nada de telinha! Pegue a pa e siga ao jazigo %s. Seis pazadas e um servico digno. O defunto nao tem pressa, mas o Baltazar tem planilha." % str(service["plot"]),[{"text":"Pegar a pa e trabalhar","action":"field_begin"},{"text":"Depois","action":"close"}])
+
+func _offer_field_job() -> void:
+    for plot in BURIAL_FIELD.plots():
+        var id: String = plot["id"]
+        if id!="B-13" and not burial_queue.is_done("field_"+id):
+            _show("Seu Osvaldo","Temos outro atendimento ficticio conferido pelo escritorio: jazigo "+id+". Documentacao e autorizacao registradas. O jardim novo fica ao sul. Bora trabalhar antes que a terra cobre aluguel!",[{"text":"Aceitar ordem de servico","action":"field_next"},{"text":"Depois","action":"close"}])
+            return
+    _show("Seu Osvaldo","Todos os jazigos ocupados! Ate o alem tem limite de lotacao.",[{"text":"Voltar","action":"close"}])
+
+func _create_field_job() -> void:
+    if burial_queue.has_pending() or not is_b13_buried():
+        _close()
+        return
+    for plot in BURIAL_FIELD.plots():
+        var id: String = plot["id"]
+        if id!="B-13" and not burial_queue.is_done("field_"+id):
+            if burial_queue.enqueue("field_"+id,"Atendimento autorizado "+id,id,day,true,true):
+                _save_game()
+                _start_osvaldo_work()
+            return
 
 func _burial_progress(progress: Dictionary, service_id: String) -> void:
     burial_queue.update_progress(service_id, progress)
@@ -951,6 +986,8 @@ func _burial_finished(success: bool, quality: int, service_id: String) -> void:
         if registered:
             reputation = mini(100, reputation + (5 if quality >= 90 else 2))
             compliance = mini(100, compliance + 2)
+            if service_id.begins_with("field_"):
+                money += 180
     _save_game()
     if registered:
         _notify("Sepultamento registrado! Seu Osvaldo aprovou o servico. Qualidade: %d%%" % quality, 4.0)

@@ -3,7 +3,7 @@ extends RefCounted
 ## Malha de 32px: 48 colunas x 30 linhas. Renderizacao procedural deterministica.
 const TILE: int = 32
 const WIDTH: int = 96
-const HEIGHT: int = 44
+const HEIGHT: int = 72
 const GRASS: int = 0
 const STONE: int = 1
 const DIRT: int = 2
@@ -14,7 +14,11 @@ const DIRT_COLORS = [Color("#715243"),Color("#765645"),Color("#634a3e")]
 # Areas em unidades de tile. Ajuste estes retangulos para modificar o piso.
 # Os caminhos conectam as entradas de capela, oficina, jazigo B-13 e portao.
 const PATHS = [
-    Rect2i(22,13,4,16), # alameda central
+    Rect2i(22,13,4,58),
+    Rect2i(4,45,40,2),
+    Rect2i(4,52,40,2),
+    Rect2i(4,59,40,2),
+    Rect2i(4,66,40,2), # alameda central
     Rect2i(5,17,39,3),  # eixo leste/oeste
     Rect2i(12,12,4,5),  # escritorio
     Rect2i(38,11,4,6),  # oficina
