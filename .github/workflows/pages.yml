@@ -12,12 +12,13 @@ permissions:
 
 concurrency:
   group: godot-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     name: Validar e exportar Godot 4.7.2 para Web
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Baixar codigo
         uses: actions/checkout@v4
@@ -50,6 +51,9 @@ jobs:
                       raise SystemExit(f"Sprite do gato ausente ou vazio: {path}")
           print("Gato OK: 43 imagens PNG disponíveis antes da importação Godot")
           PY
+
+      - name: Conferir referencias obrigatorias de recursos
+        run: python3 tools/check_resources.py
 
       - name: Importar recursos e validar projeto
         run: godot --headless --path . --editor --quit
@@ -114,8 +118,12 @@ jobs:
       - name: Testar campanha de plataforma do fantasma
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-ghost" godot --headless --path . --script res://tests/ghost_adventure_smoke.gd
 
+      - name: Testar sepultamento, persistencia e conclusao unica
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-oficio" godot --headless --path . --script res://tests/oficio_osvaldo_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
+          set -euo pipefail
           mkdir -p build/web
           VERSION="game-${GITHUB_SHA:0:12}"
           godot --headless --path . --export-release "Web" "build/web/$VERSION.html"

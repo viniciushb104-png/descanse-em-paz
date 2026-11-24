@@ -39,7 +39,21 @@ func _run() -> void:
     for etapa in range(3):
         var required: int = [3,5,6][etapa]
         for idx in range(required):
-            activity.activate_target(idx)
+            if etapa == 2:
+                activity._request_target(idx)
+                activity._process(0.47)
+                if not activity.completed[2].has(idx):
+                    _fail("Golpe nao registrou progresso.", 116)
+                    return
+                var count: int = activity.completed[2].size()
+                activity._request_target(idx)
+                activity._process(0.15)
+                if activity.completed[2].size() != count:
+                    _fail("Golpe duplicado.", 117)
+                    return
+                activity._process(0.50)
+            else:
+                activity.activate_target(idx)
         if int(activity.phase) != etapa + 1:
             _fail("Etapa interativa nao avancou: %d." % etapa, 107)
             return
