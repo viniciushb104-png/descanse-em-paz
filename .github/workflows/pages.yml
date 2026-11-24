@@ -35,8 +35,27 @@ jobs:
           cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
           godot --version
 
+      - name: Extrair e conferir os 43 sprites do gato
+        run: |
+          set -euo pipefail
+          test -s assets/cat/gato_santa_mortalha_sprites.zip
+          unzip -oq assets/cat/gato_santa_mortalha_sprites.zip -d .
+          python3 - <<'PY'
+          import os
+          animations = {"idle":4,"sit":5,"walk_left":8,"walk_right":8,"meow":4,"pet":6,"purr":4,"sleep":4}
+          for animation, count in animations.items():
+              for i in range(count):
+                  path = f"assets/cat/{animation}_{i:02}.png"
+                  if not os.path.isfile(path) or os.path.getsize(path) < 100:
+                      raise SystemExit(f"Sprite do gato ausente ou vazio: {path}")
+          print("Gato OK: 43 imagens PNG disponíveis antes da importação Godot")
+          PY
+
       - name: Importar recursos e validar projeto
         run: godot --headless --path . --editor --quit
+
+      - name: Testar gato e animacoes PNG
+        run: godot --headless --path . --script res://tests/cemetery_cat_smoke.gd
 
       - name: Testar aparicao e movimento do jogador
         run: godot --headless --path . --script res://tests/smoke.gd
