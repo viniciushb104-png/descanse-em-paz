@@ -13,6 +13,10 @@ var steering := 0.0
 var bumps := 0
 var ended := false
 var held := {}
+var touch_keys := {}
+var control_buttons := {}
+var brake_active := false
+const HEARSE = preload("res://assets/sprites/hearse_arcade/rear.png")
 var info: Label
 var board: Control
 var hit_timer := 0.0
@@ -40,20 +44,22 @@ func _ready() -> void:
     board.resized.connect(board.queue_redraw)
     var controls := HBoxContainer.new()
     controls.alignment = BoxContainer.ALIGNMENT_CENTER
+    controls.add_theme_constant_override("separation",12)
     frame.add_child(controls)
     for pair in [["left","◀ Esquerda"],["right","Direita ▶"],["down","Freio"],["up","Acelerar"]]:
         var b := Button.new()
         b.text = pair[1]
         b.focus_mode = Control.FOCUS_NONE
-        b.custom_minimum_size = Vector2(125,58)
+        b.custom_minimum_size = Vector2(145,76)
         controls.add_child(b)
         var key: String = pair[0]
+        control_buttons[key] = b
         b.button_down.connect(_set_held.bind(key,true))
         b.button_up.connect(_set_held.bind(key,false))
     var exit := Button.new()
     exit.text = "Sair"
     exit.focus_mode = Control.FOCUS_NONE
-    exit.custom_minimum_size = Vector2(90,58)
+    exit.custom_minimum_size = Vector2(90,76)
     controls.add_child(exit)
     exit.pressed.connect(func(): _finish(false))
     info.text = "TRANSLADO DO ALÉM • Prepare-se!"
@@ -61,8 +67,29 @@ func _ready() -> void:
 func _set_held(key: String, value: bool) -> void:
     held[key] = value
 
+func _input(event: InputEvent) -> void:
+    if ended:
+        return
+    if event is InputEventScreenTouch:
+        if not event.pressed:
+            if touch_keys.has(event.index):
+                touch_keys.erase(event.index)
+                get_viewport().set_input_as_handled()
+            return
+        for key in control_buttons:
+            var button: Button = control_buttons[key]
+            if button.get_global_rect().has_point(event.position):
+                touch_keys[event.index] = key
+                get_viewport().set_input_as_handled()
+                return
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+        touch_keys.clear()
+        held.clear()
+
 func _held(key: String, a: int, b: int) -> bool:
-    return bool(held.get(key,false)) or Input.is_physical_key_pressed(a) or Input.is_physical_key_pressed(b)
+    return touch_keys.values().has(key) or bool(held.get(key,false)) or Input.is_physical_key_pressed(a) or Input.is_physical_key_pressed(b)
 
 func _curve(z: float) -> float:
     return sin(z/290.0)*0.65 + sin(z/610.0)*0.35
@@ -77,6 +104,7 @@ func _physics_process(delta: float) -> void:
     var turn := float(_held("right",KEY_D,KEY_RIGHT))-float(_held("left",KEY_A,KEY_LEFT))
     var accel := _held("up",KEY_W,KEY_UP)
     var brake := _held("down",KEY_S,KEY_DOWN) or Input.is_physical_key_pressed(KEY_SPACE)
+    brake_active = brake
     steering = move_toward(steering,turn,delta*9.0)
     speed = move_toward(speed,0.0 if brake else (MAX_SPEED if accel else 0.0),delta*(260.0 if brake else (115.0 if accel else 38.0)))
     var ratio := speed/MAX_SPEED
@@ -121,6 +149,7 @@ func _paint() -> void:
     var k := minf(board.size.x/VIEW.x,board.size.y/VIEW.y)
     if k<=0.0:
         return
+    board.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     board.draw_set_transform((board.size-VIEW*k)/2.0,0.0,Vector2.ONE*k)
     board.draw_rect(Rect2(Vector2.ZERO,VIEW),Color("#251d40"))
     board.draw_circle(Vector2(780,55),38,Color("#efdbad"))
@@ -191,23 +220,14 @@ func _traffic(p: Vector2,t: float) -> void:
 
 func _player_car(p: Vector2) -> void:
     var x := p.x+steering*5.0
-    var y := p.y
-    board.draw_rect(Rect2(x-68,y-8,136,16),Color(0,0,0,0.4))
-    board.draw_rect(Rect2(x-57,y-53,19,55),Color("#14101b"))
-    board.draw_rect(Rect2(x+38,y-53,19,55),Color("#14101b"))
-    board.draw_rect(Rect2(x-58,y-68,116,65),Color("#171420"))
-    board.draw_rect(Rect2(x-48,y-91,96,44),Color("#392c48"))
-    board.draw_rect(Rect2(x-42,y-84,84,31),Color("#654377"))
-    for i in range(4):
-        board.draw_rect(Rect2(x-40+i*21,y-83,10,27),Color("#392343"))
-    board.draw_rect(Rect2(x-52,y-48,104,34),Color("#292432"))
-    board.draw_rect(Rect2(x-49,y-44,18,12),Color("#e65d55"))
-    board.draw_rect(Rect2(x+31,y-44,18,12),Color("#e65d55"))
-    board.draw_rect(Rect2(x-58,y-12,116,5),Color("#b5a7a4"))
-    board.draw_rect(Rect2(x-4,y-81,8,24),Color("#d5b77d"))
-    board.draw_rect(Rect2(x-12,y-74,24,7),Color("#d5b77d"))
-    board.draw_rect(Rect2(x-17,y-29,34,13),Color("#d7c6a5"))
-    board.draw_string(ThemeDB.fallback_font,Vector2(x-12,y-19),"S.M.",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("#271d2c"))
+    var bounce := sin(distance*0.18)*1.5*speed/MAX_SPEED
+    var y := p.y+bounce
+    var lean := steering*5.0
+    board.draw_rect(Rect2(x-65,y-5,130,9),Color(0,0,0,0.35))
+    board.draw_texture_rect(HEARSE,Rect2(x-65+lean,y-124,130,130),false)
+    if brake_active:
+        board.draw_circle(Vector2(x-49+lean,y-41),9,Color(1.0,0.12,0.05,0.28))
+        board.draw_circle(Vector2(x+49+lean,y-41),9,Color(1.0,0.12,0.05,0.28))
 
 func _finish(success: bool) -> void:
     if ended:
