@@ -106,7 +106,7 @@ func _process(delta: float) -> void:
         $PropsLayer.queue_redraw()
     if is_instance_valid(burial_marker):
         burial_marker.visible = burial_queue.has_pending() and not rooms.inside() and not is_instance_valid(burial_layer)
-        burial_marker.position.y = 515.0 + sin(visual_animation_elapsed * 1.6) * 2.0
+        burial_marker.position = Vector2(725.0, 515.0 + sin(float(Time.get_ticks_msec()) * 0.002) * 3.0)
     if not dialogue_open:
         clock_minutes += delta * 1.8
         if clock_minutes >= 1080.0:
