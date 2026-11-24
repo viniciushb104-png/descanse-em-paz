@@ -12,6 +12,7 @@ const CLIENT_PORTRAIT = preload("res://scripts/ui/client_portrait.gd")
 const DIALOGUE_CHARACTERS = preload("res://scripts/ui/dialogue_characters.gd")
 const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
 const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
+const PORTRAIT_EXPRESSIONS = preload("res://scripts/ui/portrait_expressions.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -431,7 +432,7 @@ func _show(heading: String, body: String, choices: Array) -> void:
     dialog_panel.visible = true
     dialog_title.text = heading
     dialog_body.text = body
-    _apply_dialogue_identity(DIALOGUE_CHARACTERS.resolve(heading),heading)
+    _apply_dialogue_identity(DIALOGUE_CHARACTERS.resolve(heading),heading,"",PORTRAIT_EXPRESSIONS.infer(body))
     var body_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
     var choice_scroll := dialog_panel.get_node("ChoicesScroll") as ScrollContainer
     body_scroll.scroll_vertical = 0
@@ -472,7 +473,7 @@ func _show(heading: String, body: String, choices: Array) -> void:
         btn.pressed.connect(_on_choice.bind(str(choice["action"])))
         options_box.add_child(btn)
 
-func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String = "") -> void:
+func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String = "", expression: String = "") -> void:
     var has_actor: bool = not actor.is_empty()
     var identity: String = str(actor.get("id",""))
     var illustrated: bool = DIALOGUE_ART.supports(identity)
@@ -484,7 +485,7 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
     var speech_scroll := dialog_panel.get_node("BodyScroll") as ScrollContainer
     var choices_scroll := dialog_panel.get_node("ChoicesScroll") as ScrollContainer
     if has_actor:
-        dialog_portrait.call("set_actor",speaker,mood)
+        dialog_portrait.call("set_actor",speaker,mood,expression)
         dialog_title.add_theme_font_size_override("font_size",23)
         dialog_title.add_theme_color_override("font_color",Color(str(actor["accent"])).lightened(0.16))
         dialog_role.text = str(actor["role"]).to_upper()
@@ -495,9 +496,16 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
     if illustrated:
         dialog_portrait_frame_art.texture = DIALOGUE_ART.portrait(identity)
         dialog_nameplate_art.texture = DIALOGUE_ART.nameplate(identity)
-        # O rosto provisório fica atrás do ornamento; nenhuma borda o encobre.
-        dialog_portrait.position = Vector2(79,108)
-        dialog_portrait.size = Vector2(117,119)
+        # Baltazar e Osvaldo ja possuem molduras no proprio retrato.
+        # A arte antiga fica oculta apenas nesses dois casos.
+        var integrated_frame: bool = bool(dialog_portrait.get("embedded_frame"))
+        dialog_portrait_frame_art.visible = not integrated_frame
+        if integrated_frame:
+            dialog_portrait.position = Vector2(34,78)
+            dialog_portrait.size = Vector2(204,204)
+        else:
+            dialog_portrait.position = Vector2(79,108)
+            dialog_portrait.size = Vector2(117,119)
         dialog_title.position = Vector2(344,25)
         dialog_title.size = Vector2(236,32)
         dialog_title.add_theme_font_size_override("font_size",19)
@@ -535,10 +543,11 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
     speech_scroll.scroll_vertical = 0
     choices_scroll.scroll_vertical = 0
 
-func _show_character(speaker: String, words: String, mood: String, choices: Array) -> void:
+func _show_character(speaker: String, words: String, mood: String, choices: Array, expression: String = "") -> void:
     _show(speaker, words, choices)
     var actor: Dictionary = DIALOGUE_CHARACTERS.resolve(speaker)
-    _apply_dialogue_identity(actor,speaker,mood)
+    var chosen: String = expression if not expression.is_empty() else PORTRAIT_EXPRESSIONS.infer(words)
+    _apply_dialogue_identity(actor,speaker,mood,chosen)
 
 func _style(bg: Color, edge: Color) -> StyleBoxFlat:
     var st := StyleBoxFlat.new()
