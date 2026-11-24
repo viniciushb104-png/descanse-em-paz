@@ -46,7 +46,8 @@ func _run() -> void:
         push_error("Escolha segura deveria avancar diretamente")
         quit(155)
         return
-    if not game.dialog_panel.visible or game.dialog_panel.get_node("BodyScroll/DialogText").text.find("Antes:")==-1:
+    var dialog_text := game.dialog_panel.get_node("BodyScroll/DialogText") as Label
+    if dialog_text == null or not game.dialog_panel.visible or dialog_text.text.find("Antes:")==-1:
         push_error("Fala seguinte precisa mostrar reacao")
         quit(156)
         return
