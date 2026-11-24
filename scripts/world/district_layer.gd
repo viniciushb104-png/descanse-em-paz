@@ -68,15 +68,7 @@ func _building(pos: Vector2,sz: Vector2,name: String,walls: Color,roof: Color,ha
         draw_line(pos+Vector2(sz.x*0.5-19,33),pos+Vector2(sz.x*0.5+19,33),Color("#f4c1d1"),8.0)
 
 func _hearse(pos: Vector2,scale_factor: float) -> void:
-    var w: float = 236.0*scale_factor
-    var h: float = 69.0*scale_factor
-    _rect(Rect2(pos,w*Vector2(1,0)+Vector2(0,h)),Color("#2b2531"))
-    _rect(Rect2(pos+Vector2(w*0.23,-19*scale_factor),Vector2(w*0.58,32*scale_factor)),Color("#51455b"))
-    _rect(Rect2(pos+Vector2(w*0.34,6),Vector2(w*0.35,23*scale_factor)),Color("#718497"))
-    for offset in [0.25,0.78]:
-        draw_circle(pos+Vector2(w*offset,h+9.0),15*scale_factor,INK)
-        draw_circle(pos+Vector2(w*offset,h+9.0),7*scale_factor,Color("#bab0ac"))
-    _text(pos+Vector2(w*0.37,h*0.76),"S.M.",18,GOLD)
+    draw_texture_rect(preload("res://assets/sprites/hearse.svg"),Rect2(pos-Vector2(0,25)*scale_factor,Vector2(236,118)*scale_factor),false)
 
 func _sign(r: Rect2,a: String,b: String) -> void:
     _rect(r,Color("#493448"))
