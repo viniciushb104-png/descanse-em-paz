@@ -17,8 +17,8 @@ const DEST := Rect2(810,310,95,105)
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     var frame := VBoxContainer.new()
-    frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     add_child(frame)
+    frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     info = Label.new()
     info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     frame.add_child(info)
@@ -58,7 +58,7 @@ func _physics_process(delta: float) -> void:
     for obstacle in BLOCKS:
         hit = hit or obstacle.grow(15).has_point(candidate)
     if hit:
-        if absf(speed)>45:
+        if absf(speed)>12:
             bumps += 1
         speed = 0
     else:
@@ -86,10 +86,7 @@ func _paint(board: Control) -> void:
     board.draw_rect(PICKUP,Color("#b99550") if not checkpoint else Color("#777777"))
     board.draw_rect(DEST,Color("#548d79"))
     board.draw_set_transform(origin+car*scale_factor,heading,Vector2.ONE*scale_factor)
-    board.draw_rect(Rect2(-23,-10,46,20),Color("#15131d"))
-    board.draw_rect(Rect2(5,-8,10,16),Color("#9ac0d2"))
-    board.draw_rect(Rect2(20,-8,3,5),Color("#f0e5cb"))
-    board.draw_rect(Rect2(20,3,3,5),Color("#f0e5cb"))
+    board.draw_texture_rect(preload("res://assets/sprites/hearse.svg"),Rect2(-24,-12,48,24),false,Color.WHITE,true)
     board.draw_set_transform(Vector2.ZERO)
 
 func _finish(success: bool) -> void:
