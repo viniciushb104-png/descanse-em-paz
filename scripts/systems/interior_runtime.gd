@@ -396,6 +396,18 @@ func finish_case() -> void:
     game().money += int(item["reward"])
     game().reputation = mini(100,game().reputation+3)
     game().compliance = mini(100,game().compliance+2)
+    # Futuras historias so abrem ordens com metadados explicitos de
+    # sepultamento. Comprar caixao ou encerrar conversa NAO basta.
+    var work: Dictionary = item.get("burial_order", {})
+    if not work.is_empty():
+        game().burial_queue.enqueue(
+            "case_%d" % int(item["id"]),
+            str(item["client"]),
+            str(work.get("plot", "")),
+            int(game().day),
+            bool(work.get("documents_checked", false)),
+            bool(work.get("authorized", false))
+        )
     case_index += 1
     _reset_dialogue()
     game()._save_game()
