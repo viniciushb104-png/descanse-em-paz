@@ -61,6 +61,10 @@ func load_state(cfg: ConfigFile) -> void:
     last_reaction = str(cfg.get_value("save","case_last_reaction",""))
     humor_used = bool(cfg.get_value("save","case_humor_used",false))
     repairs = maxi(0,int(cfg.get_value("save","case_repairs",0)))
+    # Compatibilidade com saves antigos pausados na reacao positiva.
+    if awaiting_reaction and last_grade > 0:
+        awaiting_reaction = false
+        dialogue_step = mini(max_steps,dialogue_step + 1)
 
 func apply_room() -> void:
     for item in ["GroundLayer","TreeLayer","PropsLayer","GravesLayer","DistrictLayer"]:
@@ -93,7 +97,8 @@ func nearest(pos: Vector2) -> Dictionary:
     var distance := 98.0
     for s in CATALOG.points(room):
         var d: float = pos.distance_to(s["p"])
-        if d < distance:
+        var reach: float = 62.0 if str(s["id"]) == "exit" else 98.0
+        if d < distance and d < reach:
             distance=d
             found=s
     return found
@@ -106,13 +111,10 @@ func safe_spawn() -> Vector2:
     return CATALOG.ENTRY if inside() else Vector2(748,714)
 
 func offer_entry(id: String) -> bool:
-    if inside() or skip_entry or not CATALOG.ROOMS.has(id):
+    if inside() or skip_entry or changing or not CATALOG.ROOMS.has(id):
         return false
-    var options: Array = [{"text":"Entrar e explorar o interior","action":"enter_"+id}]
-    if id not in ["funeraria","fornecedor"]:
-        options.append({"text":"Atendimento rapido na entrada","action":"outside_"+id})
-    options.append({"text":"Voltar","action":"close"})
-    game()._show(str(CATALOG.ROOMS[id]["title"]),"A porta esta aberta. Aqui ha atendentes, clientes, catalogos e livros de ocorrencias.",options)
+    # A entrada agora e direta e animada: sem pergunta nem popup.
+    enter(id)
     return true
 
 func enter(id: String) -> void:
@@ -129,7 +131,8 @@ func _enter_now(id: String) -> void:
     game().player.velocity = Vector2.ZERO
     apply_room()
     game()._save_game()
-    game()._show(str(CATALOG.ROOMS[id]["title"]),str(CATALOG.ROOMS[id]["description"])+"\n\nAnde pela sala. E interage; a saida fica embaixo.",[{"text":"Explorar","action":"close"}])
+    game()._close()
+    game()._notify(str(CATALOG.ROOMS[id]["title"])+"  |  E: interagir",1.65)
 
 func leave() -> void:
     if not inside() or changing:
@@ -145,6 +148,7 @@ func _leave_now() -> void:
     apply_room()
     game()._save_game()
     game()._close()
+    game()._notify("Santa Mortalha  |  Explore o distrito",1.35)
     game()._refresh_ui()
 
 func _end_transition() -> void:
@@ -220,11 +224,14 @@ func _show_beat() -> void:
         var option: Dictionary = beat["choices"][index]
         responses.append({"text":str(option["text"]),"action":"case_pick_"+str(index)})
     responses.append({"text":"Consultar o livro de ocorrencias","action":"case_board"})
-    var chapter: String = "Dificuldade %d/4 | Conversa %d/%d" % [int(beat["tier"]),dialogue_step+1,int(beat["total"])]
+    var chapter: String = "Conversa %d/%d" % [dialogue_step+1,int(beat["total"])]
+    var spoken_line: String = str(beat["line"])
+    if not last_reaction.is_empty():
+        spoken_line = "Antes: "+last_reaction+"\n\n"+spoken_line
     var speaking_profile: String = str(beat.get("profile",""))
     if speaking_profile.is_empty():
         speaking_profile = str(item["profile"])
-    game()._show_character(str(beat["speaker"]),chapter+"\n\n"+str(beat["line"]),speaking_profile,responses)
+    game()._show_character(str(beat["speaker"]),chapter+"\n\n"+spoken_line,speaking_profile,responses)
 
 func choose_dialogue_option(index: int) -> void:
     var item: Dictionary = CASES.active(case_index)
@@ -250,16 +257,26 @@ func choose_dialogue_option(index: int) -> void:
         repairs += 1
         game().reputation = maxi(0,game().reputation-1)
         game().compliance = maxi(0,game().compliance-2)
-    awaiting_reaction = true
-    game()._save_game()
-    _show_reaction()
+    # Resposta responsavel ja segue para o proximo dialogo.
+    # Atalho inseguro exige reparo antes de qualquer servico.
+    if last_grade > 0:
+        dialogue_step += 1
+        awaiting_reaction = false
+        last_grade = -1
+        last_reaction = str(reaction["line"])
+        game()._save_game()
+        show_case()
+    else:
+        awaiting_reaction = true
+        game()._save_game()
+        _show_reaction()
     game()._refresh_ui()
 
 func _show_reaction() -> void:
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         return
-    var response: Array = [{"text":"Reconsiderar e esclarecer o passo","action":"case_retry"}] if last_grade == 0 else [{"text":"Continuar conversa","action":"case_advance"}]
+    var response: Array = [{"text":"Corrigir a resposta","action":"case_retry"}] if last_grade == 0 else [{"text":"Continuar","action":"case_advance"}]
     response.append({"text":"Retomar mais tarde","action":"close"})
     var last: Dictionary = DIALOGUES.scene(case_index,dialogue_step,str(item["client"]))
     var speaking_profile: String = str(last.get("profile",""))
@@ -303,8 +320,8 @@ func _audit() -> void:
             "Voce ouviu o cliente, mas algumas partes ficaram incompletas. O trabalho profissional exige juntar clareza, procedimento e respeito.\n\nReleia as pistas e retome a conversa; nenhuma contratacao sera executada precipitadamente.",
             [{"text":"Revisar trechos pendentes","action":"case_review"},{"text":"Consultar a referencia","action":"legal_"+str(item["lesson"])},{"text":"Voltar depois","action":"close"}])
         return
-    var summary: String = "Os fatos foram conferidos. Seu acolhimento %s foi uma boa escolha. Agora finalize o atendimento e registre os itens combinados." % ("com humor respeitoso" if humor_used else "atencioso")
-    game()._show("Analise concluida",summary,[{"text":"Concluir com registro","action":"case_finalize"},{"text":"Consultar fundamento legal","action":"legal_"+str(item["lesson"])},{"text":"Voltar depois","action":"close"}])
+    # A ultima decisao responsavel registra o caso, sem confirmacao duplicada.
+    finish_case()
 
 func review_dialogue() -> void:
     var first_partial: int = -1
@@ -377,8 +394,8 @@ func finish_case() -> void:
     _reset_dialogue()
     game()._save_game()
     update_client()
-    game()._show("Atendimento concluido","O atendimento de "+str(item["client"])+" foi responsavel.\nCaixa ficticio: +R$ %d; reputacao +3; conformidade +2.\n\nFonte educativa: %s" % [int(item["reward"]),str(LEGAL.ITEMS[str(item["lesson"])]["source"])],
-        [{"text":"Continuar","action":"close"}])
+    game()._show("Atendimento concluido",str(item["client"])+" recebeu orientacao responsavel.\nCaixa ficticio: +R$ %d  |  Reputacao +3  |  Conformidade +2.\n\nFonte: %s" % [int(item["reward"]),str(LEGAL.ITEMS[str(item["lesson"])]["source"])],
+        [{"text":"Voltar ao jogo","action":"close"},{"text":"Estudar este assunto","action":"legal_"+str(item["lesson"])}])
     game()._refresh_ui()
 
 func reject_case() -> void:

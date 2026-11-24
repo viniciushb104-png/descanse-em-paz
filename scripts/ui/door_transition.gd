@@ -53,16 +53,16 @@ func travel(midpoint: Callable, finished: Callable = Callable()) -> void:
     curtain.visible = true
     _show_frame(0)
     var sequence := create_tween()
-    sequence.tween_property(curtain, "closure", 0.86, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+    sequence.tween_property(curtain, "closure", 0.86, 0.14).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
     for frame_index in range(1, 4):
         sequence.tween_callback(_show_frame.bind(frame_index))
-        sequence.tween_interval(0.075)
-    sequence.tween_property(curtain, "closure", 1.0, 0.13)
+        sequence.tween_interval(0.035)
+    sequence.tween_property(curtain, "closure", 1.0, 0.06)
     sequence.tween_callback(midpoint)
     for frame_index in range(4, 8):
         sequence.tween_callback(_show_frame.bind(frame_index))
-        sequence.tween_interval(0.075)
-    sequence.tween_property(curtain, "closure", 0.0, 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+        sequence.tween_interval(0.035)
+    sequence.tween_property(curtain, "closure", 0.0, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
     sequence.tween_callback(_finish.bind(finished))
 
 func _finish(finished: Callable) -> void:
