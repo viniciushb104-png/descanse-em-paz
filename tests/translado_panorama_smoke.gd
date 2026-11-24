@@ -44,5 +44,17 @@ func _run() -> void:
         push_error("Piso incorreto")
         quit(107)
         return
+    if game.roadside.size()!=8:
+        push_error("Decoracao de estrada incompleta")
+        quit(108)
+        return
+    for region in range(6):
+        for slot in range(12):
+            for side in [-1,1]:
+                var kind: int = game._roadside_kind(float(region)*ARCADE.REGION_SPAN+10.0,slot,side)
+                if kind<0 or kind>=game.roadside.size() or game.roadside[kind]==null:
+                    push_error("Sprite de decoracao invalido")
+                    quit(109)
+                    return
     print("TRANSLADO PANORAMAS OK: 6 texturas HD, 6 regioes e transicao.")
     quit(0)
