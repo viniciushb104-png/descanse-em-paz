@@ -2,24 +2,31 @@ extends Control
 ## Janela individual por personagem. Aceita PNG definitivo
 ## res://assets/portraits/<id>.png; usa busto proprio caso ainda nao exista.
 const CHARACTERS = preload("res://scripts/ui/dialogue_characters.gd")
+const EXPRESSIONS = preload("res://scripts/ui/portrait_expressions.gd")
 var actor_name: String = ""
 var profile: String = "calmo"
 var identity: Dictionary = {}
 var portrait_texture: Texture2D = null
+var current_expression: String = ""
+var embedded_frame: bool = false
 var time_passed: float = 0.0
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
     clip_contents = true
 
-func set_actor(speaker: String, mood: String = "") -> void:
+func set_actor(speaker: String, mood: String = "", expression: String = "") -> void:
     actor_name = speaker
     identity = CHARACTERS.resolve(speaker)
     profile = mood if not mood.is_empty() else str(identity.get("profile","calmo"))
-    portrait_texture = null
-    var path: String = str(identity.get("portrait",""))
-    if not path.is_empty() and ResourceLoader.exists(path):
-        portrait_texture = load(path) as Texture2D
+    var id: String = str(identity.get("id",""))
+    current_expression = expression if not expression.is_empty() else "alegre"
+    embedded_frame = EXPRESSIONS.has_actor(id) and EXPRESSIONS.has_frame(id)
+    portrait_texture = EXPRESSIONS.texture(id,current_expression)
+    if portrait_texture == null:
+        var path: String = str(identity.get("portrait",""))
+        if not path.is_empty() and ResourceLoader.exists(path):
+            portrait_texture = load(path) as Texture2D
     time_passed = 0.0
     queue_redraw()
 
@@ -37,13 +44,15 @@ func _draw() -> void:
         return
     var accent := Color(str(identity.get("accent","#b4a1cb")))
     var shade := Color(str(identity.get("shade","#42354b")))
-    draw_rect(Rect2(0,0,w,h),shade.darkened(0.31))
-    for j in range(6):
-        draw_line(Vector2(0,float(j)*h/6.0),Vector2(w,float(j)*h/6.0),
-            accent.darkened(0.47),1.0)
+    if not embedded_frame or portrait_texture == null:
+        draw_rect(Rect2(0,0,w,h),shade.darkened(0.31))
+        for j in range(6):
+            draw_line(Vector2(0,float(j)*h/6.0),Vector2(w,float(j)*h/6.0),
+                accent.darkened(0.47),1.0)
     if portrait_texture != null:
         var tex_size: Vector2 = portrait_texture.get_size()
-        var factor: float = minf((w-7.0)/tex_size.x,(h-5.0)/tex_size.y)
+        var margin: float = 0.0 if embedded_frame else 4.0
+        var factor: float = minf((w-margin)/tex_size.x,(h-margin)/tex_size.y)
         var display_size: Vector2 = tex_size*factor
         draw_texture_rect(portrait_texture,
             Rect2((Vector2(w,h)-display_size)*0.5,display_size),false)
