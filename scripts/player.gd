@@ -41,7 +41,7 @@ func _physics_process(delta: float) -> void:
         direction.y += 1.0
     if virtual_direction.length_squared() > 0.0:
         direction = virtual_direction
-    if bool(get_parent().get("dialogue_open")):
+    if bool(get_parent().get("dialogue_open")) or bool(get_parent().get_node("RoomsRuntime").get("changing")):
         direction = Vector2.ZERO
     direction = direction.normalized()
     walking = direction.length_squared() > 0.0

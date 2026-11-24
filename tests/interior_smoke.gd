@@ -8,11 +8,15 @@ func _run() -> void:
     root.add_child(game)
     await process_frame
     var r: Node = game.get_node("RoomsRuntime")
-    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=9:
+    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=10:
         push_error("20 casos ou 9 interiores ausentes")
         quit(91)
         return
     game._close()
+    if not game.has_node("DoorTransition"):
+        push_error("Transicao de portas ausente")
+        quit(90)
+        return
     r.enter("funeraria")
     game._close()
     if not r.inside() or game.get_node("GroundLayer").visible or not game.get_node("InteriorLayer").visible:
@@ -59,6 +63,21 @@ func _run() -> void:
             push_error("Caso nao concluido: "+str(idx+1))
             quit(98)
             return
+    if r.inside():
+        r.leave()
+    r.enter("maintenance")
+    game._close()
+    if not r.inside() or r.room != "maintenance" or not game.get_node("InteriorLayer").has_node("RoomArtwork"):
+        push_error("Oficina sem interior proprio")
+        quit(101)
+        return
+    r.leave()
+    r.enter("office")
+    game._close()
+    if not game.get_node("InteriorLayer").has_node("RoomArtwork"):
+        push_error("Escritorio sem interior proprio")
+        quit(102)
+        return
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg")!=OK:
         push_error("Salvamento de casos inexistente")

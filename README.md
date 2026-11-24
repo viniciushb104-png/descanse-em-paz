@@ -71,3 +71,9 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Estoque real no jogo: compra de caixoes e urnas cinerarias, custos ficticios e consumo por caso.
 - Pausa e salvamento persistem entre exterior e interior. Testes automatizados evitam quebrar as versoes anteriores.
 - Conteudo educacional refere-se ao CDC, ao registro civil, ao ambiente e a regras sanitarias, sempre com ressalvas locais.
+
+## Sprint 1.1: interiores próprios e transição
+- A oficina/manutencao agora e uma sala visitavel; sua fachada continua idêntica.
+- Escritorio e oficina tem cenas individuais de arte em `scenes/interiors/`.
+- Entradas e saidas usam cortinas goticas animadas de CanvasLayer, com troca no momento de fechamento.
+- O progresso e o fluxo dos 20 casos foram preservados. Mais detalhes em `docs/SPRINT_V11.md`.

@@ -1,9 +1,12 @@
 extends Node2D
 const CATALOG = preload("res://scripts/world/interior_catalog.gd")
+const OFFICE = preload("res://scenes/interiors/office.tscn")
+const MAINTENANCE = preload("res://scenes/interiors/maintenance.tscn")
 const INK := Color("#241a2b")
 const GOLD := Color("#d8b882")
 const PAPER := Color("#eadfd0")
 var room: String = ""
+var room_art: Node2D = null
 var customer_name: String = "VISITANTE"
 var customer_profile: String = "calmo"
 
@@ -15,6 +18,18 @@ func set_customer(name: String, profile: String) -> void:
 func set_room(key: String) -> void:
     room = key
     visible = not key.is_empty()
+    if is_instance_valid(room_art):
+        remove_child(room_art)
+        room_art.queue_free()
+        room_art = null
+    match key:
+        "office":
+            room_art = OFFICE.instantiate() as Node2D
+        "maintenance":
+            room_art = MAINTENANCE.instantiate() as Node2D
+    if room_art != null:
+        room_art.name = "RoomArtwork"
+        add_child(room_art)
     queue_redraw()
 
 func _draw() -> void:
@@ -32,6 +47,7 @@ func _draw() -> void:
         "parlor": wall=Color("#75536d"); floor_col=Color("#553c50")
         "supply": wall=Color("#85715e"); floor_col=Color("#645246")
         "archive": wall=Color("#575274"); floor_col=Color("#45415a")
+        "maintenance": wall=Color("#756073"); floor_col=Color("#625052")
         "inspection": wall=Color("#666476"); floor_col=Color("#4c465b")
     draw_rect(Rect2(0,0,1152,648),INK)
     draw_rect(Rect2(24,22,1104,570),wall)

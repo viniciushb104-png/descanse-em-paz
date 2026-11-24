@@ -4,6 +4,7 @@ const SIZE := Vector2(1152,648)
 const ENTRY := Vector2(575,508)
 const ROOMS = {
  "office":{"title":"ESCRITORIO ADMINISTRATIVO","agent":"Baltazar","description":"Papeis, registros e as eternas planilhas.","theme":"office"},
+ "maintenance":{"title":"OFICINA DE SANTA MORTALHA","agent":"Seu Osvaldo","description":"Bancadas, ferramentas e manutencao preventiva.","theme":"maintenance"},
  "hospital":{"title":"HOSPITAL SANTA ULTIMA HORA","agent":"Dra. Penelope","description":"Acolhimento e documentacao de saude.","theme":"hospital"},
  "garagem":{"title":"GARAGEM DA ULTIMA VIAGEM","agent":"Arquimedes","description":"Revisao da frota e rotas.","theme":"garage"},
  "preparo":{"title":"SALA DE CONSERVACAO","agent":"Dona Clotilde","description":"Controle sanitario e residuos; nenhuma tecnica clinica.","theme":"lab"},

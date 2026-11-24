@@ -110,7 +110,7 @@ func _near_station() -> Dictionary:
     return nearest
 
 func _try_interact() -> void:
-    if dialogue_open:
+    if dialogue_open or rooms.changing:
         return
     var station := _near_station()
     if not station.is_empty():
@@ -351,7 +351,7 @@ func _ensure_valid_player_position() -> void:
         _save_game()
 
 func _open_pause_menu() -> void:
-    if dialogue_open:
+    if dialogue_open or rooms.changing:
         return
     var menu_options: Array = [{"text":"Retomar expediente","action":"close"}]
     if rooms.inside():
@@ -361,6 +361,8 @@ func _open_pause_menu() -> void:
 
 func _rescue_player() -> void:
     # Resgate seguro: nao altera missao, dinheiro ou reputacao.
+    if rooms.changing:
+        return
     if dialogue_open:
         _close()
     player.virtual_direction = Vector2.ZERO

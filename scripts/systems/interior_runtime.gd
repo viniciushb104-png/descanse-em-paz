@@ -8,6 +8,7 @@ var return_point := Vector2(748,714)
 var case_index: int = 0
 var inventory: Dictionary = {"caixao":2,"urna":1}
 var skip_entry: bool = false
+var changing: bool = false
 
 func game() -> Node2D:
     return get_parent() as Node2D
@@ -85,8 +86,12 @@ func offer_entry(id: String) -> bool:
     return true
 
 func enter(id: String) -> void:
-    if not CATALOG.ROOMS.has(id) or inside():
+    if not CATALOG.ROOMS.has(id) or inside() or changing:
         return
+    changing = true
+    game().get_node("DoorTransition").travel(_enter_now.bind(id), _end_transition)
+
+func _enter_now(id: String) -> void:
     return_point = game().player.global_position
     room = id
     game().player.global_position = CATALOG.ENTRY
@@ -97,8 +102,12 @@ func enter(id: String) -> void:
     game()._show(str(CATALOG.ROOMS[id]["title"]),str(CATALOG.ROOMS[id]["description"])+"\n\nAnde pela sala. E interage; a saida fica embaixo.",[{"text":"Explorar","action":"close"}])
 
 func leave() -> void:
-    if not inside():
+    if not inside() or changing:
         return
+    changing = true
+    game().get_node("DoorTransition").travel(_leave_now, _end_transition)
+
+func _leave_now() -> void:
     room = ""
     game().player.global_position = return_point
     game().player.virtual_direction = Vector2.ZERO
@@ -106,6 +115,10 @@ func leave() -> void:
     apply_room()
     game()._save_game()
     game()._close()
+    game()._refresh_ui()
+
+func _end_transition() -> void:
+    changing = false
     game()._refresh_ui()
 
 func interact(id: String) -> void:
