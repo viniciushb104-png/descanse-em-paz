@@ -58,9 +58,22 @@ func _run() -> void:
         push_error("Centro do logo parece transparente demais para ficar visivel.")
         quit(85)
         return
-    if not logo.visible or not logo.is_visible_in_tree() or logo.z_index <= 0 or logo.size.x < 350:
-        push_error("Logo foi ocultado, ficou pequeno demais ou sob outra camada.")
+    if not logo.visible or not logo.is_visible_in_tree() or logo.z_index <= 0:
+        push_error("Logo oculto ou sob outra camada.")
         quit(86)
+        return
+    # Evita o problema visual da v1.2.2: logo em tamanho nativo cobria personagens.
+    if logo.size.x > 340.0 or logo.size.x < 260.0 or logo.position.x > 30.0 or logo.position.y > 18.0:
+        push_error("Logo grande demais ou fora do canto superior esquerdo.")
+        quit(88)
+        return
+    if logo.position.y + logo.size.y > 185.0 or logo.position.x + logo.size.x > 370.0:
+        push_error("Logo nao cabe na area acima dos personagens.")
+        quit(89)
+        return
+    if logo.stretch_mode != TextureRect.STRETCH_SCALE:
+        push_error("Logo precisa escalar dentro da area reservada, nao no tamanho nativo.")
+        quit(90)
         return
     if logo.mouse_filter != Control.MOUSE_FILTER_IGNORE:
         push_error("Logo bloqueia toques do menu.")

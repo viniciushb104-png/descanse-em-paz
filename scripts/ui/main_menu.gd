@@ -160,14 +160,20 @@ func _install_logo() -> void:
     menu_logo = TextureRect.new()
     menu_logo.name = "HangingGameLogo"
     menu_logo.texture = MENU_LOGO
-    # Usa PNG RGBA padrao: a versao anterior era paletizada com tRNS.
-    # Posicao e escala em coordenadas do menu virtual (1152 x 648).
-    menu_logo.position = Vector2(30, 4)
-    menu_logo.size = Vector2(536, 285)
-    # A origem no alto central imita as correntes de uma placa suspensa.
-    menu_logo.pivot_offset = Vector2(menu_logo.size.x * 0.5, 5.0)
+    # Canto superior esquerdo: a placa precisa ficar acima dos personagens,
+    # sem cobrir a arte do cemiterio nem os botoes do outro lado da tela.
+    # A proporcao vem diretamente do PNG, sem deformacao.
+    var logo_width: float = 312.0
+    var logo_height: float = logo_width * float(MENU_LOGO.get_height()) / float(MENU_LOGO.get_width())
+    menu_logo.position = Vector2(20, 6)
+    menu_logo.size = Vector2(logo_width, logo_height)
+    menu_logo.custom_minimum_size = Vector2.ZERO
+    # Pendura a placa no meio da corrente superior.
+    menu_logo.pivot_offset = Vector2(menu_logo.size.x * 0.5, 4.0)
     menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    # STRETCH_SCALE respeita rigorosamente as dimensoes do TextureRect.
+    # KEEP_ASPECT_CENTERED no menu anterior estava exibindo a arte gigante.
+    menu_logo.stretch_mode = TextureRect.STRETCH_SCALE
     # Textura pintada suave; os demais elementos do jogo seguem pixel art.
     menu_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
     menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -214,8 +220,8 @@ func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Butt
 
 
 func _build_menu() -> void:
-    # O PNG oficial substitui o titulo textual antigo sem competir com a arte.
-    _make_label("A morte é inevitável. A burocracia também.", Vector2(64, 289), Vector2(600, 32), 17, LILAC)
+    # A frase fica logo abaixo da placa, acima dos personagens.
+    _make_label("A morte é inevitável. A burocracia também.", Vector2(30, 190), Vector2(420, 30), 15, LILAC)
 
     # Botões grandes sobre o gramado à direita; preservam mouse, teclado e toque.
     continue_button = _add_memorial_button("CONTINUAR EXPEDIENTE", 298.0, true)
