@@ -115,6 +115,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
         (options_box.get_child(0) as Button).pressed.emit()
         get_viewport().set_input_as_handled()
         return
+    if event.keycode == KEY_J and not dialogue_open:
+        _open_journal()
+        get_viewport().set_input_as_handled()
+        return
     if event.keycode == KEY_ESCAPE:
         if dialogue_open:
             _close()
@@ -152,7 +156,26 @@ func _open_journal() -> void:
     if dialogue_open or rooms.changing:
         return
     var mission: String = rooms.objective() if stage >= 12 else OBJECTIVES[stage]
-    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n"+mission+"\n\nAtendimentos concluidos: %d/20.\n\nConsulte os atendentes e o Arquivo Legal para estudar cada procedimento. Os valores sao ficticios." % rooms.case_index, [{"text":"Fechar diario","action":"close"}])
+    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n"+mission+"\n\nAtendimentos concluidos: %d/20.\n\nConsulte os atendentes e o Arquivo Legal para estudar cada procedimento. Os valores sao ficticios." % rooms.case_index, [{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
+
+func _portrait_gallery() -> void:
+    _show("GALERIA DE RETRATOS","Teste visual das expressoes. O progresso e o dinheiro nao serao alterados.",[
+        {"text":"Baltazar — contador fantasma","action":"portrait_select_baltazar"},
+        {"text":"Seu Osvaldo — coveiro","action":"portrait_select_osvaldo"},
+        {"text":"Madame Amalia — funeraria","action":"portrait_select_amalia"},
+        {"text":"Voltar ao jogo","action":"close"}
+    ])
+
+func _portrait_preview(identity: String, expression: String) -> void:
+    var person: Dictionary = DIALOGUE_CHARACTERS.by_id(identity)
+    if person.is_empty() or not PORTRAIT_EXPRESSIONS.has_actor(identity):
+        _portrait_gallery()
+        return
+    var options: Array = []
+    for emotion in PORTRAIT_EXPRESSIONS.EMOTIONS:
+        options.append({"text":str(emotion).capitalize(),"action":"portrait_emotion_"+identity+"_"+str(emotion)})
+    options.append({"text":"Voltar a galeria","action":"portrait_gallery"})
+    _show_character(str(person["name"]),"PREVIA DOS RETRATOS\n\nConfira a expressao atual no canto esquerdo. Esta galeria nao altera as missoes.",str(person["profile"]),options,expression)
 
 func _try_interact() -> void:
     if dialogue_open or rooms.changing:
@@ -227,6 +250,18 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action == "portrait_gallery":
+        _portrait_gallery()
+        return
+    if action.begins_with("portrait_select_"):
+        _portrait_preview(action.trim_prefix("portrait_select_"),"alegre")
+        return
+    if action.begins_with("portrait_emotion_"):
+        var info: String = action.trim_prefix("portrait_emotion_")
+        var separator: int = info.find("_")
+        if separator > 0:
+            _portrait_preview(info.substr(0,separator),info.substr(separator+1))
+        return
     if action in ["drive_training","drive_job"]:
         driving_job = action == "drive_job"
         _start_driving()
