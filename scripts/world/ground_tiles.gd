@@ -8,7 +8,10 @@ const NORTH_ROWS: int = 54
 const GRASS: int = 0
 const STONE: int = 1
 const DIRT: int = 2
-const GREEN := Color("#35493e")
+const ROAD: int = 3
+const PAVING: int = 4
+const COMMERCIAL: int = 5
+const GREEN := Color("#4d5944")
 const GRASS_ACCENTS = [Color("#405a45"),Color("#465d49"),Color("#536a4d")]
 const STONES = [Color("#a28d9e"),Color("#958292"),Color("#ab98a6"),Color("#8f7f92"),Color("#a999ac")]
 const DIRT_COLORS = [Color("#715243"),Color("#765645"),Color("#634a3e")]
@@ -31,7 +34,10 @@ const PATHS = [
     Rect2i(54,20,4,12), # preparacao
     Rect2i(67,20,3,14), # crematorio
     Rect2i(54,33,14,3), # garagem
-    Rect2i(65,35,7,3), # fiscalizacao
+    Rect2i(78,20,4,15), # passeio leste
+    Rect2i(78,34,11,3), # acesso fiscalizacao
+    Rect2i(49,19,3,3), # arquivo
+    Rect2i(22,0,5,14), # capela ao norte
     Rect2i(76,17,20,4), # extensao para o comercio
     Rect2i(80,12,4,6), # entrada da casa funeraria
     Rect2i(89,12,4,6) # entrada da fornecedora
@@ -43,8 +49,15 @@ const SOIL = [
     Rect2i(42,12,2,3),
     Rect2i(31,23,4,2),
     Rect2i(51,27,3,4),
-    Rect2i(71,30,3,3)
+    Rect2i(71,30,3,3),
+    Rect2i(27,12,20,4), Rect2i(27,20,17,7),
+    Rect2i(7,47,33,5), Rect2i(7,54,33,5), Rect2i(7,61,33,5)
 ]
+
+# A rua conecta os dois estacionamentos, sem ocupar portas de pedestres.
+const ROADS = [Rect2i(64,13,10,8), Rect2i(74,16,4,25), Rect2i(65,36,13,6)]
+const CIVIC = [Rect2i(52,12,11,5), Rect2i(49,20,5,4), Rect2i(84,32,10,6)]
+const SHOPS = [Rect2i(77,12,9,6), Rect2i(87,12,8,6)]
 
 static func hash_at(x: int, y: int, salt: int = 0) -> int:
     var n: int = x * 73856093 + y * 19349663 + salt * 83492791 + 197
@@ -57,6 +70,15 @@ static func material_at(cell: Vector2i) -> int:
         return GRASS
     if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
         return -1
+    for section in ROADS:
+        if section.has_point(cell):
+            return ROAD
+    for section in CIVIC:
+        if section.has_point(cell):
+            return PAVING
+    for section in SHOPS:
+        if section.has_point(cell):
+            return COMMERCIAL
     for section in PATHS:
         if section.has_point(cell):
             return STONE
@@ -77,6 +99,9 @@ static func paint(ctx: Node2D) -> void:
             match material_at(cell):
                 STONE: _stone(ctx,cell)
                 DIRT: _soil(ctx,cell)
+                ROAD: _road(ctx,cell)
+                PAVING: _paving(ctx,cell,false)
+                COMMERCIAL: _paving(ctx,cell,true)
                 _: _grass(ctx,cell)
 
 static func _grass(ctx: Node2D, cell: Vector2i) -> void:
@@ -147,3 +172,38 @@ static func _stone(ctx: Node2D, cell: Vector2i) -> void:
         ctx.draw_rect(Rect2(x,y,3,TILE),ink)
     if material_at(cell+Vector2i.RIGHT) != STONE:
         ctx.draw_rect(Rect2(x+TILE-3,y,3,TILE),ink)
+
+static func _road(ctx: Node2D, cell: Vector2i) -> void:
+    var p := Vector2(cell*TILE)
+    var n := hash_at(cell.x,cell.y,8)
+    ctx.draw_rect(Rect2(p,Vector2(32,32)),Color("#514853"))
+    for i in range(5):
+        var q := hash_at(cell.x*7+i,cell.y,9)
+        ctx.draw_rect(Rect2(p+Vector2(q%29,(q/31)%29),2,2),Color("#605562"))
+    for d in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
+        if material_at(cell+d)!=ROAD:
+            var edge := Rect2(p,Vector2(32,4))
+            if d==Vector2i.DOWN: edge.position.y+=28
+            if d==Vector2i.LEFT: edge.size=Vector2(4,32)
+            if d==Vector2i.RIGHT:
+                edge.size=Vector2(4,32)
+                edge.position.x+=28
+            ctx.draw_rect(edge,Color("#92818a"))
+    if cell.x==75 and cell.y%2==0 and cell.y>=21 and cell.y<36:
+        ctx.draw_rect(Rect2(p+Vector2(15,6),2,20),Color("#a59a85"))
+    if cell.x in [64,73] and cell.y>=14 and cell.y<=17:
+        ctx.draw_rect(Rect2(p+Vector2(2,2),2,28),Color("#b0a18d"))
+    if cell.y==36 and cell.x>=65 and cell.x<74:
+        ctx.draw_rect(Rect2(p+Vector2(0,4),32,2),Color("#b0a18d"))
+
+static func _paving(ctx: Node2D, cell: Vector2i, commercial: bool) -> void:
+    var p := Vector2(cell*TILE)
+    var base := Color("#84766f") if commercial else Color("#88818a")
+    ctx.draw_rect(Rect2(p,Vector2(32,32)),base.darkened(0.23))
+    for row in range(2):
+        for col in range(2):
+            var n := hash_at(cell.x*2+col,cell.y*2+row,12)
+            var shade := base.lightened(float(n%5)*0.012)
+            var at := p+Vector2(col*16+1,row*16+1)
+            ctx.draw_rect(Rect2(at,Vector2(14,14)),shade)
+            ctx.draw_rect(Rect2(at,Vector2(14,1)),shade.lightened(0.08))

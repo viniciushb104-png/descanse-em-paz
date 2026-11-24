@@ -57,7 +57,7 @@ func _run() -> void:
     game._close()
     # Regressao: o carro sul interceptava a Fiscalizacao por ter um
     # retangulo de interacao grande, mesmo sobre a porta do posto.
-    var inspection_door := Vector2(2208,1155)
+    var inspection_door := Vector2(2840,1085)
     if not game.is_walkable(inspection_door):
         push_error("Porta da Fiscalizacao bloqueada por colisao")
         quit(94)

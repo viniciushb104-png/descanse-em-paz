@@ -37,5 +37,11 @@ func _run() -> void:
         push_error("Grama invadida pelo caminho")
         quit(13)
         return
+    for station in preload("res://scripts/world/district_layout.gd").STATIONS:
+        var surface: int = GROUND.material_at_world(station["p"])
+        if surface not in [GROUND.STONE,GROUND.ROAD,GROUND.PAVING,GROUND.COMMERCIAL]:
+            push_error("Entrada sem pavimento: "+str(station["id"]))
+            quit(14)
+            return
     print("GROUND OK: 32px, caminhos conectados, camadas independentes.")
     quit(0)
