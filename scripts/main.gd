@@ -61,6 +61,8 @@ var dialog_body: Label
 var dialog_portrait: Control
 var options_box: VBoxContainer
 var mobile_hud: Control
+var driving_layer: CanvasLayer
+var driving_completed: bool = false
 
 func _ready() -> void:
     _build_ui()
@@ -87,6 +89,8 @@ func _process(delta: float) -> void:
     _refresh_ui()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+    if is_instance_valid(driving_layer):
+        return
     if not (event is InputEventKey):
         return
     if not event.pressed or event.echo:
@@ -186,9 +190,9 @@ func _interact(id: String) -> void:
             if stage == 7:
                 _show("Arquimedes Ossario", "A limousine preta esta pronta. Mas antes: registro de rota, condicoes do veiculo, documentacao e normas de transporte. Fantasma sem carteira nao dirige!", [{"text":"Inspecionar frota (R$ 80)", "action":"garagem_certo"}, {"text":"Ignorar os requisitos", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             else:
-                _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+                _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "carro":
-            _show("O Carro da Ultima Viagem", "Este veiculo e especial: nao tem banco para passageiro fantasma. Antes de qualquer deslocamento, confira registros, seguranca e permissoes cabiveis.", [{"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+            _show("O Carro da Ultima Viagem", "Este veiculo e especial: nao tem banco para passageiro fantasma. Antes de qualquer deslocamento, confira registros, seguranca e permissoes cabiveis.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "preparo":
             if stage == 8:
                 _show("Dona Clotilde Eternelia", "Aqui nao existe formula milagrosa! Conservacao e tanatopraxia exigem condicoes sanitarias, pessoal competente, licencas aplicaveis e residuos sob controle.", [{"text":"Conferir estrutura e equipe (R$ 90)", "action":"preparo_certo"}, {"text":"Trabalhar sem controle sanitario", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
@@ -210,6 +214,9 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
+    if action == "drive_training":
+        _start_driving()
+        return
     if rooms.handle_choice(action):
         _refresh_ui()
         return
@@ -338,6 +345,7 @@ func _next_day() -> void:
 
 func _save_game() -> void:
     var cfg := ConfigFile.new()
+    cfg.set_value("save", "driving_completed", driving_completed)
     cfg.set_value("save", "stage", stage)
     cfg.set_value("save", "day", day)
     cfg.set_value("save", "money", money)
@@ -354,6 +362,7 @@ func _load_game() -> void:
     var cfg := ConfigFile.new()
     if cfg.load("user://save.cfg") != OK:
         return
+    driving_completed = bool(cfg.get_value("save", "driving_completed", false))
     stage = clampi(int(cfg.get_value("save", "stage", 0)), 0, 12)
     day = maxi(1, int(cfg.get_value("save", "day", 1)))
     money = int(cfg.get_value("save", "money", 3500))
@@ -643,3 +652,33 @@ func is_walkable(world_position: Vector2) -> bool:
     return true
 
 
+
+func _start_driving() -> void:
+    if is_instance_valid(driving_layer):
+        return
+    _close()
+    dialogue_open = true
+    player.set_physics_process(false)
+    driving_layer = CanvasLayer.new()
+    driving_layer.layer = 100
+    add_child(driving_layer)
+    var backdrop := ColorRect.new()
+    backdrop.color = NIGHT
+    driving_layer.add_child(backdrop)
+    backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    var activity = preload("res://scripts/minigames/translado.gd").new()
+    backdrop.add_child(activity)
+    activity.finished.connect(_driving_finished)
+
+func _driving_finished(success: bool, bumps: int) -> void:
+    driving_layer.queue_free()
+    driving_layer = null
+    player.set_physics_process(true)
+    if success:
+        if not driving_completed:
+            driving_completed = true
+            reputation = mini(100,reputation + (3 if bumps == 0 else 1))
+        _save_game()
+        _show("Arquimedes Ossario","Treino concluído! Impactos: %d. Segurança antes da pressa." % bumps,[{"text":"Voltar ao expediente","action":"close"}])
+    else:
+        _close()
