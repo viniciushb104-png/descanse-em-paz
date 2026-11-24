@@ -4,6 +4,7 @@ extends RefCounted
 const TILE: int = 32
 const WIDTH: int = 96
 const HEIGHT: int = 72
+const NORTH_ROWS: int = 54
 const GRASS: int = 0
 const STONE: int = 1
 const DIRT: int = 2
@@ -50,6 +51,10 @@ static func hash_at(x: int, y: int, salt: int = 0) -> int:
     return absi(n ^ (n >> 13)) % 9973
 
 static func material_at(cell: Vector2i) -> int:
+    if cell.y<0 and cell.y>=-NORTH_ROWS and cell.x>=0 and cell.x<48:
+        if cell.x>=22 and cell.x<27 or posmod(cell.y+6,6)<2:
+            return STONE
+        return GRASS
     if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
         return -1
     for section in PATHS:
@@ -65,8 +70,9 @@ static func material_at_world(pos: Vector2) -> int:
 
 static func paint(ctx: Node2D) -> void:
     ctx.draw_rect(Rect2(0,0,WIDTH*TILE,HEIGHT*TILE),GREEN)
-    for cy in range(HEIGHT):
-        for cx in range(WIDTH):
+    ctx.draw_rect(Rect2(0,-NORTH_ROWS*TILE,48*TILE,NORTH_ROWS*TILE),GREEN)
+    for cy in range(-NORTH_ROWS,HEIGHT):
+        for cx in range(48 if cy<0 else WIDTH):
             var cell := Vector2i(cx,cy)
             match material_at(cell):
                 STONE: _stone(ctx,cell)

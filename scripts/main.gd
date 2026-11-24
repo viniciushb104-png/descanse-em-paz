@@ -910,7 +910,7 @@ func _refresh_ui() -> void:
     if is_instance_valid(burial_field) and burial_field.active and not rooms.inside():
         var job: Dictionary = burial_queue.pending()
         if not job.is_empty():
-            objective_label.text = "OFICIO DE OSVALDO | PA EQUIPADA\nJazigo %s - %d/6 pazadas | %s" % [str(job["plot"]),burial_field.count_for(str(job["plot"])),"Jardim ao sul" if str(job["plot"])!="B-13" else "Quadra B"]
+            objective_label.text = "OFICIO DE OSVALDO | PA EQUIPADA\nJazigo %s - %d/6 pazadas | %s" % [str(job["plot"]),burial_field.count_for(str(job["plot"])),"Jardim ao norte" if str(job["plot"]).begins_with("N-") else ("Jardim ao sul" if str(job["plot"])!="B-13" else "Quadra B")]
     if mobile_hud != null:
         mobile_hud.call("set_playable",not dialogue_open and not rooms.changing and (not is_instance_valid(burial_field) or burial_field.elapsed<0.0))
     if dialogue_open:
@@ -937,7 +937,11 @@ func is_walkable(world_position: Vector2) -> bool:
     # somente o corpo da administracao e do galpao, nao suas entradas.
     if world_position.x < 58.0 or world_position.x > 3025.0:
         return false
-    if world_position.y < 92.0 or world_position.y > 2245.0:
+    if world_position.y < -1660.0 or world_position.y > 2245.0:
+        return false
+    if world_position.y<92.0 and (world_position.x<650.0 or world_position.x>925.0) and world_position.y>=-100.0:
+        return false
+    if world_position.y<0.0 and world_position.x>1510.0:
         return false
     if Rect2(196, 150, 418, 280).has_point(world_position):
         return false

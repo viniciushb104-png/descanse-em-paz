@@ -3,6 +3,23 @@ extends Node2D
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 const TOMB = preload("res://assets/props/tumulos/Tumulo_01.png")
 const OLD_TOMBS = [preload("res://assets/props/tumulos/Tumulo_01.png"),preload("res://assets/props/tumulos/Tumulo_02.png"),preload("res://assets/props/tumulos/Tumulo_03.png"),preload("res://assets/props/tumulos/Tumulo_04.png"),preload("res://assets/props/tumulos/Tumulo_05.png"),preload("res://assets/props/tumulos/Tumulo_06.png")]
+const NORTH_ART := "res://assets/cemetery/north/"
+const NORTH_GATE = preload("res://assets/sprites/gate.svg")
+const NORTH_FENCE = preload("res://assets/sprites/fence.svg")
+const NORTH_BENCH = preload("res://assets/sprites/bench.svg")
+const NORTH_STATUE = preload("res://assets/sprites/statue.svg")
+const NORTH_MAUSOLEUM = preload("res://assets/roadside/mausoleum.webp")
+var north_art: Dictionary = {}
+static func north_plots() -> Array[Dictionary]:
+    var result: Array[Dictionary] = []
+    for sector in range(4):
+        for row in range(3):
+            for col in range(4):
+                var x := 182.0+float(sector%2)*795.0+float(col)*135.0
+                var y := -365.0-float(floori(float(sector)/2.0))*690.0-float(row)*184.0
+                result.append({"id":"N-%02d" % (sector*12+row*4+col+1),"p":Vector2(x,y)})
+    return result
+
 static func old_positions() -> Array[Vector2]:
     var result: Array[Vector2] = []
     for row in range(3):
@@ -32,6 +49,7 @@ static func plots() -> Array[Dictionary]:
     for row in range(3):
         for col in range(6):
             result.append({"id":"%s-%02d" % [["C","D","E"][row],col+1],"p":Vector2(270+col*185,1560+row*228)})
+    result.append_array(north_plots())
     return result
 
 static func position_for(id: String) -> Vector2:
@@ -53,7 +71,16 @@ func _ready() -> void:
                 tex = art
                 hd_count += 1
         frames.append(tex)
+    for key in ["gate","fence","path","tomb","cross","mausoleum","grave","tree","flower_tree","lamp","flowers","hedge","pumpkins","bench","statue"]:
+        var path := NORTH_ART+str(key)+".webp"
+        if ResourceLoader.exists(path):
+            var tex := load(path) as Texture2D
+            if tex != null:
+                north_art[key] = tex
     queue_redraw()
+
+func _north_tex(key: String, fallback: Texture2D) -> Texture2D:
+    return north_art.get(key,fallback) as Texture2D
 
 func current() -> Dictionary:
     return game.burial_queue.pending()
@@ -70,6 +97,12 @@ func near(pos: Vector2) -> Dictionary:
     return {}
 
 func blocked(pos: Vector2) -> bool:
+    if pos.y<0.0:
+        if pos.x<65.0 or pos.x>1510.0:
+            return true
+        for p in north_old_positions():
+            if Rect2(p-Vector2(24,20),Vector2(48,40)).has_point(pos):
+                return true
     for p in old_positions():
         if Rect2(p-Vector2(28,25),Vector2(56,50)).has_point(pos):
             return true
@@ -139,9 +172,48 @@ func _sprite(tex: Texture2D,p: Vector2,h: float) -> void:
     var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
     draw_texture_rect(tex,Rect2(p.x-w/2,p.y-h,w,h),false)
 
+static func north_old_positions() -> Array[Vector2]:
+    var result: Array[Vector2] = []
+    for sector in range(4):
+        for row in range(3):
+            for col in range(3):
+                result.append(Vector2(249+sector%2*795+col*135,-365-floori(float(sector)/2.0)*690-row*184))
+    return result
+
+func _paint_north() -> void:
+    # Old memorials alternate with new plots; no painted UI rectangles.
+    var old := north_old_positions()
+    for i in range(old.size()):
+        var p: Vector2 = old[i]
+        _sprite(_north_tex("cross" if i%3==0 else "tomb",OLD_TOMBS[i%OLD_TOMBS.size()]),p+Vector2(0,22),72.0)
+        if i%3==0:
+            _sprite(_north_tex("flowers",FLOWERS),p+Vector2(20,25),22.0)
+    for y in [-220.0,-820.0,-1510.0]:
+        for x in [90.0,780.0,1460.0]:
+            _sprite(_north_tex("lamp",LAMP),Vector2(x,y),92.0)
+        for x in [105.0,1450.0]:
+            _sprite(_north_tex("flower_tree" if y==-820.0 else "tree",TREE),Vector2(x,y-90),145.0)
+    for y in [-650.0,-1340.0]:
+        _sprite(_north_tex("bench",NORTH_BENCH),Vector2(705,y),45.0)
+        _sprite(_north_tex("statue",NORTH_STATUE),Vector2(855,y),85.0)
+    for x in [370.0,1170.0]:
+        _sprite(_north_tex("mausoleum",NORTH_MAUSOLEUM),Vector2(x,-1535),120.0)
+    # Gate sides leave the central walkway open even with fallback art.
+    for x in [690.0,870.0]:
+        _sprite(_north_tex("lamp",LAMP),Vector2(x,-80),100.0)
+    for x in range(100,1500,145):
+        if x<640 or x>920:
+            _sprite(_north_tex("fence",NORTH_FENCE),Vector2(x,-85),65.0)
+        _sprite(_north_tex("fence",NORTH_FENCE),Vector2(x,-1650),65.0)
+    for i in range(4):
+        var x := 155.0+float(i%2)*795.0
+        var y := -245.0-float(floori(float(i)/2.0))*690.0
+        draw_string(ThemeDB.fallback_font,Vector2(x,y),["Jardim das Lanternas","Jardim das Saudades","Jardim da Eternidade","Jardim da Nevoa"][i],HORIZONTAL_ALIGNMENT_LEFT,-1,23,Color("#e4b875"))
+
 func _draw() -> void:
     if game==null:
         return
+    _paint_north()
     var old := old_positions()
     for i in range(old.size()):
         var p: Vector2 = old[i]
@@ -162,9 +234,9 @@ func _draw() -> void:
         var hits := count_for(id)
         if id!="B-13" or (hits>0 and hits<7):
             if hits==0:
-                _sprite(GRAVES[0],p+Vector2(0,34),72.0)
+                _sprite(_north_tex("grave",GRAVES[0]) if id.begins_with("N-") else GRAVES[0],p+Vector2(0,34),72.0)
             elif hits==7:
-                _sprite(TOMB,p+Vector2(0,34),94)
+                _sprite(_north_tex("tomb",TOMB) if id.begins_with("N-") else TOMB,p+Vector2(0,34),94)
                 _sprite(FLOWERS,p+Vector2(32,35),23)
             else:
                 draw_texture_rect(GRAVES[mini(3, floori(float(hits-1)*4.0/6.0))],Rect2(p-Vector2(46,42),Vector2(92,84)),false)

@@ -84,6 +84,7 @@ func apply_room() -> void:
         camera.limit_bottom = 648
     else:
         camera.zoom = Vector2(0.75,0.75)
+        camera.limit_top = -1728
         camera.limit_right = 3072
         camera.limit_bottom = 2304
     update_client()
@@ -401,7 +402,7 @@ func finish_case() -> void:
     var burial_required := int(item["id"]) in BURIAL_CASES
     var chosen_plot := ""
     if burial_required:
-        for plot in FIELD.plots():
+        for plot in FIELD.north_plots():
             var id: String = plot["id"]
             if id=="B-13":
                 continue
@@ -452,7 +453,7 @@ func authorize_burial() -> void:
     var needed: String = item["stock"]
     if int(inventory.get(needed,0))<=0:
         return
-    for plot in FIELD.plots():
+    for plot in FIELD.north_plots():
         var id: String = plot["id"]
         if id=="B-13":
             continue
