@@ -161,10 +161,8 @@ func _near_station() -> Dictionary:
         var field_station: Dictionary = burial_field.near(player.global_position)
         if not field_station.is_empty():
             return field_station
-    # Ambos os carros usam a mesma area visual de interacao.
-    for car_rect in DISTRICT_LAYOUT.HEARSE_AREAS:
-        if car_rect.grow(75).has_point(player.global_position):
-            return {"id":"carro","name":"Carro funerario - Translado do Alem","p":car_rect.get_center()}
+    # Prioridade para portas e NPCs: o carro sul fica muito perto da
+    # Fiscalizacao. Seu raio ampliado nao pode interceptar a entrada do posto.
     var nearest: Dictionary = {}
     var shortest := 98.0
     if is_instance_valid(cemetery_cat) and player.global_position.distance_to(cemetery_cat.global_position) < 76.0:
@@ -175,7 +173,14 @@ func _near_station() -> Dictionary:
         if distance < shortest:
             shortest = distance
             nearest = station
-    return nearest
+    if not nearest.is_empty():
+        return nearest
+    # Fora do alcance de portas e NPCs, ambos os carros continuam acessiveis
+    # pelas mesmas areas generosas (incluindo o controle por toque).
+    for car_rect in DISTRICT_LAYOUT.HEARSE_AREAS:
+        if car_rect.grow(75).has_point(player.global_position):
+            return {"id":"carro","name":"Carro funerario - Translado do Alem","p":car_rect.get_center()}
+    return {}
 
 func _notify(message: String, duration: float = 1.5) -> void:
     location_hint = message
