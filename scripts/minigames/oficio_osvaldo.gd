@@ -29,6 +29,7 @@ var dragging: bool = false
 var ended: bool = false
 var feedback: String = "Prepare o local com cuidado. Osvaldo esta supervisionando."
 var last_action_at: int = -1000
+var last_slider_save_at: int = -1000
 var leave_button: Button
 
 func configure(job: Dictionary) -> void:
@@ -168,7 +169,13 @@ func _move_slider(p: Vector2) -> void:
         return
     lowering = clampf((p.x - 240.0) / 483.0, 0.0, 1.0)
     feedback = "Descida controlada: %d%%" % int(lowering * 100.0)
-    _progress()
+    # Evita escrita em disco a cada pixel arrastado no Android/Web.
+    var now: int = Time.get_ticks_msec()
+    if now - last_slider_save_at >= 200:
+        last_slider_save_at = now
+        _progress()
+    else:
+        queue_redraw()
 
 func _release() -> void:
     if not dragging:
@@ -178,7 +185,7 @@ func _release() -> void:
         _advance()
     elif phase == 3:
         feedback = "Continue movendo o controle ate o ponto dourado."
-        queue_redraw()
+        _progress()
 
 func activate_target(idx: int) -> void:
     if ended or phase == 3 or idx < 0 or idx >= COUNTS[phase]:
