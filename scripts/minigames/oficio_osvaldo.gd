@@ -34,6 +34,8 @@ var leave_button: Button
 const DIG_DIR := "res://assets/sprites/osvaldo_dig/"
 const DIG_NAMES := ["idle","raise","strike","effort","throw"]
 const DIG_TIMES := [0.10,0.16,0.13,0.14,0.20,0.12]
+const DIG_IMPACT_SECONDS := 0.48
+const DIG_COMPLETE_SECONDS := 1.05
 var dig_frames: Array[Texture2D] = []
 var dig_clock := -1.0
 var dig_target := -1
@@ -235,7 +237,7 @@ func _process(delta: float) -> void:
     if ended or dig_clock < 0.0:
         return
     dig_clock += delta
-    if dig_clock >= 0.48 and not dig_committed:
+    if dig_clock >= DIG_IMPACT_SECONDS and not dig_committed:
         dig_committed = true
         # Apply once, when the blade reaches the soil.
         var done: Array = completed[2]
@@ -243,7 +245,7 @@ func _process(delta: float) -> void:
             done.append(dig_target)
             completed[2] = done
             _progress()
-    if dig_clock >= 1.05:
+    if dig_clock >= DIG_COMPLETE_SECONDS:
         var target: Rect2 = _zones()[dig_target]
         dig_anchor = target.get_center()+Vector2(-38.0,22.0)
         dig_clock = -1.0
@@ -277,9 +279,9 @@ func _paint_digger() -> void:
     var h := 98.0
     var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
     draw_texture_rect(tex,Rect2(foot.x-w*0.42,foot.y-h,w,h),false)
-    if dig_clock >= 0.48 and dig_clock < 0.83 and dig_target >= 0:
+    if dig_clock >= DIG_IMPACT_SECONDS and dig_clock < 0.83 and dig_target >= 0:
         var zone: Rect2 = _zones()[dig_target]
-        var t := (dig_clock-0.48)/0.35
+        var t := (dig_clock-DIG_IMPACT_SECONDS)/0.35
         for i in range(10):
             var p := zone.get_center()+Vector2(float(i-4)*9.0*t,-sin(t*PI)*28.0-float(i%3)*5.0)
             draw_rect(Rect2(p,Vector2(4,4)),Color("#a96b41"))

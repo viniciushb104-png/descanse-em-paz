@@ -41,7 +41,11 @@ func _run() -> void:
         for idx in range(required):
             if etapa == 2:
                 activity._request_target(idx)
-                activity._process(0.47)
+                activity._process(GAME.DIG_IMPACT_SECONDS - 0.02)
+                if activity.completed[2].has(idx):
+                    _fail("Pazada registrada antes do impacto.", 118)
+                    return
+                activity._process(0.04)
                 if not activity.completed[2].has(idx):
                     _fail("Golpe nao registrou progresso.", 116)
                     return
@@ -51,7 +55,7 @@ func _run() -> void:
                 if activity.completed[2].size() != count:
                     _fail("Golpe duplicado.", 117)
                     return
-                activity._process(0.50)
+                activity._process(GAME.DIG_COMPLETE_SECONDS)
             else:
                 activity.activate_target(idx)
         if int(activity.phase) != etapa + 1:
