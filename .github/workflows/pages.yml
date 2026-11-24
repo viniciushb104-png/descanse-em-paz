@@ -105,6 +105,9 @@ jobs:
       - name: Validar preferencias e capela do ultimo adeus
         run: godot --headless --path . --script res://tests/wake_smoke.gd
 
+      - name: Validar nove novas atividades do distrito
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_activities_smoke" godot --headless --path . --script res://tests/district_activities_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web
