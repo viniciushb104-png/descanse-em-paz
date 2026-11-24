@@ -13,9 +13,13 @@ const WORLD_ATLAS: Texture2D = preload("res://assets/art/world.png")
 const TREE_LILAC: Texture2D = preload("res://assets/trees/Arvore_01.png")
 const TREE_GOTHIC: Texture2D = preload("res://assets/trees/Arvore_10.png")
 const TREE_TWISTED: Texture2D = preload("res://assets/trees/Arvore_06.png")
+const MENU_BACKGROUND_PATH := "res://assets/menu/menu_turma.png"
+const GRAVE_MARKER_SCRIPT := preload("res://scripts/ui/menu_grave_marker.gd")
 
 var elapsed: float = 0.0
 var continue_button: Button
+var continue_marker: Control
+var menu_background: TextureRect
 var new_button: Button
 var modal_overlay: ColorRect
 var modal_title: Label
@@ -24,6 +28,7 @@ var modal_actions: HBoxContainer
 
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    _install_background()
     _build_menu()
     _build_modal()
     _refresh_continue()
@@ -34,9 +39,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     elapsed += delta
-    queue_redraw()
+    if menu_background == null:
+        queue_redraw()
 
 func _draw() -> void:
+    if menu_background != null:
+        return
     var viewport_size: Vector2 = size
     var width: float = viewport_size.x
     var height: float = viewport_size.y
@@ -121,45 +129,83 @@ func _make_button(title_text: String, font_size: int = 19) -> Button:
     button.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), GOLD, 9, 3))
     return button
 
+func _install_background() -> void:
+    # A arte e um recurso opcional: testes e projeto continuam abrindo
+    # enquanto o PNG esta sendo integrado ao repositorio.
+    if not ResourceLoader.exists(MENU_BACKGROUND_PATH):
+        return
+    var image_texture := load(MENU_BACKGROUND_PATH) as Texture2D
+    if image_texture == null:
+        return
+    menu_background = TextureRect.new()
+    menu_background.name = "CemeteryMenuBackground"
+    menu_background.texture = image_texture
+    menu_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+    menu_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(menu_background)
+    menu_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+func _add_memorial_button(title_text: String, y: float, is_coffin: bool) -> Button:
+    var marker := GRAVE_MARKER_SCRIPT.new() as Control
+    marker.name = "Memorial_" + title_text.replace(" ", "_")
+    marker.position = Vector2(840, y)
+    marker.size = Vector2(286, 56)
+    marker.set("shape_kind", 1 if is_coffin else 0)
+    marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(marker)
+
+    var button := _make_button(title_text, 17)
+    button.name = "Button_" + title_text.replace(" ", "_")
+    button.position = marker.position
+    button.size = marker.size
+    button.custom_minimum_size = Vector2(250, 56)
+    button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    button.focus_mode = Control.FOCUS_ALL
+    # O Button e a area interativa; a lapide/caixao e desenhada atras.
+    # Remove apenas o fundo padrao deste Button, nao dos botoes dos modais.
+    var transparent_style := StyleBoxEmpty.new()
+    for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+        button.add_theme_stylebox_override(state, transparent_style)
+    button.add_theme_color_override("font_color", CREAM)
+    button.add_theme_color_override("font_hover_color", Color("#fff2b8"))
+    button.add_theme_color_override("font_pressed_color", GOLD)
+    button.add_theme_color_override("font_focus_color", Color("#fff2b8"))
+    button.add_theme_color_override("font_disabled_color", Color("#857983"))
+    button.mouse_entered.connect(func() -> void: marker.set("highlighted", true))
+    button.mouse_exited.connect(func() -> void: marker.set("highlighted", button.has_focus()))
+    button.focus_entered.connect(func() -> void: marker.set("highlighted", true))
+    button.focus_exited.connect(func() -> void: marker.set("highlighted", button.is_hovered()))
+    add_child(button)
+    if title_text == "CONTINUAR EXPEDIENTE":
+        continue_marker = marker
+    return button
+
+
 func _build_menu() -> void:
-    var backing := Panel.new()
-    backing.position = Vector2(37, 24)
-    backing.size = Vector2(585, 588)
-    backing.add_theme_stylebox_override("panel", _style(Color("#1b1528e8"), Color("#866b80"), 15, 3))
-    backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    add_child(backing)
+    # Cabecalho no ceu escuro; personagens permanecem livres no lado esquerdo.
+    _make_label("✦  SANTA MORTALHA  ✦", Vector2(58, 20), Vector2(530, 26), 16, GOLD)
+    _make_label("Descanse em Paz", Vector2(52, 62), Vector2(690, 67), 48, CREAM)
+    _make_label("& Pague em Dia", Vector2(63, 124), Vector2(600, 59), 40, GOLD)
+    _make_label("A morte é inevitável. A burocracia também.", Vector2(64, 183), Vector2(600, 32), 17, LILAC)
 
-    _make_label("✦  SANTA MORTALHA  •  JARDIM DO ÚLTIMO SUSPIRO  ✦", Vector2(65, 56), Vector2(533, 32), 16, LILAC)
-    _make_label("DESCANSE EM PAZ", Vector2(70, 128), Vector2(545, 56), 43, CREAM)
-    _make_label("& PAGUE EM DIA", Vector2(70, 184), Vector2(525, 56), 40, GOLD)
-    _make_label("A morte é inevitável. A burocracia também.", Vector2(72, 267), Vector2(510, 32), 19, LILAC)
-
-    continue_button = _make_button("CONTINUAR EXPEDIENTE")
-    continue_button.position = Vector2(84, 323)
-    continue_button.size = Vector2(465, 48)
+    # Botões grandes sobre o gramado à direita; preservam mouse, teclado e toque.
+    continue_button = _add_memorial_button("CONTINUAR EXPEDIENTE", 298.0, true)
     continue_button.pressed.connect(_continue_game)
-    add_child(continue_button)
 
-    new_button = _make_button("NOVO JOGO")
-    new_button.position = Vector2(84, 379)
-    new_button.size = Vector2(465, 48)
+    new_button = _add_memorial_button("NOVO JOGO", 361.0, true)
     new_button.pressed.connect(_request_new_game)
-    add_child(new_button)
 
-    var how_to := _make_button("COMO JOGAR", 18)
-    how_to.position = Vector2(84, 435)
-    how_to.size = Vector2(465, 48)
+    var how_to := _add_memorial_button("COMO JOGAR", 424.0, false)
     how_to.pressed.connect(show_how_to_play)
-    add_child(how_to)
 
-    var credits := _make_button("CRÉDITOS", 18)
-    credits.position = Vector2(84, 491)
-    credits.size = Vector2(465, 48)
+    var credits := _add_memorial_button("CRÉDITOS", 487.0, false)
     credits.pressed.connect(show_credits)
-    add_child(credits)
 
-    _make_label("SIMULADOR DE GESTÃO FUNERÁRIA  ·  DEMO 1.0", Vector2(87, 561), Vector2(484, 24), 13, Color("#b2a0af"))
-    _make_label("VINICIUS DINIZ  •  ASAS DO MEDO GAMES", Vector2(698, 597), Vector2(410, 24), 14, CREAM, true)
+    _make_label("VINICIUS DINIZ  ·  ASAS DO MEDO GAMES", Vector2(44, 612), Vector2(560, 25), 13, CREAM)
+
 
 func _build_modal() -> void:
     modal_overlay = ColorRect.new()
@@ -225,7 +271,9 @@ func _close_modal() -> void:
 func _refresh_continue() -> void:
     var has_save := FileAccess.file_exists(SAVE_PATH)
     continue_button.disabled = not has_save
-    continue_button.text = "CONTINUAR EXPEDIENTE" if has_save else "CONTINUAR (SEM SALVAMENTO)"
+    continue_button.text = "CONTINUAR EXPEDIENTE" if has_save else "SEM SALVAMENTO"
+    if is_instance_valid(continue_marker):
+        continue_marker.set("disabled_visual", not has_save)
 
 func _continue_game() -> void:
     if not FileAccess.file_exists(SAVE_PATH):
