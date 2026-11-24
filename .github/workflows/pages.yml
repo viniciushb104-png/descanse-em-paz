@@ -62,6 +62,9 @@ jobs:
       - name: Testar controle por toque e dialogos responsivos
         run: godot --headless --path . --script res://tests/mobile_smoke.gd
 
+      - name: Testar diálogos e dificuldade progressiva
+        run: godot --headless --path . --script res://tests/dialogue_smoke.gd
+
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web

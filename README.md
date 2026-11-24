@@ -91,3 +91,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Oficina com bancada, painel de ferramentas, prateleiras, vitral, carrinho e porta.
 - Transição com 8 quadros de animação gótica de porta ao entrar/sair.
 - Fachadas e missões mantidas. Documentação: `docs/SPRITES_INTERIORES_V111.md`.
+
+## Versão 1.2 — Diálogos e escolhas
+- Vinte casos com textos próprios, pistas e quatro patamares de complexidade (2, 3, 4 ou 5 etapas).
+- Humor acolhedor e abordagem séria são caminhos igualmente válidos quando responsáveis.
+- Respostas parciais permitem revisão; atalhos inseguros bloqueiam a conclusão até serem corrigidos.
+- Retratos provisórios modulares podem ser substituídos por character sheets em PNG sem mudar o motor.
+- Decisões e reações persistem no save local. Narrativas em `scripts/systems/dialogue_scenes.gd`.

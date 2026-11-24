@@ -27,14 +27,20 @@ func _run() -> void:
         push_error("Personagem preso no interior")
         quit(93)
         return
-    game._on_choice("case_bad")
-    if r.case_index != 0:
-        push_error("Erro nao pode concluir caso")
+    r.show_case()
+    game._on_choice("case_pick_2")
+    game._on_choice("case_advance")
+    game._on_choice("case_pick_2")
+    if r.case_index != 0 or r.dialogue_step != 1:
+        push_error("Atalho nao pode concluir caso")
         quit(94)
         return
-    game._on_choice("case_best")
+    game._on_choice("case_retry")
+    game._on_choice("case_pick_0")
+    game._on_choice("case_advance")
+    game._on_choice("case_finalize")
     if r.case_index != 1:
-        push_error("Caso nao avancou")
+        push_error("Caso nao avancou apos dialogo completo")
         quit(95)
         return
     r.leave()
@@ -58,7 +64,11 @@ func _run() -> void:
         game._close()
         if not str(item["stock"]).is_empty():
             r.inventory[str(item["stock"])] = 6
-        game._on_choice("case_best")
+        r.show_case()
+        while r.dialogue_step < r.DIALOGUES.beat_keys(idx).size():
+            game._on_choice("case_pick_0")
+            game._on_choice("case_advance")
+        game._on_choice("case_finalize")
         if r.case_index != idx+1:
             push_error("Caso nao concluido: "+str(idx+1))
             quit(98)

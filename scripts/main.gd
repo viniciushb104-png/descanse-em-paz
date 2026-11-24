@@ -8,6 +8,7 @@ const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
 const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
 const MOBILE_HUD = preload("res://scripts/ui/mobile_hud.gd")
+const CLIENT_PORTRAIT = preload("res://scripts/ui/client_portrait.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -55,6 +56,7 @@ var prompt_label: Label
 var dialog_panel: Panel
 var dialog_title: Label
 var dialog_body: Label
+var dialog_portrait: Control
 var options_box: VBoxContainer
 var mobile_hud: Control
 
@@ -389,6 +391,14 @@ func _show(heading: String, body: String, choices: Array) -> void:
     dialog_panel.visible = true
     dialog_title.text = heading
     dialog_body.text = body
+    if dialog_portrait != null:
+        dialog_portrait.visible = false
+    var scroll: ScrollContainer = dialog_panel.get_node("BodyScroll")
+    scroll.position.x = 18.0
+    scroll.size.x = 806.0
+    dialog_body.custom_minimum_size.x = 770.0
+    scroll.scroll_vertical = 0
+    (dialog_panel.get_node("ChoicesScroll") as ScrollContainer).scroll_vertical = 0
     for child in options_box.get_children():
         options_box.remove_child(child)
         child.queue_free()
@@ -400,6 +410,16 @@ func _show(heading: String, body: String, choices: Array) -> void:
         btn.add_theme_font_size_override("font_size", 17)
         btn.pressed.connect(_on_choice.bind(str(choice["action"])))
         options_box.add_child(btn)
+
+func _show_character(speaker: String, words: String, mood: String, choices: Array) -> void:
+    _show(speaker, words, choices)
+    dialog_portrait.call("set_actor",speaker,mood)
+    dialog_portrait.visible = true
+    var scroll: ScrollContainer = dialog_panel.get_node("BodyScroll")
+    scroll.position.x = 153.0
+    scroll.size.x = 671.0
+    dialog_body.custom_minimum_size.x = 634.0
+    scroll.scroll_vertical = 0
 
 func _style(bg: Color, edge: Color) -> StyleBoxFlat:
     var st := StyleBoxFlat.new()
@@ -502,6 +522,13 @@ func _build_ui() -> void:
     dialog_body.add_theme_font_size_override("font_size", 18)
     dialog_body.add_theme_color_override("font_color", PAPER)
     body_scroll.add_child(dialog_body)
+    dialog_portrait = CLIENT_PORTRAIT.new()
+    dialog_portrait.name = "ClientPortrait"
+    dialog_portrait.position = Vector2(20,72)
+    dialog_portrait.size = Vector2(112,134)
+    dialog_portrait.visible = false
+    dialog_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_panel.add_child(dialog_portrait)
     var choices_scroll := ScrollContainer.new()
     choices_scroll.name = "ChoicesScroll"
     choices_scroll.position = Vector2(18, 234)
