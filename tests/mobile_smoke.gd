@@ -13,19 +13,19 @@ func _run() -> void:
         push_error("HUD touch nao criada")
         quit(111)
         return
-    hud.set_touch_preview(true)
-    hud.set_playable(true)
+    hud.call("set_touch_preview",true)
+    hud.call("set_playable",true)
     if not hud.visible or not hud.has_node("Joystick"):
         push_error("Joystick touch nao apareceu")
         quit(112)
         return
     var stick: Control = hud.get_node("Joystick")
-    stick._set_direction(Vector2(180,94))
+    stick.call("_set_direction",Vector2(180,94))
     if game.player.virtual_direction.x < 0.5:
         push_error("Joystick nao transmite movimento ao personagem")
         quit(113)
         return
-    stick.reset()
+    stick.call("reset")
     if game.player.virtual_direction.length_squared() > 0.0:
         push_error("Joystick nao solta o controle")
         quit(114)

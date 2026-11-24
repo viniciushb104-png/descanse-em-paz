@@ -74,5 +74,5 @@ func set_playable(allowed: bool) -> void:
 
 func _sync_visibility() -> void:
     visible = touch_enabled and allowed_to_move
-    if not visible and joystick != null and (joystick.direction as Vector2).length_squared()>0.0:
-        joystick.reset()
+    if not visible and joystick != null:
+        joystick.call("reset")

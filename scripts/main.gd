@@ -7,6 +7,7 @@ const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
 const LEGAL = preload("res://scripts/systems/legal_lessons.gd")
+const MOBILE_HUD = preload("res://scripts/ui/mobile_hud.gd")
 @onready var rooms: Node = $RoomsRuntime
 ## Piso e objetos agora vivem em camadas separadas.
 const PAPER := Color("#f0e5cb")
@@ -55,6 +56,7 @@ var dialog_panel: Panel
 var dialog_title: Label
 var dialog_body: Label
 var options_box: VBoxContainer
+var mobile_hud: Control
 
 func _ready() -> void:
     _build_ui()
@@ -108,6 +110,12 @@ func _near_station() -> Dictionary:
             shortest = distance
             nearest = station
     return nearest
+
+func _open_journal() -> void:
+    if dialogue_open or rooms.changing:
+        return
+    var mission: String = rooms.objective() if stage >= 12 else OBJECTIVES[stage]
+    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n"+mission+"\n\nAtendimentos concluidos: %d/20.\n\nConsulte os atendentes e o Arquivo Legal para estudar cada procedimento. Os valores sao ficticios." % rooms.case_index, [{"text":"Fechar diario","action":"close"}])
 
 func _try_interact() -> void:
     if dialogue_open or rooms.changing:
@@ -387,7 +395,8 @@ func _show(heading: String, body: String, choices: Array) -> void:
     for choice in choices:
         var btn := Button.new()
         btn.text = str(choice["text"])
-        btn.custom_minimum_size = Vector2(0, 34)
+        btn.custom_minimum_size = Vector2(0, 54)
+        btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         btn.add_theme_font_size_override("font_size", 17)
         btn.pressed.connect(_on_choice.bind(str(choice["action"])))
         options_box.add_child(btn)
@@ -424,8 +433,12 @@ func _build_ui() -> void:
     bar.add_child(status_label)
 
     var mission := Panel.new()
-    mission.position = Vector2(700, 10)
-    mission.size = Vector2(439, 92)
+    mission.anchor_left = 1.0
+    mission.anchor_right = 1.0
+    mission.offset_left = -453.0
+    mission.offset_right = -13.0
+    mission.offset_top = 10.0
+    mission.offset_bottom = 104.0
     mission.add_theme_stylebox_override("panel", _style(Color("#302238"), Color("#917259")))
     mission.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(mission)
@@ -439,8 +452,14 @@ func _build_ui() -> void:
     mission.add_child(objective_label)
 
     var tip := Panel.new()
-    tip.position = Vector2(240, 600)
-    tip.size = Vector2(665, 38)
+    tip.anchor_left = 0.5
+    tip.anchor_right = 0.5
+    tip.anchor_top = 1.0
+    tip.anchor_bottom = 1.0
+    tip.offset_left = -331.0
+    tip.offset_right = 331.0
+    tip.offset_top = -48.0
+    tip.offset_bottom = -10.0
     tip.add_theme_stylebox_override("panel", _style(Color("#302238bb"), Color("#b79a6e")))
     tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(tip)
@@ -453,68 +472,86 @@ func _build_ui() -> void:
     tip.add_child(prompt_label)
 
     dialog_panel = Panel.new()
-    dialog_panel.position = Vector2(185, 281)
-    dialog_panel.size = Vector2(782, 314)
+    dialog_panel.anchor_left = 0.5
+    dialog_panel.anchor_right = 0.5
+    dialog_panel.anchor_top = 0.5
+    dialog_panel.anchor_bottom = 0.5
+    dialog_panel.offset_left = -421.0
+    dialog_panel.offset_right = 421.0
+    dialog_panel.offset_top = -202.0
+    dialog_panel.offset_bottom = 202.0
     dialog_panel.visible = false
     dialog_panel.add_theme_stylebox_override("panel", _style(NIGHT, GOLD))
     root.add_child(dialog_panel)
     dialog_title = Label.new()
-    dialog_title.position = Vector2(18, 14)
-    dialog_title.size = Vector2(744, 36)
+    dialog_title.position = Vector2(22, 15)
+    dialog_title.size = Vector2(798, 40)
     dialog_title.add_theme_font_size_override("font_size", 23)
     dialog_title.add_theme_color_override("font_color", BLUE)
     dialog_panel.add_child(dialog_title)
+    var body_scroll := ScrollContainer.new()
+    body_scroll.name = "BodyScroll"
+    body_scroll.position = Vector2(18, 63)
+    body_scroll.size = Vector2(806, 158)
+    dialog_panel.add_child(body_scroll)
     dialog_body = Label.new()
-    dialog_body.position = Vector2(18, 57)
-    dialog_body.size = Vector2(741, 107)
+    dialog_body.name = "DialogText"
+    dialog_body.custom_minimum_size = Vector2(770, 0)
+    dialog_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    dialog_body.add_theme_font_size_override("font_size", 17)
+    dialog_body.add_theme_font_size_override("font_size", 18)
     dialog_body.add_theme_color_override("font_color", PAPER)
-    dialog_panel.add_child(dialog_body)
+    body_scroll.add_child(dialog_body)
+    var choices_scroll := ScrollContainer.new()
+    choices_scroll.name = "ChoicesScroll"
+    choices_scroll.position = Vector2(18, 234)
+    choices_scroll.size = Vector2(806, 155)
+    dialog_panel.add_child(choices_scroll)
     options_box = VBoxContainer.new()
-    options_box.position = Vector2(20, 173)
-    options_box.size = Vector2(741, 127)
-    options_box.add_theme_constant_override("separation", 5)
-    dialog_panel.add_child(options_box)
+    options_box.name = "OptionsBox"
+    options_box.custom_minimum_size = Vector2(776, 0)
+    options_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    options_box.add_theme_constant_override("separation", 7)
+    choices_scroll.add_child(options_box)
 
     # Botao de resgate acessivel mesmo se o teclado perder foco.
     var rescue := Button.new()
     rescue.text = "R  Resgatar personagem"
-    rescue.position = Vector2(943, 601)
-    rescue.size = Vector2(195, 37)
+    rescue.anchor_left = 1.0
+    rescue.anchor_right = 1.0
+    rescue.anchor_top = 1.0
+    rescue.anchor_bottom = 1.0
+    rescue.offset_left = -211.0
+    rescue.offset_right = -14.0
+    rescue.offset_top = -49.0
+    rescue.offset_bottom = -9.0
+    rescue.visible = not (OS.has_feature("mobile") or DisplayServer.is_touchscreen_available())
     rescue.pressed.connect(_rescue_player)
     root.add_child(rescue)
     var menu_button := Button.new()
     menu_button.text = "MENU"
-    menu_button.position = Vector2(1010, 108)
-    menu_button.size = Vector2(128, 36)
+    menu_button.anchor_left = 1.0
+    menu_button.anchor_right = 1.0
+    menu_button.offset_left = -143.0
+    menu_button.offset_right = -13.0
+    menu_button.offset_top = 108.0
+    menu_button.offset_bottom = 148.0
+    menu_button.visible = not (OS.has_feature("mobile") or DisplayServer.is_touchscreen_available())
     menu_button.pressed.connect(_open_pause_menu)
     root.add_child(menu_button)
-    if DisplayServer.is_touchscreen_available():
-        _touch_controls(root)
-
-func _touch_controls(root: Control) -> void:
-    var directions := [
-        {"label": "◀", "p": Vector2(17, 546), "d": Vector2.LEFT},
-        {"label": "▲", "p": Vector2(70, 502), "d": Vector2.UP},
-        {"label": "▼", "p": Vector2(70, 546), "d": Vector2.DOWN},
-        {"label": "▶", "p": Vector2(123, 546), "d": Vector2.RIGHT}
-    ]
-    for info in directions:
-        var btn := Button.new()
-        btn.text = str(info["label"])
-        btn.position = info["p"]
-        btn.size = Vector2(49, 40)
-        var direction: Vector2 = info["d"]
-        btn.button_down.connect(func() -> void: player.virtual_direction = direction)
-        btn.button_up.connect(func() -> void: player.virtual_direction = Vector2.ZERO)
-        root.add_child(btn)
-    var interact := Button.new()
-    interact.text = "Interagir"
-    interact.position = Vector2(958, 548)
-    interact.size = Vector2(175, 43)
-    interact.pressed.connect(_try_interact)
-    root.add_child(interact)
+    var touch_layer := CanvasLayer.new()
+    touch_layer.name = "MobileControlsLayer"
+    touch_layer.layer = 8
+    add_child(touch_layer)
+    mobile_hud = MOBILE_HUD.new()
+    mobile_hud.name = "MobileHud"
+    touch_layer.add_child(mobile_hud)
+    mobile_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    mobile_hud.connect("direction_changed",func(value: Vector2) -> void: player.virtual_direction = value)
+    mobile_hud.connect("interact_requested",_try_interact)
+    mobile_hud.connect("menu_requested",_open_pause_menu)
+    mobile_hud.connect("journal_requested",_open_journal)
+    mobile_hud.call("set_playable",not dialogue_open and not rooms.changing)
 
 func _refresh_ui() -> void:
     if status_label == null:
@@ -522,6 +559,8 @@ func _refresh_ui() -> void:
     var minutes: int = int(clock_minutes)
     status_label.text = "SANTA MORTALHA  |  Dia %d  |  %02d:%02d\nCaixa R$ %d  ·  Reputacao %d/100  ·  Conformidade %d/100" % [day, int(minutes / 60.0), minutes % 60, money, reputation, compliance]
     objective_label.text = "MISSÃO DO EXPEDIENTE\n" + (rooms.objective() if stage >= 12 else OBJECTIVES[stage])
+    if mobile_hud != null:
+        mobile_hud.call("set_playable",not dialogue_open and not rooms.changing)
     if dialogue_open:
         prompt_label.text = ""
     elif not rescue_notice.is_empty():

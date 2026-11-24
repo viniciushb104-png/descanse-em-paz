@@ -77,3 +77,10 @@ O mapa foi redesenhado para preservar a leitura visual e o enquadramento dos pre
 - Escritorio e oficina tem cenas individuais de arte em `scenes/interiors/`.
 - Entradas e saidas usam cortinas goticas animadas de CanvasLayer, com troca no momento de fechamento.
 - O progresso e o fluxo dos 20 casos foram preservados. Mais detalhes em `docs/SPRINT_V11.md`.
+
+## Sprint 1.1 mobile
+- Tela planejada para smartphone Android em modo paisagem, conservando o jogo no computador/Web.
+- Joystick multitouch a esquerda, Interagir/Diario/Menu a direita, posicionados com ancoras.
+- Caixas de dialogo centralizadas e rolaveis; botoes grandes com quebra de linha para casos longos.
+- Controles touch somem nos dialogos e nas transicoes de porta.
+- Android APK/AAB e publicacao na Google Play **ainda nao foram realizados**; `docs/MOBILE_V11.md` explica os proximos requisitos.
