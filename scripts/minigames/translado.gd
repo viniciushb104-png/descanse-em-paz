@@ -7,7 +7,7 @@ const VIEW := Vector2(960,480)
 const HORIZON := 196.0
 const PLAYER_WIDTH := 130.0
 const PLAYER_Y := 430.0
-const BUILD_LABEL := "ARCADE 2.9"
+const BUILD_LABEL := "ARCADE 3.0 HD"
 const DEPTH := 650.0
 var distance := 0.0
 var speed := 0.0
@@ -41,15 +41,15 @@ const REGION_NAMES := ["Bairro gótico","Centro de Santa Mortalha","Montanhas da
 const REGION_SPAN := LENGTH / 6.0
 const ROADSIDE_DIR := "res://assets/roadside/"
 const ROADSIDE_NAMES := ["lamp","tree","pumpkins","fence","mausoleum","house","vegetation","ghost"]
-const ROADSIDE_FALLBACKS = [
-    preload("res://assets/sprites/lantern.svg"),
-    preload("res://assets/trees/Arvore_01.png"),
-    preload("res://assets/sprites/pumpkin.svg"),
-    preload("res://assets/sprites/fence.svg"),
-    preload("res://assets/props/tumulos/Tumulo_01.png"),
-    preload("res://assets/sprites/office.svg"),
-    preload("res://assets/sprites/flowers_grass.svg"),
-    preload("res://assets/sprites/baltazar_down_0.svg")
+const ROADSIDE_HD = [
+    preload("res://assets/roadside/lamp.webp"),
+    preload("res://assets/roadside/tree.webp"),
+    preload("res://assets/roadside/pumpkins.webp"),
+    preload("res://assets/roadside/fence.webp"),
+    preload("res://assets/roadside/mausoleum.webp"),
+    preload("res://assets/roadside/house.webp"),
+    preload("res://assets/roadside/vegetation.webp"),
+    preload("res://assets/roadside/ghost.webp")
 ]
 # Heights measured relative to a hearse at the same distance.
 const ROADSIDE_HEIGHTS := [105.0,230.0,45.0,85.0,170.0,240.0,35.0,70.0]
@@ -63,16 +63,16 @@ var countdown := 3.0
 var obstacles: Array[Dictionary] = []
 var flash := 0.0
 var fuel := 100.0
-const ROUTE_CAR = preload("res://assets/hud/translado/route_car.png")
+const ROUTE_CAR = preload("res://assets/hud/translado/route_car.webp")
+const HUD_SPEED = preload("res://assets/hud/translado/speed_base.webp")
+const HUD_ROUTE = preload("res://assets/hud/translado/route_base.webp")
+const HUD_FUEL = preload("res://assets/hud/translado/fuel_base.webp")
 var hud_art: Dictionary = {}
 
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _load_roadside()
-    for part in ["route_base","speed_base","fuel_base","route_car"]:
-        var path: String = "res://assets/hud/translado/"+part+".webp"
-        if ResourceLoader.exists(path):
-            hud_art[part] = load(path)
+    hud_art = {"route_base":HUD_ROUTE,"speed_base":_clean_speed_dial(),"fuel_base":HUD_FUEL,"route_car":ROUTE_CAR}
     for i in range(1,14):
         obstacles.append({"z":float(i)*205.0+120.0,"lane": [-0.63,0.63,0.0,0.63,-0.63][i%5],"hit":false,"model":(i-1)%TRAFFIC.size()})
     var frame := VBoxContainer.new()
@@ -80,7 +80,7 @@ func _ready() -> void:
     frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     info = Label.new()
     info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    info.add_theme_font_size_override("font_size",22)
+    info.add_theme_font_size_override("font_size",16)
     frame.add_child(info)
     board = Control.new()
     board.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
@@ -178,7 +178,7 @@ func _physics_process(delta: float) -> void:
     if distance>=LENGTH:
         _finish(true)
         return
-    info.text = "TRANSLADO DO ALÉM | "+BUILD_LABEL
+    info.text = "TRANSLADO DO ALÉM | "+BUILD_LABEL+" | 12/12 ARTES"
     board.queue_redraw()
 
 func _impact() -> void:
@@ -290,42 +290,64 @@ func _paint_hud() -> void:
         board.draw_rect(Rect2(segment.position,Vector2(segment.size.x,segment.size.y*portion)),Color("#dc5145") if fuel<=20.0 else Color("#e8af45"))
     _hud_text(Vector2(786,93),"%d%%" % int(fuel),20)
 
+# Remove the baked red needle from the approved dial using the opposite dial
+# background only inside the narrow needle footprint. Keep the central jewel.
+func _clean_speed_dial() -> Texture2D:
+    var image := HUD_SPEED.get_image()
+    if image.is_compressed():
+        image.decompress()
+    var original := image.duplicate() as Image
+    var center := Vector2(246.0,322.0)
+    var tip := Vector2(309.0,191.0)
+    for y in range(187,309):
+        for x in range(244,319):
+            var point := Vector2(x,y)
+            var nearest := Geometry2D.get_closest_point_to_segment(point,center,tip)
+            if point.distance_to(nearest)<10.0 and point.distance_to(center)>20.0:
+                var pixel := original.get_pixel(x,y)
+                if pixel.r>pixel.b*1.20 or point.distance_to(nearest)<5.0:
+                    image.set_pixel(x,y,original.get_pixel(492-x,y))
+    return ImageTexture.create_from_image(image)
+
 func _paint_art_hud(progress: float, kmh: float) -> void:
-    var dial := Rect2(8,1,106,106)
+    var dial := Rect2(5,-2,120,120)
     board.draw_texture_rect(hud_art["speed_base"],dial,false)
     var pivot := dial.position+Vector2(0.492,0.644)*dial.size
-    var angle := deg_to_rad(160.0+220.0*clampf(kmh/200.0,0.0,1.0))
-    board.draw_line(pivot,pivot+Vector2(cos(angle),sin(angle))*34.0,Color("#ff734d"),2.5,true)
-    board.draw_circle(pivot,3.4,Color("#d9a94c"))
-    _hud_text(Vector2(118,33),"%03d km/h" % int(kmh),23)
-    _hud_text(Vector2(118,55),"Impactos: %d" % bumps,15,Color("#ff7565") if flash>0.0 else Color("#f5d39b"))
-    var route := Rect2(279,2,390,130)
+    var angle := deg_to_rad(165.0+210.0*clampf(kmh/200.0,0.0,1.0))
+    board.draw_line(pivot,pivot+Vector2(cos(angle),sin(angle))*39.0,Color("#ff734d"),2.5,true)
+    board.draw_circle(pivot,3.0,Color("#d9a94c"))
+    board.draw_rect(Rect2(125,24,130,55),Color("#24162e"))
+    _hud_text(Vector2(131,48),"%03d km/h" % int(kmh),21)
+    _hud_text(Vector2(131,70),"Impactos: %d" % bumps,15,Color("#ff7565") if flash>0.0 else Color("#f5d39b"))
+    var route := Rect2(263,1,432,144.18)
     board.draw_texture_rect(hud_art["route_base"],route,false)
     var start := route.position.x+route.size.x*182.0/800.0
     var span := route.size.x*437.0/800.0
     var y := route.position.y+route.size.y*158.0/267.0
-    board.draw_rect(Rect2(start,y,span*progress,route.size.y*16.0/267.0),Color("#e9aa43"))
-    for i in range(7):
-        var x := start+span*float(i)/6.0
-        board.draw_line(Vector2(x,y+9),Vector2(x,y+14),Color("#bda4c6"),1.0)
+    board.draw_rect(Rect2(start,y,span*progress,route.size.y*17.0/267.0),Color("#e9aa43"))
     var car_x := start+span*progress
     var bounce := sin(distance*0.3)*1.4 if speed>1.0 else 0.0
-    var car: Texture2D = hud_art.get("route_car",ROUTE_CAR)
-    board.draw_texture_rect(car,Rect2(car_x-20,y-17+bounce,40,22),false)
-    _hud_text(Vector2(290,145),REGION_NAMES[_panorama_index(distance)],15)
-    _hud_text(Vector2(612,145),"%d%%" % int(progress*100.0),18)
+    var car: Texture2D = ROUTE_CAR
+    var car_h := 40.0*float(car.get_height())/float(car.get_width())
+    board.draw_texture_rect(car,Rect2(car_x-20,y-car_h+5+bounce,40,car_h),false)
+    if brake_active:
+        board.draw_circle(Vector2(car_x-17,y-5+bounce),2.5,Color("#ff5745"))
+    _hud_text(Vector2(278,158),REGION_NAMES[_panorama_index(distance)],15)
+    _hud_text(Vector2(630,158),"%d%%" % int(progress*100.0),18)
     if progress>=0.9:
-        _hud_text(Vector2(526,17),"CHEGANDO!",17,Color("#a0e5ad"))
-    var tank := Rect2(729,9,220,132)
+        var glow := 0.65+0.35*sin(Time.get_ticks_msec()*0.005)
+        board.draw_circle(Vector2(631,83),22,Color(0.6,1.0,0.65,glow*0.18))
+        _hud_text(Vector2(528,20),"CHEGANDO!",15,Color("#a0e5ad"))
+    var tank := Rect2(711,5,244,146.4)
     board.draw_texture_rect(hud_art["fuel_base"],tank,false)
     for i in range(8):
         var portion := clampf(fuel/100.0*8.0-float(i),0.0,1.0)
         var x := tank.position.x+tank.size.x*(137.0+40.0*i)/500.0
-        var fy := tank.position.y+tank.size.y*175.0/300.0
+        var fy := tank.position.y+tank.size.y*177.0/300.0
         var w := tank.size.x*36.0/500.0
-        var height := tank.size.y*39.0/300.0
+        var height := tank.size.y*37.0/300.0
         board.draw_rect(Rect2(x,fy,w*portion,height),Color("#dc5145") if fuel<=20.0 else Color("#e8af45"))
-    _hud_text(Vector2(820,151),"%d%%" % int(fuel),18)
+    _hud_text(Vector2(822,160),"%d%%" % int(fuel),18)
 
 func _panorama_index(z: float) -> int:
     return clampi(floori(z/REGION_SPAN),0,PANORAMAS.size()-1)
@@ -411,16 +433,9 @@ func _paint_signs() -> void:
 
 func _load_roadside() -> void:
     roadside.clear()
-    roadside_hd_count = 0
-    for i in range(ROADSIDE_NAMES.size()):
-        var path: String = ROADSIDE_DIR + ROADSIDE_NAMES[i] + ".webp"
-        var tex: Texture2D = ROADSIDE_FALLBACKS[i]
-        if ResourceLoader.exists(path):
-            var loaded := load(path) as Texture2D
-            if loaded != null:
-                tex = loaded
-                roadside_hd_count += 1
+    for tex in ROADSIDE_HD:
         roadside.append(tex)
+    roadside_hd_count = roadside.size()
 
 func _roadside_kind(z: float, slot: int, side: int) -> int:
     var options: Array = REGION_DECOR[_panorama_index(z)]
