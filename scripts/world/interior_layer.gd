@@ -208,11 +208,12 @@ func _chapel_npc(id: String, p: Vector2, label: String) -> void:
     if id=="anselmo" or ResourceLoader.exists(path):
         var tex: Texture2D
         if id=="anselmo":
-            if not anselmo_cache.has(direction):
-                anselmo_cache[direction] = ANSELMO_ART.texture(direction)
-            tex = anselmo_cache[direction] as Texture2D
-            if tex==null:
-                tex = ANSELMO_ART.texture("front")
+            # Front/back PNGs passed import; side poses use front until replacements arrive.
+            var safe_direction := "back" if direction=="back" else "front"
+            if not anselmo_cache.has(safe_direction):
+                var safe_path := "res://assets/sprites/chapel_npcs/anselmo_"+safe_direction+".png"
+                anselmo_cache[safe_direction] = load(safe_path) if ResourceLoader.exists(safe_path) else null
+            tex = anselmo_cache[safe_direction] as Texture2D
         else:
             tex = load(path) as Texture2D
         if tex != null:

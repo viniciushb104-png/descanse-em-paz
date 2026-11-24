@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: godot-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -56,74 +56,80 @@ jobs:
         run: python3 tools/check_resources.py
 
       - name: Importar recursos e validar projeto
-        run: godot --headless --path . --editor --quit
+        run: |
+          set -euo pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee /tmp/godot-import.log
+          if grep -E 'SCRIPT ERROR:|Error importing|Error loading image|Failed to load script' /tmp/godot-import.log; then
+            echo "Godot import reported errors; refusing to publish"
+            exit 1
+          fi
 
       - name: Testar gato e animacoes PNG
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-cemetery_cat_smoke" godot --headless --path . --script res://tests/cemetery_cat_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-cemetery_cat_smoke" bash tools/run_smoke.sh res://tests/cemetery_cat_smoke.gd
 
       - name: Testar aparicao e movimento do jogador
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-smoke" godot --headless --path . --script res://tests/smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-smoke" bash tools/run_smoke.sh res://tests/smoke.gd
 
       - name: Validar piso e conexao dos caminhos
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-ground_smoke" godot --headless --path . --script res://tests/ground_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-ground_smoke" bash tools/run_smoke.sh res://tests/ground_smoke.gd
 
       - name: Validar lobby ornamental, placas, iluminacao e interiores
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-lobby_smoke" godot --headless --path . --script res://tests/lobby_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-lobby_smoke" bash tools/run_smoke.sh res://tests/lobby_smoke.gd
 
       - name: Validar dez PNGs de muros e acessos do mapa
         timeout-minutes: 2
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-boundary" godot --headless --path . --script res://tests/boundary_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-boundary" bash tools/run_smoke.sh res://tests/boundary_smoke.gd
 
       - name: Testar dez sprites individuais e acesso ao B-13
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" godot --headless --path . --script res://tests/graves_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" bash tools/run_smoke.sh res://tests/graves_smoke.gd
 
       - name: Testar arvores goticas e caminhos livres
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-trees_smoke" godot --headless --path . --script res://tests/trees_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-trees_smoke" bash tools/run_smoke.sh res://tests/trees_smoke.gd
 
       - name: Testar menu inicial e retorno ao jogo
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-menu_smoke" godot --headless --path . --script res://tests/menu_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-menu_smoke" bash tools/run_smoke.sh res://tests/menu_smoke.gd
 
       - name: Testar distrito, missões e legislação
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_smoke" godot --headless --path . --script res://tests/district_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_smoke" bash tools/run_smoke.sh res://tests/district_smoke.gd
 
       - name: Testar interiores, estoque e vinte casos
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-interior_smoke" godot --headless --path . --script res://tests/interior_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-interior_smoke" bash tools/run_smoke.sh res://tests/interior_smoke.gd
 
       - name: Testar controle por toque e dialogos responsivos
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-mobile_smoke" godot --headless --path . --script res://tests/mobile_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-mobile_smoke" bash tools/run_smoke.sh res://tests/mobile_smoke.gd
 
       - name: Testar diálogos e dificuldade progressiva
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_smoke" godot --headless --path . --script res://tests/dialogue_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_smoke" bash tools/run_smoke.sh res://tests/dialogue_smoke.gd
 
       - name: Testar entrada direta e ritmo de dialogos
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-pacing_smoke" godot --headless --path . --script res://tests/pacing_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-pacing_smoke" bash tools/run_smoke.sh res://tests/pacing_smoke.gd
 
       - name: Testar molduras e retratos de todos os personagens
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_frames_smoke" godot --headless --path . --script res://tests/dialogue_frames_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_frames_smoke" bash tools/run_smoke.sh res://tests/dialogue_frames_smoke.gd
 
       - name: Validar molduras PNG do lote 1 e fallbacks
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote1_smoke" godot --headless --path . --script res://tests/dialogue_lote1_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote1_smoke" bash tools/run_smoke.sh res://tests/dialogue_lote1_smoke.gd
 
       - name: Testar seis molduras individuais do lote 2
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote2_smoke" godot --headless --path . --script res://tests/dialogue_lote2_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-dialogue_lote2_smoke" bash tools/run_smoke.sh res://tests/dialogue_lote2_smoke.gd
 
       - name: Testar seis panoramas do translado
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-translado_panorama_smoke" godot --headless --path . --script res://tests/translado_panorama_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-translado_panorama_smoke" bash tools/run_smoke.sh res://tests/translado_panorama_smoke.gd
 
       - name: Validar retratos expressivos e galeria do Diario
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-portraits_expressions_smoke" godot --headless --path . --script res://tests/portraits_expressions_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-portraits_expressions_smoke" bash tools/run_smoke.sh res://tests/portraits_expressions_smoke.gd
 
       - name: Validar preferencias e capela do ultimo adeus
-        run: godot --headless --path . --script res://tests/wake_smoke.gd
+        run: bash tools/run_smoke.sh res://tests/wake_smoke.gd
 
       - name: Validar nove novas atividades do distrito
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_activities_smoke" godot --headless --path . --script res://tests/district_activities_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-district_activities_smoke" bash tools/run_smoke.sh res://tests/district_activities_smoke.gd
 
       - name: Testar campanha de plataforma do fantasma
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-ghost" godot --headless --path . --script res://tests/ghost_adventure_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-ghost" bash tools/run_smoke.sh res://tests/ghost_adventure_smoke.gd
 
       - name: Testar sepultamento, persistencia e conclusao unica
-        run: XDG_DATA_HOME="$RUNNER_TEMP/test-oficio" godot --headless --path . --script res://tests/oficio_osvaldo_smoke.gd
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-oficio" bash tools/run_smoke.sh res://tests/oficio_osvaldo_smoke.gd
 
       - name: Exportar versao Web sem threads
         run: |

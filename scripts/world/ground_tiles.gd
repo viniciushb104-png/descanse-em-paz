@@ -196,41 +196,6 @@ static func _stone(ctx: Node2D, cell: Vector2i) -> void:
     if material_at(cell+Vector2i.RIGHT) != STONE:
         ctx.draw_rect(Rect2(x+TILE-3,y,3,TILE),ink)
 
-static func _road(ctx: Node2D, cell: Vector2i) -> void:
-    var p := Vector2(cell*TILE)
-    var n := hash_at(cell.x,cell.y,8)
-    ctx.draw_rect(Rect2(p,Vector2(32,32)),Color("#514853"))
-    for i in range(5):
-        var q := hash_at(cell.x*7+i,cell.y,9)
-        ctx.draw_rect(Rect2(p+Vector2(q%29,(q/31)%29),2,2),Color("#605562"))
-    for d in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
-        if material_at(cell+d)!=ROAD:
-            var edge := Rect2(p,Vector2(32,4))
-            if d==Vector2i.DOWN: edge.position.y+=28
-            if d==Vector2i.LEFT: edge.size=Vector2(4,32)
-            if d==Vector2i.RIGHT:
-                edge.size=Vector2(4,32)
-                edge.position.x+=28
-            ctx.draw_rect(edge,Color("#92818a"))
-    if cell.x==75 and cell.y%2==0 and cell.y>=21 and cell.y<36:
-        ctx.draw_rect(Rect2(p+Vector2(15,6),2,20),Color("#a59a85"))
-    if cell.x in [64,73] and cell.y>=14 and cell.y<=17:
-        ctx.draw_rect(Rect2(p+Vector2(2,2),2,28),Color("#b0a18d"))
-    if cell.y==36 and cell.x>=65 and cell.x<74:
-        ctx.draw_rect(Rect2(p+Vector2(0,4),32,2),Color("#b0a18d"))
-
-static func _paving(ctx: Node2D, cell: Vector2i, commercial: bool) -> void:
-    var p := Vector2(cell*TILE)
-    var base := Color("#84766f") if commercial else Color("#88818a")
-    ctx.draw_rect(Rect2(p,Vector2(32,32)),base.darkened(0.23))
-    for row in range(2):
-        for col in range(2):
-            var n := hash_at(cell.x*2+col,cell.y*2+row,12)
-            var shade := base.lightened(float(n%5)*0.012)
-            var at := p+Vector2(col*16+1,row*16+1)
-            ctx.draw_rect(Rect2(at,Vector2(14,14)),shade)
-            ctx.draw_rect(Rect2(at,Vector2(14,1)),shade.lightened(0.08))
-
 static func _road_details(ctx: Node2D, cell: Vector2i) -> void:
     var p := Vector2(cell*TILE)
     for d in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
@@ -243,11 +208,11 @@ static func _road_details(ctx: Node2D, cell: Vector2i) -> void:
                 edge.position.x+=28
             ctx.draw_rect(edge,Color("#897a85"))
     if cell.x==75 and cell.y%2==0 and cell.y>=21 and cell.y<36:
-        ctx.draw_rect(Rect2(p+Vector2(15,6),2,20),Color("#a59a85"))
+        ctx.draw_rect(Rect2(p+Vector2(15,6),Vector2(2,20)),Color("#a59a85"))
     if cell.x in [64,73] and cell.y>=14 and cell.y<=17:
-        ctx.draw_rect(Rect2(p+Vector2(2,2),2,28),Color("#b0a18d"))
+        ctx.draw_rect(Rect2(p+Vector2(2,2),Vector2(2,28)),Color("#b0a18d"))
     if cell.y==36 and cell.x>=65 and cell.x<74:
-        ctx.draw_rect(Rect2(p+Vector2(0,4),32,2),Color("#b0a18d"))
+        ctx.draw_rect(Rect2(p+Vector2(0,4),Vector2(32,2)),Color("#b0a18d"))
 
 static func _transition_details(ctx: Node2D,cell: Vector2i,material: int) -> void:
     var p := Vector2(cell*TILE)

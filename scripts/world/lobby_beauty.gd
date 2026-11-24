@@ -130,12 +130,13 @@ func _border_mosaics() -> void:
             draw_rect(Rect2(float(x),y,9,3),Color("#b09274",0.40))
 
 func _flowerbeds() -> void:
-    for spot in FLOWER_SPOTS:
+    for spot_value in FLOWER_SPOTS:
+        var spot: Vector2 = spot_value
         draw_rect(Rect2(spot.x-33,spot.y-4,67,13),Color("#242833",0.24))
         for i in range(9):
             var theta := float(i)*TAU/9.0
             var offset := Vector2(cos(theta)*21.0,sin(theta)*8.0)
-            var p := spot+offset
+            var p: Vector2 = spot+offset
             draw_rect(Rect2(p.x-4,p.y-9,8,13),MOSS)
             draw_rect(Rect2(p.x-2,p.y-16,5,6),LILAC if i%3==0 else Color("#d4a4ae"))
             draw_rect(Rect2(p.x-1,p.y-14,2,2),Color("#f3dbc0"))

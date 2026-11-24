@@ -1,4 +1,5 @@
 extends SceneTree
+const DISTRICT = preload("res://scripts/world/district_layout.gd")
 const GROUND = preload("res://scripts/world/ground_tiles.gd")
 func _initialize() -> void:
     call_deferred("_run")
@@ -37,7 +38,7 @@ func _run() -> void:
         push_error("Grama invadida pelo caminho")
         quit(13)
         return
-    for station in preload("res://scripts/world/district_layout.gd").STATIONS:
+    for station in DISTRICT.STATIONS:
         var surface: int = GROUND.material_at_world(station["p"])
         if surface not in [GROUND.STONE,GROUND.ROAD,GROUND.PAVING,GROUND.COMMERCIAL]:
             push_error("Entrada sem pavimento: "+str(station["id"]))
