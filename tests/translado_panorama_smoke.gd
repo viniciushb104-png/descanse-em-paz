@@ -44,7 +44,7 @@ func _run() -> void:
         push_error("Piso incorreto")
         quit(107)
         return
-    if game.roadside.size()!=8:
+    if game.roadside.size()!=8 or game.roadside_hd_count!=8:
         push_error("Decoracao de estrada incompleta")
         quit(108)
         return
@@ -56,5 +56,21 @@ func _run() -> void:
                     push_error("Sprite de decoracao invalido")
                     quit(109)
                     return
+    if game.hud_art.size()!=4:
+        push_error("HUD artistico incompleto")
+        quit(110)
+        return
+    for key in ["route_base","speed_base","fuel_base","route_car"]:
+        var tex: Texture2D = game.hud_art[key]
+        if tex==null or tex.get_width()<1 or tex.get_height()<1:
+            push_error("Textura HUD invalida: "+key)
+            quit(111)
+            return
+    for state in [Vector3(0,0,100),Vector3(1500,90,55),Vector3(2900,160,15)]:
+        game.distance = state.x
+        game.speed = state.y
+        game.fuel = state.z
+        game.board.queue_redraw()
+        await process_frame
     print("TRANSLADO PANORAMAS OK: 6 texturas HD, 6 regioes e transicao.")
     quit(0)
