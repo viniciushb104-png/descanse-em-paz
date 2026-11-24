@@ -12,6 +12,7 @@ const WORLD := Vector2(3072.0, 2304.0)
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
 var burial_field: Node2D
+const BOUNDARY_LAYOUT = preload("res://scripts/world/boundary_art.gd")
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
 const DISTRICT_LAYOUT = preload("res://scripts/world/district_layout.gd")
@@ -975,6 +976,8 @@ func is_walkable(world_position: Vector2) -> bool:
     if Rect2(1138, 168, 286, 203).has_point(world_position):
         return false
     if is_instance_valid(burial_field) and burial_field.blocked(world_position):
+        return false
+    if BOUNDARY_LAYOUT.is_blocked(world_position):
         return false
     if GRAVE_LAYOUT.is_blocked(world_position):
         return false

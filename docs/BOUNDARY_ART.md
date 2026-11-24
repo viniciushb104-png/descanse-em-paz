@@ -1,4 +1,2 @@
-# Muros e cercas de Santa Mortalha
-Reorganização do perímetro, passagem norte para capela, saída sul e passagem leste.
-Preserva posições de personagens, estações e fachadas. Fonte e banco foram reduzidos e afastados da circulação.
-Arte modular em assets/walls: wall, wall_skull, wall_lamp, pillar, corner, pillar_ivy, fence, fence_ivy, gate, arch (PNG). Carregamento opcional com fallback para arte existente. Não há novas colisões nesta etapa; validar circulação e profundidade visual antes de definir barreiras físicas.
+# Arte definitiva de limites
+Dez PNGs transparentes em assets/walls, preloads explicitos, variacoes por setor e colisoes na base. Portao fechado no limite norte, arco aberto na entrada sul. Acesso garagem pela fachada sul, fiscalizacao no leste. Seis materiais de piso; transicoes e acessos revisados. Validacao automatica em tests/boundary_smoke.gd. Revisao visual em navegador e Android ainda necessaria.

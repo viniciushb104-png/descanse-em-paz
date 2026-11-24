@@ -19,6 +19,11 @@ const DIRT_COLORS = [Color("#715243"),Color("#765645"),Color("#634a3e")]
 # Os caminhos conectam as entradas de capela, oficina, jazigo B-13 e portao.
 const PATHS = [
     Rect2i(22,13,4,58),
+    Rect2i(16,14,3,4), # Baltazar
+    Rect2i(49,32,18,3), # conexao conservacao/crematorio
+    Rect2i(49,20,3,14), # passeio oeste do distrito
+    Rect2i(49,35,3,10), Rect2i(49,43,13,2), Rect2i(56,42,5,4), # acesso garagem pelo sul
+    Rect2i(67,40,10,3), # passeio estacionamento sul,
     Rect2i(4,45,40,2),
     Rect2i(4,52,40,2),
     Rect2i(4,59,40,2),
@@ -31,7 +36,7 @@ const PATHS = [
     Rect2i(7,19,5,4),   # sepulturas oeste
     Rect2i(43,17,33,4), # passagem para o leste
     Rect2i(55,12,4,6),  # hospital
-    Rect2i(54,20,4,12), # preparacao
+    Rect2i(54,20,4,13), # preparacao
     Rect2i(67,20,3,14), # crematorio
     Rect2i(54,33,14,3), # garagem
     Rect2i(78,20,4,15), # passeio leste
@@ -55,7 +60,7 @@ const SOIL = [
 ]
 
 # A rua conecta os dois estacionamentos, sem ocupar portas de pedestres.
-const ROADS = [Rect2i(64,13,10,8), Rect2i(74,16,4,25), Rect2i(65,36,13,6)]
+const ROADS = [Rect2i(64,13,10,8), Rect2i(73,16,5,25), Rect2i(65,36,13,6), Rect2i(64,40,1,2)]
 const CIVIC = [Rect2i(52,12,11,5), Rect2i(49,20,5,4), Rect2i(84,32,10,6)]
 const SHOPS = [Rect2i(77,12,9,6), Rect2i(87,12,8,6)]
 
@@ -67,6 +72,8 @@ static func material_at(cell: Vector2i) -> int:
     if cell.y<0 and cell.y>=-NORTH_ROWS and cell.x>=0 and cell.x<48:
         if cell.x>=22 and cell.x<27 or posmod(cell.y+6,6)<2:
             return STONE
+        if cell.y<=-10 and ((cell.x>=5 and cell.x<20) or (cell.x>=30 and cell.x<46)):
+            return DIRT
         return GRASS
     if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
         return -1

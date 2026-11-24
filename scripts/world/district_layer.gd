@@ -32,7 +32,7 @@ func _draw() -> void:
     _text(Vector2(1692,426),"Dra. Penelope Alvorada",18,GOLD)
     _text(Vector2(1674,1016),"Dona Clotilde",18,GOLD)
     _text(Vector2(2112,1025),"Seu Cinerio Brasa",18,GOLD)
-    _text(Vector2(1695,1121),"Arquimedes Ossario",18,GOLD)
+    _text(Vector2(1762,1410),"Arquimedes Ossario",18,GOLD)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)

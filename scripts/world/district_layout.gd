@@ -15,7 +15,7 @@ const BUILDINGS = [
 const HEARSE_AREAS = [Rect2(2083,434,236,118), Rect2(2110,1171,212.4,106.2)]
 const STATIONS = [
     {"id":"hospital","name":"Hospital Santa Ultima Hora","p":Vector2(1813,446)},
-    {"id":"garagem","name":"Garagem funeraria","p":Vector2(1818,1116)},
+    {"id":"garagem","name":"Garagem funeraria","p":Vector2(1860,1408)},
     {"id":"preparo","name":"Sala de conservacao","p":Vector2(1794,1035)},
     {"id":"crematorio","name":"Crematorio Cinzas & Cia","p":Vector2(2192,1039)},
     {"id":"fiscalizacao","name":"Posto de fiscalizacao","p":Vector2(2840,1085)},

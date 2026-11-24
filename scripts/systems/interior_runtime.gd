@@ -50,6 +50,8 @@ func load_state(cfg: ConfigFile) -> void:
     return_point = cfg.get_value("save","return_point",Vector2(748,714))
     if room=="fiscalizacao" and return_point.distance_to(Vector2(2208,1155))<120.0:
         return_point = Vector2(2840,1085)
+    if room=="garagem" and return_point.distance_to(Vector2(1818,1116))<120.0:
+        return_point = Vector2(1860,1408)
     case_index = clampi(int(cfg.get_value("save","case_index",0)),0,CASES.total())
     pending_burial_id = str(cfg.get_value("save","case_pending_burial",""))
     inventory = cfg.get_value("save","stock",{"caixao":2,"urna":1})

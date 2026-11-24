@@ -70,6 +70,10 @@ jobs:
       - name: Validar lobby ornamental, placas, iluminacao e interiores
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-lobby_smoke" godot --headless --path . --script res://tests/lobby_smoke.gd
 
+      - name: Validar dez PNGs de muros e acessos do mapa
+        timeout-minutes: 2
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-boundary" godot --headless --path . --script res://tests/boundary_smoke.gd
+
       - name: Testar dez sprites individuais e acesso ao B-13
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" godot --headless --path . --script res://tests/graves_smoke.gd
 
