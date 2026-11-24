@@ -47,6 +47,7 @@ var worker := Vector2.ZERO
 var active := false
 var game: Node
 var hd_count := 0
+var collision_rects: Array[Rect2] = []
 
 static func plots() -> Array[Dictionary]:
     var result: Array[Dictionary] = [{"id":"B-13","p":Vector2(1141,704)}]
@@ -65,6 +66,13 @@ static func position_for(id: String) -> Vector2:
 
 func _ready() -> void:
     game = get_parent()
+    for p in north_old_positions():
+        collision_rects.append(Rect2(p-Vector2(24,20),Vector2(48,40)))
+    for p in old_positions():
+        collision_rects.append(Rect2(p-Vector2(28,25),Vector2(56,50)))
+    for plot in plots():
+        if plot["id"]!="B-13":
+            collision_rects.append(Rect2(plot["p"]-Vector2(40,34),Vector2(80,68)))
     z_index = 10
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     for key in NAMES:
@@ -102,19 +110,38 @@ func near(pos: Vector2) -> Dictionary:
     return {}
 
 func blocked(pos: Vector2) -> bool:
-    if pos.y<0.0 and pos.x<1510.0:
-        if pos.x<65.0:
-            return true
-        for p in north_old_positions():
-            if Rect2(p-Vector2(24,20),Vector2(48,40)).has_point(pos):
-                return true
-    for p in old_positions():
-        if Rect2(p-Vector2(28,25),Vector2(56,50)).has_point(pos):
-            return true
-    for plot in plots():
-        if plot["id"]!="B-13" and Rect2(plot["p"]-Vector2(40,34),Vector2(80,68)).has_point(pos):
+    if pos.y<0.0 and pos.x<65.0:
+        return true
+    for rect in collision_rects:
+        if rect.has_point(pos):
             return true
     return false
+
+func _depth_stamp(ctx: Node2D, tex: Texture2D, p: Vector2, h: float) -> void:
+    var w := h*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
+    var rect := Rect2(p.x-w/2,p.y-h,w,h)
+    if bool(ctx.call("accept_stamp",rect)):
+        ctx.draw_texture_rect(tex,rect,false)
+
+func paint_depth(ctx: Node2D) -> void:
+    var north := north_old_positions()
+    for i in range(north.size()):
+        _depth_stamp(ctx,_north_tex("cross" if i%3==0 else "tomb",OLD_TOMBS[i%OLD_TOMBS.size()]),north[i]+Vector2(0,22),72)
+    var south := old_positions()
+    for i in range(south.size()):
+        _depth_stamp(ctx,OLD_TOMBS[i%OLD_TOMBS.size()],south[i]+Vector2(0,25),85)
+    for plot in plots():
+        var id: String = plot["id"]
+        if id=="B-13":
+            continue
+        var p: Vector2 = plot["p"]
+        if p.distance_to(ctx.get("foot"))>200.0:
+            continue
+        var hits := count_for(id)
+        if hits==7:
+            _depth_stamp(ctx,TOMB,p+Vector2(0,34),94)
+        else:
+            _depth_stamp(ctx,GRAVES[0] if hits==0 else GRAVES[mini(3,floori(float(hits-1)*4.0/6.0))],p+Vector2(0,34),72)
 
 func count_for(id: String) -> int:
     for order in game.burial_queue.orders:

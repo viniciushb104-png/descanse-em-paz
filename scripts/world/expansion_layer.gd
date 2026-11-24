@@ -17,7 +17,6 @@ func _draw() -> void:
     WALLS.side(self,3040,-1650,0)
     WALLS.side(self,1510,-1650,-910)
     WALLS.side(self,1510,-710,-100)
-    WALLS.object(self,"arch",1522,-710,110)
     for i in range(LAYOUT.STATIONS.size()):
         var st: Dictionary = LAYOUT.STATIONS[i]
         var rect: Rect2 = LAYOUT.BUILDINGS[i]

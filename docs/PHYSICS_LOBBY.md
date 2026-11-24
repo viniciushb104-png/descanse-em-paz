@@ -1,0 +1,2 @@
+# Física e profundidade
+Disco de 9 px nos pés, movimento em subpassos de até 4 px e deslizamento pelos eixos. Bases sólidas para NPCs, gato, decoração, muros e sepulturas; portais em sprites independentes com pilares sólidos e vão livre. Oclusão seletiva de objetos da camada do lobby, túmulos, árvores e cercas. Pontos de interação Osvaldo e Baltazar movidos para a frente. Não altera a arte dos PNGs, save ou missões. Validação visual e teste real de toque necessários.

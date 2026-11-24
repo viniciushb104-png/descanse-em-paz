@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
@@ -13,6 +13,8 @@
 [ext_resource type="Script" path="res://scripts/world/lobby_beauty.gd" id="11_lobby"]
 
 [ext_resource type="Script" path="res://scripts/world/expansion_layer.gd" id="12_expansion"]
+
+[ext_resource type="Script" path="res://scripts/world/depth_layer.gd" id="13_depth"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 10.0
@@ -45,6 +47,9 @@ script = ExtResource("7_district")
 
 [node name="ExpansionLayer" type="Node2D" parent="."]
 script = ExtResource("12_expansion")
+
+[node name="DepthLayer" type="Node2D" parent="."]
+script = ExtResource("13_depth")
 
 [node name="InteriorLayer" type="Node2D" parent="."]
 z_index = 0

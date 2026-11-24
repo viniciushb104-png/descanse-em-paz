@@ -14,6 +14,7 @@ const TEXTURES = {
 }
 # Colisao apenas na base fisica dos limites, nunca na altura do desenho.
 # Vao norte, entrada sul e ligacao leste permanecem livres.
+const ARCHES = [Vector3(780,950,174),Vector3(2352,48,120),Vector3(1522,-710,110)]
 const BLOCKS = [
     Rect2(0,70,640,14), Rect2(928,70,608,14),
     Rect2(18,80,24,800), Rect2(1490,80,24,430), Rect2(1490,700,24,180),
@@ -31,9 +32,23 @@ static func is_blocked(p: Vector2) -> bool:
     for region in BLOCKS:
         if region.has_point(p):
             return true
+    for portal in ARCHES:
+        var rect := arch_rect(portal)
+        var w: float = rect.size.x
+        var foot_y: float = rect.end.y-23.0
+        # Apenas os dois pes; o vao central permanece livre.
+        if Rect2(rect.position.x+w*0.08,foot_y,w*0.22,23).has_point(p) or Rect2(rect.position.x+w*0.70,foot_y,w*0.22,23).has_point(p):
+            return true
     return false
 
+static func arch_rect(portal: Vector3) -> Rect2:
+    var tex: Texture2D = TEXTURES["arch"]
+    var w: float = portal.z*float(tex.get_width())/maxf(1.0,float(tex.get_height()))
+    return Rect2(portal.x-w/2.0,portal.y-portal.z,w,portal.z)
+
 static func art(ctx: Node2D, key: String, rect: Rect2) -> void:
+    if ctx.has_method("accept_stamp") and not bool(ctx.call("accept_stamp",rect)):
+        return
     var tex: Texture2D = TEXTURES[key]
     ctx.draw_texture_rect(tex,rect,false)
 
@@ -50,6 +65,8 @@ static func horizontal(ctx: Node2D, left: int, right: int, base: int, keys: Arra
         art(ctx,str(keys[i%keys.size()]),Rect2(float(left)+float(i)*span,float(base)-height,span,height))
 
 static func side(ctx: Node2D, x: int, top: int, bottom: int) -> void:
+    if ctx.has_method("accept_stamp"):
+        return
     ctx.draw_rect(Rect2(x,top,24,bottom-top),Color("#514354"))
     ctx.draw_rect(Rect2(x+3,top,18,bottom-top),Color("#817083"))
     for y in range(top,bottom,32):
@@ -68,7 +85,6 @@ static func paint_cemetery(ctx: Node2D) -> void:
     horizontal(ctx,910,1536,950,["wall","wall_skull","wall"],62)
     object(ctx,"corner",55,950,66)
     object(ctx,"corner",1480,950,66)
-    object(ctx,"arch",780,950,174)
     object(ctx,"pillar_ivy",630,950,75)
     object(ctx,"pillar_ivy",910,950,75)
     horizontal(ctx,160,390,870,["fence","fence_ivy"],40)
@@ -77,7 +93,6 @@ static func paint_cemetery(ctx: Node2D) -> void:
 static func paint_district(ctx: Node2D) -> void:
     horizontal(ctx,1536,2240,48,["wall","wall","wall_lamp"],44)
     horizontal(ctx,2464,3072,48,["wall","wall","wall_lamp"],44)
-    object(ctx,"arch",2352,48,120)
     side(ctx,3040,48,1376)
     horizontal(ctx,1536,1760,1390,["fence"],45)
     horizontal(ctx,1968,3072,1390,["fence","fence_ivy","fence"],45)

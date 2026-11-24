@@ -2,6 +2,7 @@ extends CharacterBody2D
 ## Jogador sempre visivel: sprite como no dedicado, nao desenhado no _draw
 ## junto com o mapa. O anel nos pes indica o controle do personagem.
 const SPEED := 205.0
+const MAX_STEP := 4.0
 const ATLAS: Texture2D = preload("res://assets/art/characters.png")
 const FRAMES = [
     [Rect2(3, 3, 52, 85), Rect2(115, 3, 52, 85), Rect2(171, 3, 52, 85)],
@@ -50,24 +51,38 @@ func _physics_process(delta: float) -> void:
         walk_clock += delta
     else:
         walk_clock = 0.0
-    velocity = direction * SPEED
-    # Movimento continua com correcoes de colisao no distrito novo.
-    # Se um salvamento antigo estiver perto de uma parede, deixar sair:
-    # bloquear somente movimentos para DENTRO de uma area invalida.
-    var next_position := global_position + velocity * delta
-    if not bool(get_parent().is_walkable(next_position)):
-        if bool(get_parent().is_walkable(global_position)):
-            velocity = Vector2.ZERO
-        else:
-            var safe := Vector2(748, 714)
-            velocity = (safe - global_position).normalized() * SPEED
-    move_and_slide()
+    var previous := global_position
+    var world: Node = get_parent()
+    if direction!=Vector2.ZERO:
+        if not bool(world.call("can_player_stand",global_position)):
+            global_position=world.call("nearest_safe_position",global_position)
+        global_position=resolve_motion(global_position,direction*SPEED*delta)
+    velocity=(global_position-previous)/maxf(delta,0.0001)
+    walking=global_position.distance_to(previous)>0.1
     character_sprite.region_rect = FRAMES[facing][(1 + int(walk_clock * 7.0) % 2) if walking else 0]
     queue_redraw()
 
+## Movimento em subpassos: cantos nao engolem o personagem; desliza ao longo da parede.
+func resolve_motion(start: Vector2, motion: Vector2) -> Vector2:
+    var world: Node = get_parent()
+    var steps := maxi(1,ceili(motion.length()/MAX_STEP))
+    var step := motion/float(steps)
+    var p := start
+    for i in range(steps):
+        if bool(world.call("can_player_stand",p+step)):
+            p+=step
+        else:
+            var x_step := Vector2(step.x,0)
+            var y_step := Vector2(0,step.y)
+            if bool(world.call("can_player_stand",p+x_step)):
+                p+=x_step
+            if bool(world.call("can_player_stand",p+y_step)):
+                p+=y_step
+    return p
+
 func _draw() -> void:
     draw_ellipse_shadow()
-    draw_arc(Vector2(0, 0), 22.0, 0.0, TAU, 32, Color("#f0cb6d"), 2.5)
+    draw_arc(Vector2(0, 0), 13.0, 0.0, TAU, 24, Color("#f0cb6d",0.65), 1.5)
 
 func draw_ellipse_shadow() -> void:
     draw_circle(Vector2(0, 4), 13.0, Color(0.12, 0.10, 0.13, 0.35))

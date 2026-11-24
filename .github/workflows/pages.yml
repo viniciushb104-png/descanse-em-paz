@@ -80,6 +80,9 @@ jobs:
         timeout-minutes: 2
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-boundary" bash tools/run_smoke.sh res://tests/boundary_smoke.gd
 
+      - name: Validar fisica de circulacao e profundidade
+        run: XDG_DATA_HOME="$RUNNER_TEMP/test-world-physics" bash tools/run_smoke.sh res://tests/world_physics_smoke.gd
+
       - name: Testar dez sprites individuais e acesso ao B-13
         run: XDG_DATA_HOME="$RUNNER_TEMP/test-graves_smoke" bash tools/run_smoke.sh res://tests/graves_smoke.gd
 

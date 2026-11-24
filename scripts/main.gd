@@ -14,6 +14,7 @@ const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const BURIAL_FIELD = preload("res://scripts/world/burial_field.gd")
 var burial_field: Node2D
 const EXPANSION = preload("res://scripts/world/expansion_layout.gd")
+const WORLD_COLLISION = preload("res://scripts/world/world_collision.gd")
 const BOUNDARY_LAYOUT = preload("res://scripts/world/boundary_art.gd")
 const GRAVE_LAYOUT = preload("res://scripts/world/graves_layout.gd")
 const TREE_LAYOUT = preload("res://scripts/world/trees_layout.gd")
@@ -36,11 +37,11 @@ const GOLD := Color("#deb57c")
 const BLUE := Color("#8dbddc")
 const STATIONS := [
     {"id":"chapel","name":"Capela do Ultimo Adeus","p":Vector2(780,-175)},
-    {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(778, 638)},
+    {"id": "osvaldo", "name": "Seu Osvaldo", "p": Vector2(778, 680)},
     {"id": "office", "name": "Escritorio", "p": Vector2(425, 476)},
     {"id": "plot", "name": "Jazigo B-13", "p": Vector2(1125, 630)},
     {"id": "maintenance", "name": "Manutencao", "p": Vector2(1270, 407)},
-    {"id": "ghost", "name": "Baltazar", "p": Vector2(572, 500)}
+    {"id": "ghost", "name": "Baltazar", "p": Vector2(572, 540)}
 ]
 const OBJECTIVES := [
     "Fale com Seu Osvaldo, o coveiro.",
@@ -537,8 +538,8 @@ func _load_game() -> void:
     _save_game()
 
 func _ensure_valid_player_position() -> void:
-    if not is_walkable(player.global_position):
-        player.global_position = rooms.safe_spawn()
+    if not can_player_stand(player.global_position):
+        player.global_position = nearest_safe_position(player.global_position)
         rescue_notice = "Personagem reposicionado em uma area segura."
         _save_game()
 
@@ -983,6 +984,8 @@ func is_walkable(world_position: Vector2) -> bool:
         return false
     if is_instance_valid(burial_field) and burial_field.blocked(world_position):
         return false
+    if WORLD_COLLISION.blocked(world_position):
+        return false
     if EXPANSION.is_blocked(world_position):
         return false
     if BOUNDARY_LAYOUT.is_blocked(world_position):
@@ -997,6 +1000,27 @@ func is_walkable(world_position: Vector2) -> bool:
 
 
 
+
+## Um pequeno disco nos pes, separado do sprite de 85 px.
+func can_player_stand(p: Vector2) -> bool:
+    if not is_walkable(p):
+        return false
+    for offset in [Vector2(9,0),Vector2(-9,0),Vector2(0,9),Vector2(0,-9),Vector2(6,6),Vector2(-6,6),Vector2(6,-6),Vector2(-6,-6)]:
+        if not is_walkable(p+offset):
+            return false
+    if not rooms.inside() and is_instance_valid(cemetery_cat) and p.distance_to(cemetery_cat.global_position)<24.0:
+        return false
+    return true
+
+func nearest_safe_position(p: Vector2) -> Vector2:
+    if can_player_stand(p):
+        return p
+    for distance in [16.0,32.0,48.0,64.0,96.0,128.0]:
+        for i in range(16):
+            var candidate: Vector2 = p+Vector2.from_angle(float(i)*TAU/16.0)*distance
+            if can_player_stand(candidate):
+                return candidate
+    return rooms.safe_spawn()
 
 func _build_burial_marker() -> void:
     burial_marker = Label.new()

@@ -41,6 +41,8 @@ const STONE := Color("#79697b")
 const LIGHT := Color("#f6e3be")
 
 static func stamp(ctx: Node2D, key: String, x: float, y: float, w: float, h: float, opacity: float = 1.0) -> void:
+    if ctx.has_method("accept_stamp") and not bool(ctx.call("accept_stamp",Rect2(x,y,w,h))):
+        return
     var is_npc: bool = NPC_RECTS.has(key)
     var area: Dictionary = NPC_RECTS if is_npc else SPRITES
     if not area.has(key):

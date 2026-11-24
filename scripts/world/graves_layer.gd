@@ -55,6 +55,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
     var level: Node = get_parent()
+    var foot: Vector2 = level.get_node("Player").global_position
+    for item in LAYOUT.ITEMS:
+        var sprite: Sprite2D = get_node(str(item["id"]))
+        var hit: Rect2 = item["hit"]
+        sprite.z_index = 18 if foot.y<=hit.end.y else 2
+        sprite.z_as_relative = false
+    if is_instance_valid(b13_final_tomb):
+        b13_final_tomb.z_as_relative = false
+        b13_final_tomb.z_index = 18 if foot.y<=741.0 else 2
     var now_reserved: bool = bool(level.get("reserved_plot"))
     var now_buried: bool = bool(level.call("is_b13_buried"))
     if now_reserved != last_reserved or now_buried != last_buried:

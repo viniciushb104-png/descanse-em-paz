@@ -106,6 +106,8 @@ func _process(delta: float) -> void:
     visible = not bool(world.get_node("RoomsRuntime").call("inside"))
     if not visible:
         return
+    var player_pos: Vector2 = world.get_node("Player").global_position
+    z_index = 18 if player_pos.y<=global_position.y else 12
     animation_time += delta
     meow_time = maxf(0.0,meow_time-delta)
     pet_time = maxf(0.0, pet_time - delta)
@@ -130,7 +132,7 @@ func _process(delta: float) -> void:
         if global_position.distance_to(destination) > 5.0:
             var direction := (destination - global_position).normalized()
             var next_position := global_position + direction * SPEED * delta
-            if bool(world.call("is_walkable", next_position)) and next_position.distance_to(HOME) < WANDER_RADIUS + 12.0:
+            if bool(world.call("is_walkable", next_position)) and next_position.distance_to(HOME) < WANDER_RADIUS + 12.0 and next_position.distance_to(player_pos) >= 26.0:
                 position = next_position
                 moved = true
                 flip = direction.x < 0.0

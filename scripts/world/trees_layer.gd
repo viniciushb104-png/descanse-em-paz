@@ -15,3 +15,13 @@ func _ready() -> void:
         sprite.scale = Vector2(bounds.x / source_size.x, bounds.y / source_size.y)
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         add_child(sprite)
+
+func _process(_delta: float) -> void:
+    if not visible:
+        return
+    var foot: Vector2 = get_parent().get_node("Player").global_position
+    for item in TREE_DATA.ITEMS:
+        var sprite: Sprite2D = get_node(str(item["id"]))
+        var hit: Rect2 = item["hit"]
+        sprite.z_as_relative = false
+        sprite.z_index = 18 if foot.y<=hit.end.y else -5

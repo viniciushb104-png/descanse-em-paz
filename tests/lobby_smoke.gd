@@ -20,8 +20,8 @@ func _run() -> void:
         return
     # Pontos de interacao conhecidos: independente do acesso a const do script.
     var points := {
-        "office":Vector2(425,476), "osvaldo":Vector2(778,638),
-        "maintenance":Vector2(1270,407), "ghost":Vector2(572,500),
+        "office":Vector2(425,476), "osvaldo":Vector2(778,680),
+        "maintenance":Vector2(1270,407), "ghost":Vector2(572,540),
         "plot":Vector2(1125,630), "chapel":Vector2(780,-175)
     }
     for station in points:
