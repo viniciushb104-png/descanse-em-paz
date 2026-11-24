@@ -71,10 +71,14 @@ jobs:
       - name: Exportar versao Web sem threads
         run: |
           mkdir -p build/web
-          godot --headless --path . --export-release "Web" build/web/index.html
-          test -s build/web/index.html
-          test -s build/web/index.wasm
-          test -s build/web/index.pck
+          VERSION="game-${GITHUB_SHA:0:12}"
+          godot --headless --path . --export-release "Web" "build/web/$VERSION.html"
+          test -s "build/web/$VERSION.html"
+          test -s "build/web/$VERSION.wasm"
+          test -s "build/web/$VERSION.pck"
+          cp "build/web/$VERSION.html" build/web/index.html
+          printf '%s\n' "$GITHUB_SHA" > build/web/version.txt
+          grep -F "$VERSION" build/web/index.html
           touch build/web/.nojekyll
 
       - name: Preparar GitHub Pages
