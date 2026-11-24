@@ -13,6 +13,17 @@ func _run() -> void:
         push_error("Gato ausente ou sobre uma area bloqueada")
         quit(201)
         return
+    var sprite := cat.get_node_or_null("CatSprite") as Sprite2D
+    var animation_frames: Dictionary = cat.get("frames")
+    if sprite == null or animation_frames.size() != 8:
+        push_error("Pacote de arte do gato nao foi carregado integralmente")
+        quit(206)
+        return
+    for anim in ["idle","sit","walk_right","walk_left","meow","pet","purr","sleep"]:
+        if not animation_frames.has(anim):
+            push_error("Animacao ausente: "+anim)
+            quit(207)
+            return
     var money_before: int = game.money
     var stage_before: int = game.stage
     var case_before: int = game.get_node("RoomsRuntime").case_index

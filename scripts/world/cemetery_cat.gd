@@ -40,6 +40,8 @@ func _load_frames() -> void:
                     images.append(img)
         if images.size() == int(FRAME_COUNTS[anim]):
             frames[anim] = images
+    if frames.size() < FRAME_COUNTS.size():
+        _load_zip_frames()
     if not frames.is_empty():
         sprite = Sprite2D.new()
         sprite.name = "CatSprite"
@@ -47,6 +49,32 @@ func _load_frames() -> void:
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         sprite.centered = true
         add_child(sprite)
+
+func _load_zip_frames() -> void:
+    # Pacote integrado no GitHub, sem exigir 43 PNGs soltos.
+    var zip_path := "res://assets/cat/gato_santa_mortalha_sprites.zip"
+    if not FileAccess.file_exists(zip_path):
+        return
+    var reader := ZIPReader.new()
+    if reader.open(zip_path) != OK:
+        push_warning("Pacote de sprites do gato nao pode ser aberto.")
+        return
+    for anim in FRAME_COUNTS:
+        if frames.has(anim):
+            continue
+        var images: Array[Texture2D] = []
+        for index in range(int(FRAME_COUNTS[anim])):
+            var name := "assets/cat/%s_%02d.png" % [anim, index]
+            var bytes: PackedByteArray = reader.read_file(name)
+            if bytes.is_empty():
+                break
+            var picture := Image.new()
+            if picture.load_png_from_buffer(bytes) != OK:
+                break
+            images.append(ImageTexture.create_from_image(picture))
+        if images.size() == int(FRAME_COUNTS[anim]):
+            frames[anim] = images
+    reader.close()
 
 func _set_animation(anim: String) -> void:
     if active_anim != anim:

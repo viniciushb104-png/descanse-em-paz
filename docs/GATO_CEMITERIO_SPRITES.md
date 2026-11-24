@@ -1,23 +1,11 @@
-# Gato do Cemitério — integração dos sprites
+# Gato do Cemitério — assets integrados
 
-## Estado
-O NPC já existe em `scripts/world/cemetery_cat.gd`, aparece no mapa externo, anda em área segura, mia ao interagir e permite carinho pelo comando E/botão Interagir. A rotina de animações foi adicionada ao script.
+O pacote original de 43 quadros transparentes está **no GitHub** em `assets/cat/gato_santa_mortalha_sprites.zip`. Todos os quadros possuem 112 × 112 px. Os nomes dentro do ZIP seguem `assets/cat/<animacao>_<quadro>.png`.
 
-## Instalação dos PNGs
-Copiar a pasta `assets/cat/` do pacote `gato_santa_mortalha_sprites.zip` para a raiz do repositório, mantendo os nomes. São 43 PNGs 112x112 com transparência e apoio consistente, organizados em: `idle` (4), `sit` (5), `walk_right` (8), `walk_left` (8), `meow` (4), `pet` (6), `purr` (4), `sleep` (4).
+`scripts/world/cemetery_cat.gd` carrega automaticamente os PNGs individuais, se houver, ou lê os quadros direto do ZIP por meio de `ZIPReader` e `ImageTexture`. O pacote é incluído no export Web por `export_presets.cfg`.
 
-Se os PNGs ainda não estiverem instalados, o gato continua aparecendo com arte provisória procedural; o jogo não deve quebrar. A lógica do jogo **não** altera dinheiro, missão, estoque ou reputação.
+Animações: idle (4), sit (5), walk_right (8), walk_left (8), meow (4), pet (6), purr (4), sleep (4).
 
-## Estados
-- Idle: parado, antes de repousar
-- Walk: esquerda/direita conforme deslocamento
-- Sit: parado por mais de 6 segundos
-- Sleep: parado por mais de 16 segundos
-- Meow: quando interagir
-- Pet: após escolher 'Fazer carinho'
-- Purr: último trecho do carinho
+O gato aparece no mapa externo, passeia, mia e aceita carinho pelo comando de interação. Nunca fala; não altera dinheiro ou missões. A representação procedural continua como fallback caso os recursos não possam ser carregados.
 
-## Validação após instalar
-Executar a Godot e confirmar se os 43 quadros estão importados, sem partes cortadas e com filtragem nearest. Verificar as ações no mouse/teclado e no toque, aproximação do gato, portas, salvamento e colisões. Não substitua as fachadas, as cenas do mapa nem o menu.
-
-Os PNGs do pacote são separados da folha autoral, que tem dimensões irregulares por personagem; não usar um atlas com grid uniforme diretamente.
+Verificar execução na Godot 4.7.2 e no navegador após o deploy: o gato deve aparecer usando a arte nova; andar em ambas direções, miar, ser acariciado, ronronar, sentar e dormir. Confirmar Android quando houver build.
