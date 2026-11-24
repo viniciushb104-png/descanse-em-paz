@@ -28,5 +28,12 @@ func _run() -> void:
         push_error("Transicao de panorama invalida")
         quit(104)
         return
+    var depth: float = (ARCADE.PLAYER_Y-ARCADE.HORIZON)/(ARCADE.VIEW.y-ARCADE.HORIZON)
+    for model in range(6):
+        var width: float = game._traffic_width(depth,model)
+        if width < ARCADE.PLAYER_WIDTH*0.85 or width > ARCADE.PLAYER_WIDTH*1.16 or game._traffic_width(0.1,model)>=width:
+            push_error("Escala de perspectiva incorreta")
+            quit(105)
+            return
     print("TRANSLADO PANORAMAS OK: 6 texturas, 6 regioes e transicao.")
     quit(0)
