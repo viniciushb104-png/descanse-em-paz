@@ -63,6 +63,7 @@ var options_box: VBoxContainer
 var mobile_hud: Control
 var driving_layer: CanvasLayer
 var driving_completed: bool = false
+var driving_job: bool = false
 
 func _ready() -> void:
     _build_ui()
@@ -192,7 +193,7 @@ func _interact(id: String) -> void:
             else:
                 _show("Garagem da Ultima Viagem", "Frota com carros funerarios, limpeza, manutencao e rotas. A normativa de transporte depende da jurisdicao.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Ler norma de translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "carro":
-            _show("O Carro da Ultima Viagem", "Este veiculo e especial: nao tem banco para passageiro fantasma. Antes de qualquer deslocamento, confira registros, seguranca e permissoes cabiveis.", [{"text":"Treinar direção", "action":"drive_training"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
+            _show("Seu Osvaldo", "Ô chefe! Este é o carro da Última Viagem. Treine à vontade, mas não transforme translado em recrutamento! Serviço bem feito rende dinheiro e confiança.", [{"text":"Treinar sem custos", "action":"drive_training"}, {"text":"Aceitar translado remunerado", "action":"drive_job"}, {"text":"Sobre o translado", "action":"legal_transporte"}, {"text":"Voltar", "action":"close"}])
         "preparo":
             if stage == 8:
                 _show("Dona Clotilde Eternelia", "Aqui nao existe formula milagrosa! Conservacao e tanatopraxia exigem condicoes sanitarias, pessoal competente, licencas aplicaveis e residuos sob controle.", [{"text":"Conferir estrutura e equipe (R$ 90)", "action":"preparo_certo"}, {"text":"Trabalhar sem controle sanitario", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
@@ -214,7 +215,8 @@ func _interact(id: String) -> void:
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
-    if action == "drive_training":
+    if action in ["drive_training","drive_job"]:
+        driving_job = action == "drive_job"
         _start_driving()
         return
     if rooms.handle_choice(action):
@@ -674,11 +676,17 @@ func _driving_finished(success: bool, bumps: int) -> void:
     driving_layer.queue_free()
     driving_layer = null
     player.set_physics_process(true)
-    if success:
-        if not driving_completed:
-            driving_completed = true
-            reputation = mini(100,reputation + (3 if bumps == 0 else 1))
-        _save_game()
-        _show("Arquimedes Ossario","Treino concluído! Impactos: %d. Segurança antes da pressa." % bumps,[{"text":"Voltar ao expediente","action":"close"}])
-    else:
-        _close()
+    var balance: int = 0
+    var trust: int = 0
+    var comment: String = "Treino encerrado. Até o fantasma precisa praticar!"
+    if driving_job:
+        balance = (150 - mini(bumps, 8)*25) if success else -30
+        trust = (5 if bumps == 0 else (2 if bumps == 1 else -4)) if success else -3
+        money += balance
+        reputation = clampi(reputation + trust,0,100)
+        comment = "Bonito, chefe! Nem o Baltazar reclamou da viagem." if success and bumps < 2 else "Rapaz, desse jeito o próximo enterro será o da nossa reputação!"
+    elif success:
+        driving_completed = true
+        comment = "Muito bem! O para-lama agradece. Agora tente um serviço de verdade."
+    _save_game()
+    _show("Seu Osvaldo",comment+"\nImpactos: %d | Caixa: R$ %d | Confiança: %+d" % [bumps,balance,trust],[{"text":"Voltar ao expediente","action":"close"}])
