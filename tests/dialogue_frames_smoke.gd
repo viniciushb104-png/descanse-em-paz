@@ -26,6 +26,12 @@ func _run() -> void:
         push_error("Elementos da caixa de dialogo ausentes")
         quit(142)
         return
+    # O jogo abre em uma janela institucional sem retrato, e nessa modalidade
+    # a caixa de fala usa toda a largura. Testar geometria apenas com NPC ativo.
+    game._show_character("Sr. Afonso","Teste de retrato e leitura","calmo",[
+        {"text":"Continuar","action":"close"}
+    ])
+    await process_frame
     if portrait.position.x < 20 or portrait.position.x+portrait.size.x > text_scroll.position.x-10:
         push_error("Retrato invadiu a area da fala")
         quit(143)
