@@ -19,6 +19,8 @@ const SUPPLY_ART_PATH := "res://assets/sprites/emporio_das_ultimas_coisas.png"
 var supply_art: Texture2D
 const CONSERVATION_ART_PATH := "res://assets/sprites/sala_de_conservacao.png"
 var conservation_art: Texture2D
+const UMBRA_ART_PATH := "res://assets/sprites/casa_funeraria_umbra.png"
+var umbra_art: Texture2D
 
 func _ready() -> void:
     if ResourceLoader.exists(HOSPITAL_ART_PATH, "Texture2D"):
@@ -33,6 +35,8 @@ func _ready() -> void:
         supply_art = load(SUPPLY_ART_PATH) as Texture2D
     if ResourceLoader.exists(CONSERVATION_ART_PATH, "Texture2D"):
         conservation_art = load(CONSERVATION_ART_PATH) as Texture2D
+    if ResourceLoader.exists(UMBRA_ART_PATH, "Texture2D"):
+        umbra_art = load(UMBRA_ART_PATH) as Texture2D
     queue_redraw()
 
 func _draw() -> void:
@@ -46,7 +50,7 @@ func _draw() -> void:
         _rect(Rect2(2311,664,32,22),Color("#afa2ad"))
     _hearse(Vector2(2083,459),1.0)
     _hearse(Vector2(2110,1194),0.9)
-    _building(Vector2(2464,151),Vector2(288,260),"CASA FUNERARIA UMBRA",Color("#997d8d"),Color("#543b5b"),false)
+    _paint_umbra()
     _paint_supply()
     _text(Vector2(2518,449),"ATENDIMENTO",18,GOLD)
     _text(Vector2(2812,449),"SUPRIMENTOS",18,GOLD)
@@ -118,6 +122,16 @@ func _paint_conservation() -> void:
     var art_size := conservation_art.get_size() * scale_factor
     var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
     draw_texture_rect(conservation_art, Rect2(art_pos, art_size), false)
+
+func _paint_umbra() -> void:
+    if umbra_art == null:
+        _building(Vector2(2464,151),Vector2(288,260),"CASA FUNERARIA UMBRA",Color("#997d8d"),Color("#543b5b"),false)
+        return
+    var footprint := Rect2(2464,151,288,260)
+    var scale_factor := minf(footprint.size.x / float(umbra_art.get_width()), footprint.size.y / float(umbra_art.get_height()))
+    var art_size := umbra_art.get_size() * scale_factor
+    var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
+    draw_texture_rect(umbra_art, Rect2(art_pos, art_size), false)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)
