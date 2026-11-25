@@ -9,20 +9,25 @@ const STONE := Color("#8b8092")
 
 const HOSPITAL_ART_PATH := "res://assets/sprites/hospital_santa_ultima_hora.png"
 var hospital_art: Texture2D
+const CREMATORIUM_ART_PATH := "res://assets/sprites/crematorio_cinzas_e_cia.png"
+var crematorium_art: Texture2D
 
 func _ready() -> void:
     if ResourceLoader.exists(HOSPITAL_ART_PATH, "Texture2D"):
         hospital_art = load(HOSPITAL_ART_PATH) as Texture2D
+    if ResourceLoader.exists(CREMATORIUM_ART_PATH, "Texture2D"):
+        crematorium_art = load(CREMATORIUM_ART_PATH) as Texture2D
     queue_redraw()
 
 func _draw() -> void:
     BOUNDARIES.paint_district(self)
     _paint_hospital()
     _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
-    _building(Vector2(2039,754),Vector2(337,246),"CREMATORIO CINZAS & CIA",Color("#937c91"),Color("#4f3d57"),false)
+    _paint_crematorium()
     _building(Vector2(1655,1151),Vector2(410,215),"GARAGEM FUNERARIA",Color("#71647a"),Color("#463348"),false)
-    _rect(Rect2(2304,683,46,79),Color("#7c6b75"))
-    _rect(Rect2(2311,664,32,22),Color("#afa2ad"))
+    if crematorium_art == null:
+        _rect(Rect2(2304,683,46,79),Color("#7c6b75"))
+        _rect(Rect2(2311,664,32,22),Color("#afa2ad"))
     _hearse(Vector2(2083,459),1.0)
     _hearse(Vector2(2110,1194),0.9)
     _building(Vector2(2464,151),Vector2(288,260),"CASA FUNERARIA UMBRA",Color("#997d8d"),Color("#543b5b"),false)
@@ -48,6 +53,16 @@ func _paint_hospital() -> void:
     var art_size := hospital_art.get_size() * scale_factor
     var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
     draw_texture_rect(hospital_art, Rect2(art_pos, art_size), false)
+
+func _paint_crematorium() -> void:
+    if crematorium_art == null:
+        _building(Vector2(2039,754),Vector2(337,246),"CREMATORIO CINZAS & CIA",Color("#937c91"),Color("#4f3d57"),false)
+        return
+    var footprint := Rect2(2039,754,337,246)
+    var scale_factor := minf(footprint.size.x / float(crematorium_art.get_width()), footprint.size.y / float(crematorium_art.get_height()))
+    var art_size := crematorium_art.get_size() * scale_factor
+    var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
+    draw_texture_rect(crematorium_art, Rect2(art_pos, art_size), false)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)
