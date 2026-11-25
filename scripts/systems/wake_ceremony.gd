@@ -1,6 +1,7 @@
 extends RefCounted
 ## Preferencias ficticias por familia; estado armazenado na ordem de servico.
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
+const FUNERAL_LORE = preload("res://scripts/systems/funeral_lore.gd")
 const KEYS := ["flowers","light","music","chairs","tribute"]
 const OPTIONS := {
     "flowers":["Lirios","Rosas","Margaridas","Violetas"],
@@ -48,4 +49,12 @@ static func requests(order: Dictionary) -> String:
         var key: String = KEYS[i]
         lines.append(str(LABELS[key])+": "+str(OPTIONS[key][int(p["values"][i])]))
     var coffin: Dictionary = order.get("coffin",COFFINS.legacy_snapshot())
-    return str(p["story"])+"\n\nCaixão: "+str(coffin.get("name","Serenidade"))+"\n"+ "\n".join(lines)
+    var memory: Dictionary = FUNERAL_LORE.story(str(order.get("id","")))
+    var tribute := "" if memory.is_empty() else "\nEm memória de "+str(memory["name"])+": "+str(memory["memory"])+"\n"
+    return str(p["story"])+tribute+"\n\nCaixão: "+str(coffin.get("name","Serenidade"))+"\n"+ "\n".join(lines)
+
+static func farewell_text(order: Dictionary) -> String:
+    var id := str(order.get("id",""))
+    var memory: Dictionary = FUNERAL_LORE.story(id)
+    var original := str(profile(id)["farewell"])
+    return original if memory.is_empty() else original+"\n\n"+str(memory["goodbye"])

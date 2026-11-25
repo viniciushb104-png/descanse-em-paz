@@ -11,6 +11,7 @@ var pending_burial_id := ""
 const BURIAL_CASES := [1,5,16]
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
+const FUNERAL_LORE = preload("res://scripts/systems/funeral_lore.gd")
 var coffin_stock: Dictionary = {"serenidade":2}
 var coffin_selection: Dictionary = {}
 const FIELD = preload("res://scripts/world/burial_field.gd")
@@ -196,7 +197,7 @@ func interact(id: String) -> void:
             if room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Fechar","action":"close"}],"ironico")
+                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Fechar","action":"close"}],"ironico")
             else:
                 game()._interact(room)
         "client":
@@ -440,7 +441,7 @@ func coffin_shop() -> void:
         var model: Dictionary = COFFINS.MODELS[id]
         opts.append({"text":"%s | custo R$ %d | estoque %d" % [model["name"],model["cost"],coffin_stock[id]],"action":"coffin_buy_"+str(id)})
     opts.append({"text":"Voltar","action":"coffin_shop_back"})
-    game()._show("Gervásio Caixote | Catálogo de compra","Caixa da empresa: R$ %d. Compra unitária com nota e procedência conferidas (simulação). Valores fictícios." % game().money,opts)
+    game()._show("Gervásio Caixote | Catálogo de compra","Caixa da empresa: R$ %d. Gervásio: Não compre pelo brilho das alças, chefe! Pense nas encomendas. Compra unitária com nota e procedência conferidas (simulação). Valores fictícios." % game().money,opts)
 
 func buy_coffin(model: String) -> void:
     if room != "fornecedor" or not COFFINS.MODELS.has(model):
@@ -465,7 +466,7 @@ func coffin_view() -> void:
     for id in COFFINS.MODELS:
         var model: Dictionary = COFFINS.MODELS[id]
         lines.append("%s — %s | R$ %d | estoque %d" % [model["name"],model["description"],model["price"],coffin_stock[id]])
-    game()._show("Madame Amália Umbra | Catálogo","Preços fictícios de venda. A escolha é da família; nenhum modelo mais caro garante atendimento melhor.\n\n"+"\n".join(lines),[{"text":"Fechar","action":"close"}])
+    game()._show("Madame Amália Umbra | Catálogo","Preços fictícios de venda. Madame Amália: Uma despedida não é concurso de luxo. A escolha é da família; nenhum modelo mais caro garante atendimento melhor.\n\n"+"\n".join(lines),[{"text":"Fechar","action":"close"}])
 
 func coffin_case_ready() -> bool:
     var item: Dictionary = CASES.active(case_index)
@@ -494,9 +495,36 @@ func coffin_case_menu() -> void:
                 opts.append({"text":"Apresentar %s — R$ %d" % [model["name"],model["price"]],"action":"coffin_select_"+str(id)})
             else:
                 available.append(str(model["name"])+" (sem estoque)")
+    opts.append({"text":"Ouvir a história da família","action":"coffin_memory"})
     opts.append({"text":"Voltar depois / repor no Empório","action":"close"})
     var note := "\nSem estoque: "+", ".join(available) if not available.is_empty() else ""
-    game()._show("Escolha da família | Caixão","%s. Limite fictício para o caixão: R$ %d. Apresente apenas opções adequadas, disponíveis e dentro do orçamento. A família confirma o modelo antes da autorização; nenhuma escolha vale mais reputação." % [item["client"],COFFINS.budget(case_id)]+note,opts)
+    var memory: Dictionary = FUNERAL_LORE.story("case_%d" % case_id)
+    game()._show_character(str(item["client"]),str(memory.get("family","Vamos comparar os modelos."))+"\n\nLimite fictício para o caixão: R$ %d. Apresente opções disponíveis e adequadas. A família confirma a escolha." % COFFINS.budget(case_id)+note,str(item["profile"]),opts,"sereno")
+
+func coffin_memory() -> void:
+    if not coffin_case_ready():
+        return
+    var item: Dictionary = CASES.active(case_index)
+    var memory: Dictionary = FUNERAL_LORE.story("case_%d" % int(item["id"]))
+    game()._show_character(str(item["client"]),str(memory.get("memory",""))+"\n\n"+str(memory.get("family","")),str(item["profile"]),[{"text":"Apresentar os modelos","action":"coffin_case_menu"},{"text":"Conversar depois","action":"close"}])
+
+func coffin_advice() -> void:
+    if room!="funeraria":
+        return
+    game()._show_character("Madame Amália Umbra","Pergunte sobre as lembranças da família, confira o orçamento e a disponibilidade. Um acabamento simples pode ser exatamente o que desejam. Se quiser mudar o modelo, volte à proposta antes de autorizar.","diretora",[{"text":"Consultar catálogo","action":"coffin_view"},{"text":"Fechar","action":"close"}],"alegre")
+
+func coffin_ledger() -> void:
+    if room!="office":
+        return
+    var lines: Array[String] = []
+    for order in game().burial_queue.orders:
+        var quote: Dictionary = order.get("coffin",COFFINS.legacy_snapshot())
+        var label := "Incluído no atendimento anterior" if bool(quote.get("legacy",true)) else "R$ %d | custo de referência R$ %d" % [int(quote.get("price",0)),int(quote.get("cost",0))]
+        var status := "Concluído" if bool(order.get("finished",false)) else "Agendado"
+        lines.append("%s | %s | %s | %s" % [order["plot"],quote.get("name","Serenidade"),label,status])
+    var body := "Chefe, eu sou transparente, mas a receita não pode ser invisível! Aqui estão os modelos autorizados e seus valores. Nenhuma nova cobrança é feita nesta consulta."
+    body += "\n\n"+("Nenhuma ordem registrada." if lines.is_empty() else "\n".join(lines))
+    game()._show("Baltazar | Livro dos caixões",body,[{"text":"Fechar","action":"close"}])
 
 func select_coffin(model: String) -> void:
     if not coffin_case_ready():
@@ -563,7 +591,7 @@ func finish_case() -> void:
             coffin_case_menu()
             return
         var quote: Dictionary = COFFINS.snapshot(model)
-        game()._show("Ordem de sepultamento", "Jazigo "+chosen_plot+". Modelo apresentado: %s, R$ %d. Confirme a concordância da família, a documentação e a autorização fictícias. O preço será registrado uma única vez após a conclusão." % [quote["name"],quote["price"]],[{"text":"Família confirma / autorizar","action":"case_authorize_burial"},{"text":"Rever modelo","action":"coffin_case_menu"},{"text":"Depois","action":"close"}])
+        game()._show("Ordem de sepultamento", str(item["client"])+": "+FUNERAL_LORE.response(int(item["id"]),model)+"\n\nJazigo "+chosen_plot+". Modelo apresentado: %s, R$ %d. Confirme a concordância da família, a documentação e a autorização fictícias. O preço será registrado uma única vez após a conclusão." % [quote["name"],quote["price"]],[{"text":"Família confirma / autorizar","action":"case_authorize_burial"},{"text":"Rever modelo","action":"coffin_case_menu"},{"text":"Depois","action":"close"}])
         return
     if needed=="caixao":
         for model in COFFINS.MODELS:
@@ -615,7 +643,7 @@ func authorize_burial() -> void:
             coffin_selection.clear()
             pending_burial_id = key
             game()._save_game()
-            game()._show("Servico agendado","Jazigo "+id+" reservado. A recompensa sera liberada somente apos o velorio e sepultamento. Visite a capela ao norte.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
+            game()._show("Servico agendado","Jazigo "+id+" reservado. "+str(quote["name"])+" separado para a cerimônia. Amália registra a escolha, Gervásio fornece o modelo, Baltazar confere a ordem e Anselmo aguarda na capela. A recompensa sera liberada somente apos o velorio e sepultamento. Visite a capela ao norte.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
             return
 
 func complete_burial(service_id: String) -> bool:
@@ -663,6 +691,15 @@ func handle_choice(action: String) -> bool:
             return true
         "coffin_case_menu":
             coffin_case_menu()
+            return true
+        "coffin_memory":
+            coffin_memory()
+            return true
+        "coffin_advice":
+            coffin_advice()
+            return true
+        "coffin_ledger":
+            coffin_ledger()
             return true
     if action=="chapel_guide" and room=="chapel":
         game()._show("Anselmo Velario","Confira flores, luz, musica, cadeiras e homenagem. Depois receba a familia, respeite a despedida e encerre a cerimonia junto ao caixao.",[{"text":"Entendi","action":"close"}])
@@ -740,7 +777,7 @@ func wake_interact(id: String) -> void:
         if not WAKE.ready(order) or not bool(state["received"]):
             game()._show("Preparativos pendentes","Confira os cinco pedidos e receba a familia antes da despedida.",[{"text":"Voltar","action":"close"}])
         elif not bool(state["farewell"]):
-            game()._show(str(order["customer"]),str(WAKE.profile(str(order["id"]))["farewell"]),[{"text":"Respeitar o momento de despedida","action":"wake_farewell"},{"text":"Voltar","action":"close"}])
+            game()._show(str(order["customer"]),WAKE.farewell_text(order),[{"text":"Respeitar o momento de despedida","action":"wake_farewell"},{"text":"Voltar","action":"close"}])
         else:
             game()._show("O ultimo adeus","A familia esta pronta para seguir ao cemiterio.",[{"text":"Encerrar cerimonia","action":"wake_finish"},{"text":"Voltar","action":"close"}])
         return
@@ -797,7 +834,7 @@ func chapel_attendant() -> void:
         if WAKE.done(order):
             message = "A despedida terminou. Osvaldo aguarda para o jazigo "+str(order["plot"])+"."
         else:
-            message = "Temos uma cerimonia para "+str(order["customer"])+".\n"+WAKE.requests(order)+"\nPreparativos: %d/5." % WAKE.matches(order)
+            message = "Temos uma cerimônia organizada com "+str(order["customer"])+". O modelo autorizado já está registrado. Vamos preservar a vontade da família.\n"+WAKE.requests(order)+"\nPreparativos: %d/5." % WAKE.matches(order)
     game()._show("Sr. Anselmo Velario",message,[{"text":"Como organizar uma cerimonia?","action":"chapel_guide"},{"text":"Ate logo","action":"close"}])
 
 func chapel_visitor() -> void:
