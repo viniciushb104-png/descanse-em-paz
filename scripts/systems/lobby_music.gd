@@ -1,6 +1,7 @@
 extends AudioStreamPlayer
 ## Musica ambiente do mapa externo. Nao exige arquivo no primeiro boot.
-## Colocar assets/audio/lobby/santa_mortalha.ogg (ou .wav).
+## Colocar assets/audio/lobby/santa_mortalha.mp3, .ogg ou .wav.
+const MP3_PATH := "res://assets/audio/lobby/santa_mortalha.mp3"
 const OGG_PATH := "res://assets/audio/lobby/santa_mortalha.ogg"
 const WAV_PATH := "res://assets/audio/lobby/santa_mortalha.wav"
 const BASE_VOLUME_DB := -15.0
@@ -15,19 +16,23 @@ func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     volume_db = MUTED_VOLUME_DB
     var path := ""
-    if ResourceLoader.exists(OGG_PATH):
+    if ResourceLoader.exists(MP3_PATH):
+        path = MP3_PATH
+    elif ResourceLoader.exists(OGG_PATH):
         path = OGG_PATH
     elif ResourceLoader.exists(WAV_PATH):
         path = WAV_PATH
     if path.is_empty():
-        push_warning("Trilha do lobby ausente: coloque santa_mortalha.ogg em assets/audio/lobby/")
+        push_warning("Trilha do lobby ausente: coloque santa_mortalha.mp3 em assets/audio/lobby/")
         return
     var loaded: Resource = load(path)
     if not loaded is AudioStream:
         push_warning("Arquivo de trilha nao e AudioStream: " + path)
         return
     stream = loaded as AudioStream
-    if stream is AudioStreamOggVorbis:
+    if stream is AudioStreamMP3:
+        (stream as AudioStreamMP3).loop = true
+    elif stream is AudioStreamOggVorbis:
         (stream as AudioStreamOggVorbis).loop = true
     elif stream is AudioStreamWAV:
         (stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
