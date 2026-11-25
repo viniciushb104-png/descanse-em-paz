@@ -5,8 +5,8 @@ func _initialize() -> void:
 
 func _run() -> void:
     var configured_scene: String = str(ProjectSettings.get_setting("application/run/main_scene"))
-    if configured_scene != "res://scenes/menu/main_menu.tscn":
-        push_error("A cena principal nao e o menu.")
+    if configured_scene != "res://scenes/menu/opening.tscn":
+        push_error("A cena principal nao e a abertura cinematografica.")
         quit(71)
         return
 
