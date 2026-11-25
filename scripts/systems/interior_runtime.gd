@@ -185,7 +185,7 @@ func interact(id: String) -> void:
             if room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show("Madame Amalia Umbra","O cliente decide, nos orientamos. O unico empurrao permitido aqui e no carrinho de arquivos.",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Fechar","action":"close"}])
+                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Fechar","action":"close"}],"ironico")
             else:
                 game()._interact(room)
         "client":
