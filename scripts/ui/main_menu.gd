@@ -14,6 +14,8 @@ const TREE_LILAC: Texture2D = preload("res://assets/trees/Arvore_01.png")
 const TREE_GOTHIC: Texture2D = preload("res://assets/trees/Arvore_10.png")
 const TREE_TWISTED: Texture2D = preload("res://assets/trees/Arvore_06.png")
 const MENU_BACKGROUND_PATH := "res://assets/menu/menu_turma.png"
+const MENU_MUSIC_PATH := "res://assets/menu/tema_principal.mp3"
+const MENU_MUSIC_VOLUME_DB := -10.0
 const MENU_LOGO: Texture2D = preload("res://assets/menu/logo_descanse_em_paz.png")
 const GRAVE_MARKER_SCRIPT := preload("res://scripts/ui/menu_grave_marker.gd")
 
@@ -27,12 +29,15 @@ var modal_overlay: ColorRect
 var modal_title: Label
 var modal_body: Label
 var modal_actions: HBoxContainer
+var menu_music: AudioStreamPlayer
+var music_button: Button
 
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _install_background()
     _install_logo()
     _build_menu()
+    _install_menu_music()
     _build_modal()
     _refresh_continue()
     if FileAccess.file_exists(SAVE_PATH):
@@ -135,6 +140,53 @@ func _make_button(title_text: String, font_size: int = 19) -> Button:
     button.add_theme_stylebox_override("disabled", _style(Color("#29232f"), Color("#483f4d")))
     button.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), GOLD, 9, 3))
     return button
+
+func _install_menu_music() -> void:
+    # Recurso opcional: o menu continua funcionando antes do upload da musica.
+    if not ResourceLoader.exists(MENU_MUSIC_PATH):
+        return
+    var stream := load(MENU_MUSIC_PATH) as AudioStreamMP3
+    if stream == null:
+        return
+    # Duplica para nao alterar o recurso compartilhado.
+    var looping_stream := stream.duplicate() as AudioStreamMP3
+    if looping_stream == null:
+        return
+    looping_stream.loop = true
+    menu_music = AudioStreamPlayer.new()
+    menu_music.name = "MenuThemeMusic"
+    menu_music.stream = looping_stream
+    menu_music.volume_db = MENU_MUSIC_VOLUME_DB
+    add_child(menu_music)
+
+    music_button = _make_button("ATIVAR MÚSICA", 15)
+    music_button.name = "MenuMusicToggle"
+    music_button.custom_minimum_size = Vector2(180, 48)
+    music_button.size = Vector2(224, 48)
+    music_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+    music_button.offset_left = -250.0
+    music_button.offset_right = -26.0
+    music_button.offset_top = -76.0
+    music_button.offset_bottom = -28.0
+    music_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    music_button.pressed.connect(_toggle_menu_music)
+    add_child(music_button)
+
+    # Navegadores podem bloquear autoplay. Um toque/clique no botao
+    # inicia a musica sem depender de permissao de reproducao automatica.
+    if not OS.has_feature("web"):
+        menu_music.play()
+        music_button.text = "SILENCIAR MÚSICA"
+
+func _toggle_menu_music() -> void:
+    if not is_instance_valid(menu_music):
+        return
+    if menu_music.playing:
+        menu_music.stop()
+        music_button.text = "ATIVAR MÚSICA"
+    else:
+        menu_music.play()
+        music_button.text = "SILENCIAR MÚSICA"
 
 func _install_background() -> void:
     # A arte e um recurso opcional: testes e projeto continuam abrindo
