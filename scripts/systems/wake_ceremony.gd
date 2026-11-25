@@ -1,5 +1,6 @@
 extends RefCounted
 ## Preferencias ficticias por familia; estado armazenado na ordem de servico.
+const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const KEYS := ["flowers","light","music","chairs","tribute"]
 const OPTIONS := {
     "flowers":["Lirios","Rosas","Margaridas","Violetas"],
@@ -46,4 +47,5 @@ static func requests(order: Dictionary) -> String:
     for i in range(KEYS.size()):
         var key: String = KEYS[i]
         lines.append(str(LABELS[key])+": "+str(OPTIONS[key][int(p["values"][i])]))
-    return str(p["story"])+"\n\n"+ "\n".join(lines)
+    var coffin: Dictionary = order.get("coffin",COFFINS.legacy_snapshot())
+    return str(p["story"])+"\n\nCaixão: "+str(coffin.get("name","Serenidade"))+"\n"+ "\n".join(lines)

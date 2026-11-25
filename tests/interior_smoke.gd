@@ -9,6 +9,13 @@ func _finish_field_case(game: Node, runtime: Node, idx: int) -> bool:
     if runtime.case_index!=idx:
         return false
     runtime.authorize_burial()
+    if not runtime.pending_burial_id.is_empty():
+        return false
+    runtime.select_coffin("serenidade")
+    var stock_before: int = int(runtime.inventory["caixao"])
+    runtime.authorize_burial()
+    if int(runtime.inventory["caixao"])!=stock_before-1:
+        return false
     var key: String = runtime.pending_burial_id
     if key.is_empty() or runtime.case_index!=idx:
         return false
@@ -18,6 +25,8 @@ func _finish_field_case(game: Node, runtime: Node, idx: int) -> bool:
         return false
     # Simulate completed field work, then assert single credit.
     if not game.burial_queue.complete(key) or not runtime.complete_burial(key):
+        return false
+    if game.money!=previous_money+int(CASES.active(idx)["reward"])+300:
         return false
     game._save_game()
     return runtime.case_index==idx+1 and not runtime.complete_burial(key)

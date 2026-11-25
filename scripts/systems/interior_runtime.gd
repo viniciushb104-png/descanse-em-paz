@@ -10,6 +10,9 @@ var case_index: int = 0
 var pending_burial_id := ""
 const BURIAL_CASES := [1,5,16]
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
+const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
+var coffin_stock: Dictionary = {"serenidade":2}
+var coffin_selection: Dictionary = {}
 const FIELD = preload("res://scripts/world/burial_field.gd")
 var inventory: Dictionary = {"caixao":2,"urna":1}
 var skip_entry: bool = false
@@ -34,7 +37,10 @@ func save_state(cfg: ConfigFile) -> void:
     cfg.set_value("save","return_point",return_point)
     cfg.set_value("save","case_index",case_index)
     cfg.set_value("save","case_pending_burial",pending_burial_id)
+    sync_coffin_stock()
     cfg.set_value("save","stock",inventory)
+    cfg.set_value("save","coffin_stock",coffin_stock)
+    cfg.set_value("save","coffin_selection",coffin_selection)
     cfg.set_value("save","case_dialogue_step",dialogue_step)
     cfg.set_value("save","case_dialogue_grades",dialogue_grades)
     cfg.set_value("save","case_awaiting_reaction",awaiting_reaction)
@@ -62,6 +68,11 @@ func load_state(cfg: ConfigFile) -> void:
     inventory = cfg.get_value("save","stock",{"caixao":2,"urna":1})
     for product in ["caixao","urna"]:
         inventory[product] = maxi(0,int(inventory.get(product,0)))
+    var stored_models: Variant = cfg.get_value("save","coffin_stock",{})
+    coffin_stock = stored_models if stored_models is Dictionary else {}
+    sync_coffin_stock()
+    var stored_selection: Variant = cfg.get_value("save","coffin_selection",{})
+    coffin_selection = stored_selection if stored_selection is Dictionary else {}
     var max_steps: int = DIALOGUES.beat_keys(case_index).size()
     dialogue_step = clampi(int(cfg.get_value("save","case_dialogue_step",0)),0,max_steps)
     dialogue_grades = cfg.get_value("save","case_dialogue_grades",[])
@@ -198,7 +209,7 @@ func interact(id: String) -> void:
             elif room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show("Catalogo Umbra","Caixoes: %d em estoque. Urnas cinerarias: %d. Escolhas opcionais devem ser explicadas e nunca impostas." % [int(inventory["caixao"]),int(inventory["urna"])],[{"text":"Montar homenagem floral","action":"activity_start_flowers"},{"text":"Consultar normas de consumo","action":"legal_valores"},{"text":"Fechar","action":"close"}])
+                game()._show("Catalogo Umbra","Caixoes: %d em estoque. Urnas cinerarias: %d. Escolhas opcionais devem ser explicadas e nunca impostas." % [int(inventory["caixao"]),int(inventory["urna"])],[{"text":"Consultar modelos de caixões","action":"coffin_view"},{"text":"Montar homenagem floral","action":"activity_start_flowers"},{"text":"Consultar normas de consumo","action":"legal_valores"},{"text":"Fechar","action":"close"}])
             else:
                 var lesson: String = "registro"
                 match room:
@@ -381,6 +392,7 @@ func review_dialogue() -> void:
     show_case()
 
 func _reset_dialogue() -> void:
+    coffin_selection.clear()
     dialogue_step = 0
     dialogue_grades.clear()
     awaiting_reaction = false
@@ -391,12 +403,15 @@ func _reset_dialogue() -> void:
 
 func stock_menu() -> void:
     game()._show("Gervasio Caixote - Emporio","Estoque: %d caixoes, %d urnas cinerarias. Valores ficticios de suprimentos. Comprar exige conferir procedencia, condicoes e nota fiscal." % [int(inventory["caixao"]),int(inventory["urna"])],
-        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar 2 caixoes: R$ 240","action":"stock_caixao"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
+        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar caixões por modelo","action":"coffin_shop"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
 
 func purchase(kind: String) -> void:
     if not inside() or room != "fornecedor" or not inventory.has(kind):
         return
-    var cost: int = 240 if kind=="caixao" else 160
+    if kind == "caixao":
+        coffin_shop()
+        return
+    var cost: int = 160
     if game().money < cost:
         game()._show("Saldo insuficiente","Baltazar recomenda planejar as compras antes de autorizar despesas.",[{"text":"Voltar","action":"close"}])
         return
@@ -404,6 +419,97 @@ func purchase(kind: String) -> void:
     inventory[kind] = int(inventory[kind])+2
     game()._save_game()
     stock_menu()
+
+func sync_coffin_stock() -> void:
+    coffin_stock = COFFINS.normalize(coffin_stock,int(inventory.get("caixao",0)))
+
+func take_coffin(model: String) -> bool:
+    sync_coffin_stock()
+    if int(coffin_stock.get(model,0)) <= 0:
+        return false
+    coffin_stock[model] = int(coffin_stock[model])-1
+    inventory["caixao"] = int(inventory["caixao"])-1
+    return true
+
+func coffin_shop() -> void:
+    if room != "fornecedor":
+        return
+    sync_coffin_stock()
+    var opts: Array = []
+    for id in COFFINS.MODELS:
+        var model: Dictionary = COFFINS.MODELS[id]
+        opts.append({"text":"%s | custo R$ %d | estoque %d" % [model["name"],model["cost"],coffin_stock[id]],"action":"coffin_buy_"+str(id)})
+    opts.append({"text":"Voltar","action":"coffin_shop_back"})
+    game()._show("Gervásio Caixote | Catálogo de compra","Caixa da empresa: R$ %d. Compra unitária com nota e procedência conferidas (simulação). Valores fictícios." % game().money,opts)
+
+func buy_coffin(model: String) -> void:
+    if room != "fornecedor" or not COFFINS.MODELS.has(model):
+        return
+    var cost: int = int(COFFINS.MODELS[model]["cost"])
+    if game().money < cost:
+        game()._show("Saldo insuficiente","Baltazar: Até minha paciência é limitada. Confira o caixa antes de comprar.",[{"text":"Voltar ao catálogo","action":"coffin_shop"}])
+        return
+    sync_coffin_stock()
+    game().money -= cost
+    coffin_stock[model] = int(coffin_stock[model])+1
+    inventory["caixao"] = int(inventory["caixao"])+1
+    game()._save_game()
+    game()._refresh_ui()
+    coffin_shop()
+
+func coffin_view() -> void:
+    if room != "funeraria":
+        return
+    sync_coffin_stock()
+    var lines: Array[String] = []
+    for id in COFFINS.MODELS:
+        var model: Dictionary = COFFINS.MODELS[id]
+        lines.append("%s — %s | R$ %d | estoque %d" % [model["name"],model["description"],model["price"],coffin_stock[id]])
+    game()._show("Madame Amália Umbra | Catálogo","Preços fictícios de venda. A escolha é da família; nenhum modelo mais caro garante atendimento melhor.\n\n"+"\n".join(lines),[{"text":"Fechar","action":"close"}])
+
+func coffin_case_ready() -> bool:
+    var item: Dictionary = CASES.active(case_index)
+    if item.is_empty() or not pending_burial_id.is_empty() or not int(item["id"]) in BURIAL_CASES or room != str(item["room"]):
+        return false
+    var steps: int = DIALOGUES.beat_keys(case_index).size()
+    if dialogue_step < steps or dialogue_grades.size() < steps or awaiting_reaction:
+        return false
+    var score := 0
+    for grade in dialogue_grades:
+        score += int(grade)
+    return score >= DIALOGUES.required_score(case_index)
+
+func coffin_case_menu() -> void:
+    if not coffin_case_ready():
+        return
+    sync_coffin_stock()
+    var item: Dictionary = CASES.active(case_index)
+    var case_id := int(item["id"])
+    var opts: Array = []
+    var available: Array[String] = []
+    for id in COFFINS.MODELS:
+        var model: Dictionary = COFFINS.MODELS[id]
+        if COFFINS.permitted(case_id,str(id)):
+            if int(coffin_stock[id])>0:
+                opts.append({"text":"Apresentar %s — R$ %d" % [model["name"],model["price"]],"action":"coffin_select_"+str(id)})
+            else:
+                available.append(str(model["name"])+" (sem estoque)")
+    opts.append({"text":"Voltar depois / repor no Empório","action":"close"})
+    var note := "\nSem estoque: "+", ".join(available) if not available.is_empty() else ""
+    game()._show("Escolha da família | Caixão","%s. Limite fictício para o caixão: R$ %d. Apresente apenas opções adequadas, disponíveis e dentro do orçamento. A família confirma o modelo antes da autorização; nenhuma escolha vale mais reputação." % [item["client"],COFFINS.budget(case_id)]+note,opts)
+
+func select_coffin(model: String) -> void:
+    if not coffin_case_ready():
+        return
+    var item: Dictionary = CASES.active(case_index)
+    var case_id := int(item["id"])
+    sync_coffin_stock()
+    if not COFFINS.permitted(case_id,model) or int(coffin_stock.get(model,0))<=0:
+        coffin_case_menu()
+        return
+    coffin_selection = {"case_id":case_id,"model":model}
+    game()._save_game()
+    finish_case()
 
 func finish_case() -> void:
     if not pending_burial_id.is_empty():
@@ -446,16 +552,24 @@ func finish_case() -> void:
             game()._show("Sem jazigos livres","Nao ha vaga para este atendimento.",[{"text":"Voltar","action":"close"}])
             return
     var needed: String = str(item["stock"])
+    sync_coffin_stock()
     if not needed.is_empty():
         if int(inventory.get(needed,0)) <= 0:
             game()._show("Estoque insuficiente","Precisamos de um(a) "+needed+". Va ao Emporio e compre suprimentos antes de concluir.",[{"text":"Entendi","action":"close"}])
             return
     if burial_required:
-        var id := "case_%d" % int(item["id"])
-        # Confirmação explícita do contrato fictício antes de liberar o campo.
-        game()._show("Ordem de sepultamento", "A familia solicita enterro no jazigo "+chosen_plot+". Confirme que a documentacao e a autorizacao ficticias foram conferidas.",[{"text":"Conferir e autorizar","action":"case_authorize_burial"},{"text":"Depois","action":"close"}])
+        var model := str(coffin_selection.get("model",""))
+        if int(coffin_selection.get("case_id",-1))!=int(item["id"]) or not COFFINS.permitted(int(item["id"]),model) or int(coffin_stock.get(model,0))<=0:
+            coffin_case_menu()
+            return
+        var quote: Dictionary = COFFINS.snapshot(model)
+        game()._show("Ordem de sepultamento", "Jazigo "+chosen_plot+". Modelo apresentado: %s, R$ %d. Confirme a concordância da família, a documentação e a autorização fictícias. O preço será registrado uma única vez após a conclusão." % [quote["name"],quote["price"]],[{"text":"Família confirma / autorizar","action":"case_authorize_burial"},{"text":"Rever modelo","action":"coffin_case_menu"},{"text":"Depois","action":"close"}])
         return
-    if not needed.is_empty():
+    if needed=="caixao":
+        for model in COFFINS.MODELS:
+            if take_coffin(str(model)):
+                break
+    elif not needed.is_empty():
         inventory[needed] = int(inventory[needed])-1
     game().money += int(item["reward"])
     game().reputation = mini(100,game().reputation+3)
@@ -478,9 +592,12 @@ func authorize_burial() -> void:
         score += int(grade)
     if dialogue_step<steps or dialogue_grades.size()<steps or awaiting_reaction or score<DIALOGUES.required_score(case_index):
         return
-    var needed: String = item["stock"]
-    if int(inventory.get(needed,0))<=0:
+    sync_coffin_stock()
+    var model := str(coffin_selection.get("model",""))
+    if int(coffin_selection.get("case_id",-1))!=int(item["id"]) or not COFFINS.permitted(int(item["id"]),model) or int(coffin_stock.get(model,0))<=0:
+        coffin_case_menu()
         return
+    var quote: Dictionary = COFFINS.snapshot(model)
     for plot in FIELD.north_plots():
         var id: String = plot["id"]
         if id=="B-13":
@@ -493,8 +610,9 @@ func authorize_burial() -> void:
         if used:
             continue
         var key := "case_%d" % int(item["id"])
-        if game().burial_queue.enqueue(key,str(item["client"]),id,int(game().day),true,true):
-            inventory[needed] = int(inventory[needed])-1
+        if game().burial_queue.enqueue(key,str(item["client"]),id,int(game().day),true,true,quote):
+            take_coffin(model)
+            coffin_selection.clear()
             pending_burial_id = key
             game()._save_game()
             game()._show("Servico agendado","Jazigo "+id+" reservado. A recompensa sera liberada somente apos o velorio e sepultamento. Visite a capela ao norte.",[{"text":"Ir ao cemiterio","action":"leave_room"}])
@@ -506,7 +624,13 @@ func complete_burial(service_id: String) -> bool:
     var item: Dictionary = CASES.active(case_index)
     if item.is_empty():
         return false
-    game().money += int(item["reward"])
+    var sale := 0
+    for order in game().burial_queue.orders:
+        if str(order["id"])==service_id:
+            var quote: Dictionary = order.get("coffin",COFFINS.legacy_snapshot())
+            sale = maxi(0,int(quote.get("price",0)))
+            break
+    game().money += int(item["reward"])+sale
     game().reputation = mini(100,game().reputation+3)
     game().compliance = mini(100,game().compliance+2)
     pending_burial_id = ""
@@ -520,6 +644,26 @@ func reject_case() -> void:
     show_case()
 
 func handle_choice(action: String) -> bool:
+    if action.begins_with("coffin_buy_"):
+        buy_coffin(action.trim_prefix("coffin_buy_"))
+        return true
+    if action.begins_with("coffin_select_"):
+        select_coffin(action.trim_prefix("coffin_select_"))
+        return true
+    match action:
+        "coffin_shop":
+            coffin_shop()
+            return true
+        "coffin_shop_back":
+            if room=="fornecedor":
+                stock_menu()
+            return true
+        "coffin_view":
+            coffin_view()
+            return true
+        "coffin_case_menu":
+            coffin_case_menu()
+            return true
     if action=="chapel_guide" and room=="chapel":
         game()._show("Anselmo Velario","Confira flores, luz, musica, cadeiras e homenagem. Depois receba a familia, respeite a despedida e encerre a cerimonia junto ao caixao.",[{"text":"Entendi","action":"close"}])
         return true

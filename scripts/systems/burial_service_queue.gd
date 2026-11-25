@@ -2,13 +2,14 @@ extends RefCounted
 ## Fila separada dos 20 atendimentos: so ordens explicitamente autorizadas
 ## podem abrir o minigame do coveiro. Persistida no mesmo save.cfg.
 const INITIAL_ORDER := "tutorial_b13"
+const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 var orders: Array[Dictionary] = []
 var initial_issued: bool = false
 
 static func new_progress() -> Dictionary:
     return {"phase": 0, "completed": [[], [], [], [], []], "lowering": 0.0, "mistakes": 0}
 
-func enqueue(identifier: String, customer: String, plot: String, day: int, documents_ok: bool, authorized: bool) -> bool:
+func enqueue(identifier: String, customer: String, plot: String, day: int, documents_ok: bool, authorized: bool, coffin: Dictionary = {}) -> bool:
     if identifier.is_empty() or plot.is_empty() or not documents_ok or not authorized:
         return false
     for item in orders:
@@ -18,6 +19,7 @@ func enqueue(identifier: String, customer: String, plot: String, day: int, docum
         "id": identifier, "customer": customer, "plot": plot,
         "scheduled_day": maxi(1, day),
         "authorized": true, "documents_ok": true, "finished": false,
+        "coffin": COFFINS.legacy_snapshot() if coffin.is_empty() else coffin.duplicate(true),
         "progress": new_progress()
     })
     return true
@@ -77,7 +79,10 @@ func load_state(cfg: ConfigFile) -> void:
             continue
         if str(entry.get("id", "")).is_empty() or str(entry.get("plot", "")).is_empty():
             continue
-        orders.append(entry.duplicate(true))
+        var restored: Dictionary = entry.duplicate(true)
+        if not restored.get("coffin",null) is Dictionary:
+            restored["coffin"] = COFFINS.legacy_snapshot()
+        orders.append(restored)
     for item in orders:
         if str(item.get("id", "")) == INITIAL_ORDER:
             initial_issued = true
