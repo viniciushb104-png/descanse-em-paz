@@ -17,6 +17,8 @@ const GARAGE_ART_PATH := "res://assets/sprites/garagem_funeraria.png"
 var garage_art: Texture2D
 const SUPPLY_ART_PATH := "res://assets/sprites/emporio_das_ultimas_coisas.png"
 var supply_art: Texture2D
+const CONSERVATION_ART_PATH := "res://assets/sprites/sala_de_conservacao.png"
+var conservation_art: Texture2D
 
 func _ready() -> void:
     if ResourceLoader.exists(HOSPITAL_ART_PATH, "Texture2D"):
@@ -29,12 +31,14 @@ func _ready() -> void:
         garage_art = load(GARAGE_ART_PATH) as Texture2D
     if ResourceLoader.exists(SUPPLY_ART_PATH, "Texture2D"):
         supply_art = load(SUPPLY_ART_PATH) as Texture2D
+    if ResourceLoader.exists(CONSERVATION_ART_PATH, "Texture2D"):
+        conservation_art = load(CONSERVATION_ART_PATH) as Texture2D
     queue_redraw()
 
 func _draw() -> void:
     BOUNDARIES.paint_district(self)
     _paint_hospital()
-    _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
+    _paint_conservation()
     _paint_crematorium()
     _paint_garage()
     if crematorium_art == null:
@@ -104,6 +108,16 @@ func _paint_supply() -> void:
     var art_size := supply_art.get_size() * scale_factor
     var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
     draw_texture_rect(supply_art, Rect2(art_pos, art_size), false)
+
+func _paint_conservation() -> void:
+    if conservation_art == null:
+        _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
+        return
+    var footprint := Rect2(1609,758,337,233)
+    var scale_factor := minf(footprint.size.x / float(conservation_art.get_width()), footprint.size.y / float(conservation_art.get_height()))
+    var art_size := conservation_art.get_size() * scale_factor
+    var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
+    draw_texture_rect(conservation_art, Rect2(art_pos, art_size), false)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)
