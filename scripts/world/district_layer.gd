@@ -7,12 +7,17 @@ const GOLD := Color("#dec18f")
 const BLUE := Color("#9fbdca")
 const STONE := Color("#8b8092")
 
+const HOSPITAL_ART_PATH := "res://assets/sprites/hospital_santa_ultima_hora.png"
+var hospital_art: Texture2D
+
 func _ready() -> void:
+    if ResourceLoader.exists(HOSPITAL_ART_PATH, "Texture2D"):
+        hospital_art = load(HOSPITAL_ART_PATH) as Texture2D
     queue_redraw()
 
 func _draw() -> void:
     BOUNDARIES.paint_district(self)
-    _building(Vector2(1654,148),Vector2(353,254),"HOSPITAL SANTA ULTIMA HORA",Color("#9a8a9e"),Color("#604e70"),true)
+    _paint_hospital()
     _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
     _building(Vector2(2039,754),Vector2(337,246),"CREMATORIO CINZAS & CIA",Color("#937c91"),Color("#4f3d57"),false)
     _building(Vector2(1655,1151),Vector2(410,215),"GARAGEM FUNERARIA",Color("#71647a"),Color("#463348"),false)
@@ -33,6 +38,16 @@ func _draw() -> void:
     _text(Vector2(1674,1016),"Dona Clotilde",18,GOLD)
     _text(Vector2(2112,1025),"Seu Cinerio Brasa",18,GOLD)
     _text(Vector2(1762,1410),"Arquimedes Ossario",18,GOLD)
+
+func _paint_hospital() -> void:
+    if hospital_art == null:
+        _building(Vector2(1654,148),Vector2(353,254),"HOSPITAL SANTA ULTIMA HORA",Color("#9a8a9e"),Color("#604e70"),true)
+        return
+    var footprint := Rect2(1654,148,353,254)
+    var scale_factor := minf(footprint.size.x / float(hospital_art.get_width()), footprint.size.y / float(hospital_art.get_height()))
+    var art_size := hospital_art.get_size() * scale_factor
+    var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
+    draw_texture_rect(hospital_art, Rect2(art_pos, art_size), false)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)
