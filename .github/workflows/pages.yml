@@ -52,6 +52,25 @@ jobs:
           print("Gato OK: 43 imagens PNG disponíveis antes da importação Godot")
           PY
 
+      - name: Preparar abertura cinematografica opcional
+        run: |
+          set -euo pipefail
+          if [ -s assets/menu/abertura.ogv ]; then
+            echo "Abertura OGV pronta."
+          elif [ -s assets/menu/abertura.mp4 ]; then
+            if ! command -v ffmpeg >/dev/null; then
+              sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+            fi
+            if ffmpeg -nostdin -hide_banner -loglevel error -y -i assets/menu/abertura.mp4 -vf "scale=960:540:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=960:540:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24" -c:v libtheora -q:v 6 -c:a libvorbis -q:a 4 -ac 2 assets/menu/abertura.ogv; then
+              echo "Abertura convertida para Godot."
+            else
+              rm -f assets/menu/abertura.ogv
+              echo "::warning::Nao foi possivel converter a abertura. O menu continua disponivel."
+            fi
+          else
+            echo "Abertura ainda nao enviada; menu direto habilitado."
+          fi
+
       - name: Conferir referencias obrigatorias de recursos
         run: python3 tools/check_resources.py
 
