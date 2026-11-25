@@ -27,6 +27,7 @@ const DIALOGUE_FRAME = preload("res://scripts/ui/dialogue_frame.gd")
 const DIALOGUE_ART = preload("res://scripts/ui/dialogue_art_lote_01.gd")
 const PORTRAIT_EXPRESSIONS = preload("res://scripts/ui/portrait_expressions.gd")
 const CEMETERY_CAT = preload("res://scripts/world/cemetery_cat.gd")
+const LOBBY_MUSIC = preload("res://scripts/systems/lobby_music.gd")
 const BURIAL_QUEUE = preload("res://scripts/systems/burial_service_queue.gd")
 const BURIAL_MINIGAME = preload("res://scripts/minigames/oficio_osvaldo.gd")
 @onready var rooms: Node = $RoomsRuntime
@@ -94,8 +95,12 @@ var burial_queue = BURIAL_QUEUE.new()
 var burial_layer: CanvasLayer
 var burial_marker: Label
 var cemetery_cat: Node2D
+var lobby_music: AudioStreamPlayer
 
 func _ready() -> void:
+    lobby_music = LOBBY_MUSIC.new()
+    lobby_music.name = "LobbyMusic"
+    add_child(lobby_music)
     cemetery_cat = CEMETERY_CAT.new()
     cemetery_cat.name = "GatoDoCemiterio"
     add_child(cemetery_cat)
@@ -117,6 +122,9 @@ func _ready() -> void:
         _notify("Bem-vindo de volta! O expediente continua.",1.8)
 
 func _process(delta: float) -> void:
+    if is_instance_valid(lobby_music):
+        var minigame_active := is_instance_valid(activity_layer) or is_instance_valid(driving_layer) or is_instance_valid(burial_layer)
+        lobby_music.update_context(not rooms.inside(),dialogue_open,minigame_active,delta)
     location_hint_seconds = maxf(0.0,location_hint_seconds-delta)
     visual_animation_elapsed += delta
     if visual_animation_elapsed >= 0.35:
