@@ -82,7 +82,7 @@ func load_state(cfg: ConfigFile) -> void:
         dialogue_step = mini(max_steps,dialogue_step + 1)
 
 func apply_room() -> void:
-    for item in ["GroundLayer","LobbyBeauty","TreeLayer","PropsLayer","GravesLayer","DistrictLayer","ExpansionLayer","DepthLayer"]:
+    for item in ["GroundLayer","LobbyBeauty","TreeLayer","PropsLayer","GravesLayer","DistrictLayer","ExpansionLayer","DepthLayer","CloudLayer"]:
         game().get_node(item).visible = not inside()
     game().get_node("InteriorLayer").set_room(room)
     var camera := game().get_node("Player/Camera2D") as Camera2D

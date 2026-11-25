@@ -35,6 +35,22 @@ func _run() -> void:
             push_error("Alameda central ou praca interrompida: "+str(point))
             quit(178)
             return
+    var clouds := game.get_node_or_null("CloudLayer") as Node2D
+    if clouds == null or not clouds.visible or clouds.z_index <= game.get_node("DepthLayer").z_index or clouds.get_child_count() != 12:
+        push_error("Camada de nuvens ausente ou incompleta")
+        quit(179)
+        return
+    var cloud := clouds.get_child(0) as Sprite2D
+    if cloud == null or cloud.texture == null or cloud.modulate.a <= 0.0 or cloud.modulate.a >= 0.5:
+        push_error("Nuvem sem textura ou transparencia")
+        quit(180)
+        return
+    var cloud_x := cloud.position.x
+    clouds._process(1.0)
+    if cloud.position.x == cloud_x:
+        push_error("Nuvem sem movimento")
+        quit(181)
+        return
     game.clock_minutes = 1080
     if decor.current_darkness() < 0.99:
         push_error("Iluminacao noturna nao acompanha o relogio")
@@ -43,13 +59,13 @@ func _run() -> void:
     var rooms: Node = game.get_node("RoomsRuntime")
     rooms.room = "office"
     rooms.apply_room()
-    if decor.visible:
+    if decor.visible or clouds.visible:
         push_error("Ornamentacao do patio apareceu dentro do escritorio")
         quit(176)
         return
     rooms.room = ""
     rooms.apply_room()
-    if not decor.visible:
+    if not decor.visible or not clouds.visible:
         push_error("Decoracao nao voltou ao sair do escritorio")
         quit(177)
         return
