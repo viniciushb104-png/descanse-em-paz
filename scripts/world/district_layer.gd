@@ -13,6 +13,8 @@ const CREMATORIUM_ART_PATH := "res://assets/sprites/crematorio_cinzas_e_cia.png"
 var crematorium_art: Texture2D
 const INSPECTION_ART_PATH := "res://assets/sprites/posto_de_fiscalizacao.png"
 var inspection_art: Texture2D
+const GARAGE_ART_PATH := "res://assets/sprites/garagem_funeraria.png"
+var garage_art: Texture2D
 
 func _ready() -> void:
     if ResourceLoader.exists(HOSPITAL_ART_PATH, "Texture2D"):
@@ -21,6 +23,8 @@ func _ready() -> void:
         crematorium_art = load(CREMATORIUM_ART_PATH) as Texture2D
     if ResourceLoader.exists(INSPECTION_ART_PATH, "Texture2D"):
         inspection_art = load(INSPECTION_ART_PATH) as Texture2D
+    if ResourceLoader.exists(GARAGE_ART_PATH, "Texture2D"):
+        garage_art = load(GARAGE_ART_PATH) as Texture2D
     queue_redraw()
 
 func _draw() -> void:
@@ -28,7 +32,7 @@ func _draw() -> void:
     _paint_hospital()
     _building(Vector2(1609,758),Vector2(337,233),"SALA DE CONSERVACAO",Color("#81778e"),Color("#684960"),false)
     _paint_crematorium()
-    _building(Vector2(1655,1151),Vector2(410,215),"GARAGEM FUNERARIA",Color("#71647a"),Color("#463348"),false)
+    _paint_garage()
     if crematorium_art == null:
         _rect(Rect2(2304,683,46,79),Color("#7c6b75"))
         _rect(Rect2(2311,664,32,22),Color("#afa2ad"))
@@ -76,6 +80,16 @@ func _paint_inspection() -> void:
     var art_size := inspection_art.get_size() * scale_factor
     var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
     draw_texture_rect(inspection_art, Rect2(art_pos, art_size), false)
+
+func _paint_garage() -> void:
+    if garage_art == null:
+        _building(Vector2(1655,1151),Vector2(410,215),"GARAGEM FUNERARIA",Color("#71647a"),Color("#463348"),false)
+        return
+    var footprint := Rect2(1655,1151,410,215)
+    var scale_factor := minf(footprint.size.x / float(garage_art.get_width()), footprint.size.y / float(garage_art.get_height()))
+    var art_size := garage_art.get_size() * scale_factor
+    var art_pos := Vector2(footprint.get_center().x - art_size.x / 2.0, footprint.end.y - art_size.y)
+    draw_texture_rect(garage_art, Rect2(art_pos, art_size), false)
 
 func _rect(r: Rect2, c: Color) -> void:
     draw_rect(r,c,true)
