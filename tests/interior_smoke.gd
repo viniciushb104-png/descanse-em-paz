@@ -139,6 +139,18 @@ func _run() -> void:
             push_error("Sprite com textura ausente")
             quit(105)
             return
+    var baltazar := game.get_node_or_null("InteriorLayer/BaltazarAtendente") as Sprite2D
+    if baltazar == null or baltazar.texture == null or not baltazar.region_enabled:
+        push_error("Baltazar ausente no escritorio")
+        quit(109)
+        return
+    game.player.global_position = Vector2(294,373)
+    game._try_interact()
+    if not game.dialogue_open or not game.dialog_title.text.begins_with("Baltazar"):
+        push_error("Atendimento do Baltazar inacessivel")
+        quit(110)
+        return
+    game._close()
     if ROOM_CATALOG.ROOMS.has("biblioteca") or CASES.active(10)["room"] != "office" or not office_art.has_node("Arquivo"):
         push_error("Arquivo Legal nao transferido ao escritorio")
         quit(107)

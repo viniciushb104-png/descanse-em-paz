@@ -2,6 +2,10 @@ extends Node2D
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CATALOG = preload("res://scripts/world/interior_catalog.gd")
 const OFFICE = preload("res://scenes/interiors/office.tscn")
+const MAP_ART = preload("res://scripts/map_art.gd")
+var office_baltazar: Sprite2D
+var baltazar_elapsed := 0.0
+const BALTAZAR_FEET := Vector2(294,373)
 const MAINTENANCE = preload("res://scenes/interiors/maintenance.tscn")
 const INK := Color("#241a2b")
 const GOLD := Color("#d8b882")
@@ -19,6 +23,10 @@ func set_customer(name: String, profile: String) -> void:
 func set_room(key: String) -> void:
     room = key
     visible = not key.is_empty()
+    if is_instance_valid(office_baltazar):
+        remove_child(office_baltazar)
+        office_baltazar.queue_free()
+        office_baltazar = null
     if is_instance_valid(room_art):
         remove_child(room_art)
         room_art.queue_free()
@@ -31,6 +39,8 @@ func set_room(key: String) -> void:
     if room_art != null:
         room_art.name = "RoomArtwork"
         add_child(room_art)
+    if key == "office":
+        _create_office_baltazar()
     queue_redraw()
 
 func _draw() -> void:
@@ -84,7 +94,7 @@ func _draw() -> void:
         draw_rect(Rect2(871,298,190,39),Color("#674b52"))
     if room == "funeraria":
         _madame_amalia(Vector2(294,373))
-    else:
+    elif room != "office":
         _npc(Vector2(294,326),Color("#d9b5a0"),Color("#403245"),"ATENDENTE")
     var coat := Color("#584051")
     match customer_profile:
@@ -281,8 +291,27 @@ func _chapel_npc(id: String, p: Vector2, label: String) -> void:
             draw_circle(p+Vector2(13,27)+Vector2.from_angle(float(i)*1.26)*7,5,Color("#c38fce"))
     _text(p+Vector2(-40,-38),label,15,PAPER)
 
+func _create_office_baltazar() -> void:
+    baltazar_elapsed = 0.0
+    office_baltazar = Sprite2D.new()
+    office_baltazar.name = "BaltazarAtendente"
+    office_baltazar.texture = MAP_ART.CHARACTERS
+    office_baltazar.region_enabled = true
+    office_baltazar.region_filter_clip_enabled = true
+    office_baltazar.region_rect = MAP_ART.NPC_RECTS["baltazar_down_0"]
+    office_baltazar.scale = Vector2(70.0/53.0,93.0/70.0)
+    office_baltazar.position = BALTAZAR_FEET - Vector2(0,46.5)
+    office_baltazar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    office_baltazar.z_index = 3
+    add_child(office_baltazar)
+
 func _process(delta: float) -> void:
-    if room == "funeraria":
+    if room == "office" and is_instance_valid(office_baltazar):
+        baltazar_elapsed += delta
+        var frame := "baltazar_down_0" if int(baltazar_elapsed*2.0)%2 == 0 else "baltazar_down_1"
+        office_baltazar.region_rect = MAP_ART.NPC_RECTS[frame]
+        office_baltazar.position.y = BALTAZAR_FEET.y-46.5+sin(baltazar_elapsed*2.0)*3.0
+    elif room == "funeraria":
         amalia_elapsed += delta
         queue_redraw()
     elif room == "chapel":

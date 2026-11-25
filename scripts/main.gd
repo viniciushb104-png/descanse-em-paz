@@ -271,15 +271,15 @@ func _interact(id: String) -> void:
                 _show("Seu Osvaldo", "O cemiterio nao se administra sozinho! Olhe o estado dos caminhos, os registros e o treinamento da equipe. E nao pise nas flores!", [{"text": "Ate mais", "action": "close"}])
         "office":
             if stage == 1:
-                _show("Atendimento: documentacao", "Uma familia chegou com apenas a Declaracao de Obito. Qual deve ser a conduta do administrador?", [{"text": "Conferir os requisitos e orientar a familia", "action": "docs_ok"}, {"text": "Ignorar o problema e prosseguir", "action": "docs_bad"}, {"text": "Voltar", "action": "close"}])
+                _show("Baltazar | Documentação", "Uma familia chegou com apenas a Declaracao de Obito. Qual deve ser a conduta do administrador?", [{"text": "Conferir os requisitos e orientar a familia", "action": "docs_ok"}, {"text": "Ignorar o problema e prosseguir", "action": "docs_bad"}, {"text": "Voltar", "action": "close"}])
             elif stage == 6:
-                _show("Cartorio e Certidao de Obito", "Dra. Penelope informou que o hospital forneceu a Declaracao de Obito. Como conduzir o processo?", [{"text":"Orientar o registro civil e conferir certidao", "action":"cartorio_certo"}, {"text":"Tratar a DO como certidao pronta", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+                _show("Baltazar | Cartório e certidão de óbito", "Dra. Penelope informou que o hospital forneceu a Declaracao de Obito. Como conduzir o processo?", [{"text":"Orientar o registro civil e conferir certidao", "action":"cartorio_certo"}, {"text":"Tratar a DO como certidao pronta", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             elif stage == 11:
-                _show("Orcamento transparente", "Exemplo ficticio: servico R$ 1.200, custos diretos R$ 800. O que entregar a familia?", [{"text":"Detalhar custos e obter concordancia", "action":"orcamento_certo"}, {"text":"Cobrar extras sem explicar", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+                _show("Baltazar | Orçamento transparente", "Exemplo ficticio: servico R$ 1.200, custos diretos R$ 800. O que entregar a familia?", [{"text":"Detalhar custos e obter concordancia", "action":"orcamento_certo"}, {"text":"Cobrar extras sem explicar", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             elif stage == 3:
-                _show("Registro financeiro", "Documentos conferidos e jazigo reservado. Valores ficticios: receita R$ 720, custo operacional direto R$ 250. Registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
+                _show("Baltazar | Registro financeiro", "Documentos conferidos e jazigo reservado. Valores ficticios: receita R$ 720, custo operacional direto R$ 250. Registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
             else:
-                _show("Escritorio administrativo", "Saldo em caixa: R$ %d. A gestao inclui pagamentos, registros, contratos, custos e atendimento etico." % money, [{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
+                _show("Baltazar, o contador fantasma", "Bem-vindo ao escritorio! Saldo em caixa: R$ %d. Nem a morte me livrou das planilhas! Vamos conferir pagamentos, registros, contratos e custos." % money, [{"text":"Organizar as contas","action":"activity_start_finance"},{"text":"Consultar Arquivo Legal","action":"outside_biblioteca"},{"text":"Ver fila de atendimentos","action":"case_board"},{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
         "plot":
             if stage == 2 and not reserved_plot:
                 _show("Quadra B, jazigo B-13", "O cadastro ficticio indica que este jazigo esta disponivel. Em casos reais, conferem-se tambem titularidade, direitos de uso e regras locais.", [{"text": "Reservar jazigo", "action": "reserve"}, {"text": "Voltar", "action": "close"}])
