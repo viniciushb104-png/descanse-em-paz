@@ -4,6 +4,9 @@ const EXPANSION = preload("res://scripts/world/expansion_layout.gd")
 const BOUNDARIES = preload("res://scripts/world/boundary_art.gd")
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
+const CHAPEL_ART_PATH := "res://assets/sprites/capela_do_ultimo_adeus.png"
+const CHAPEL_BASE := Vector2(780,-200)
+var chapel_art: Texture2D
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 const TOMB = preload("res://assets/props/tumulos/Tumulo_01.png")
 const OLD_TOMBS = [preload("res://assets/props/tumulos/Tumulo_01.png"),preload("res://assets/props/tumulos/Tumulo_02.png"),preload("res://assets/props/tumulos/Tumulo_03.png"),preload("res://assets/props/tumulos/Tumulo_04.png"),preload("res://assets/props/tumulos/Tumulo_05.png"),preload("res://assets/props/tumulos/Tumulo_06.png")]
@@ -90,6 +93,8 @@ func _ready() -> void:
             var tex := load(path) as Texture2D
             if tex != null:
                 north_art[key] = tex
+    if ResourceLoader.exists(CHAPEL_ART_PATH, "Texture2D"):
+        chapel_art = load(CHAPEL_ART_PATH) as Texture2D
     queue_redraw()
 
 func _north_tex(key: String, fallback: Texture2D) -> Texture2D:
@@ -124,6 +129,8 @@ func _depth_stamp(ctx: Node2D, tex: Texture2D, p: Vector2, h: float) -> void:
         ctx.draw_texture_rect(tex,rect,false)
 
 func paint_depth(ctx: Node2D) -> void:
+    if chapel_art != null:
+        _depth_stamp(ctx,chapel_art,CHAPEL_BASE,_chapel_height())
     var north := north_old_positions()
     for i in range(north.size()):
         _depth_stamp(ctx,_north_tex("cross" if i%3==0 else "tomb",OLD_TOMBS[i%OLD_TOMBS.size()]),north[i]+Vector2(0,22),72)
@@ -212,9 +219,17 @@ static func north_old_positions() -> Array[Vector2]:
                 result.append(Vector2(249+sector%2*795+col*135,-365-floori(float(sector)/2.0)*690-row*184))
     return result
 
+func _chapel_height() -> float:
+    if chapel_art == null:
+        return 160.0
+    return minf(160.0,230.0 * float(chapel_art.get_height()) / maxf(1.0,float(chapel_art.get_width())))
+
 func _paint_north() -> void:
-    _sprite(_north_tex("chapel",CHAPEL),Vector2(780,-200),160.0)
-    draw_string(ThemeDB.fallback_font,Vector2(664,-350),"CAPELA DO ULTIMO ADEUS",HORIZONTAL_ALIGNMENT_LEFT,-1,18,Color("#e4b875"))
+    if chapel_art != null:
+        _sprite(chapel_art,CHAPEL_BASE,_chapel_height())
+    else:
+        _sprite(_north_tex("chapel",CHAPEL),CHAPEL_BASE,160.0)
+        draw_string(ThemeDB.fallback_font,Vector2(664,-350),"CAPELA DO ULTIMO ADEUS",HORIZONTAL_ALIGNMENT_LEFT,-1,18,Color("#e4b875"))
     # Old memorials alternate with new plots; no painted UI rectangles.
     var old := north_old_positions()
     for i in range(old.size()):
@@ -224,6 +239,8 @@ func _paint_north() -> void:
             _sprite(_north_tex("flowers",FLOWERS),p+Vector2(20,25),22.0)
     for y in [-220.0,-820.0,-1510.0]:
         for x in [90.0,780.0,1460.0]:
+            if chapel_art != null and x==780.0 and y==-220.0:
+                continue
             _sprite(_north_tex("lamp",LAMP),Vector2(x,y),92.0)
         for x in [105.0,1450.0]:
             _sprite(_north_tex("flower_tree" if y==-820.0 else "tree",TREE),Vector2(x,y-90),145.0)
