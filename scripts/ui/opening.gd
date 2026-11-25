@@ -1,6 +1,7 @@
 extends Control
 ## Opening cinematic. No video is required for the game to start.
 const VIDEO_PATH := "res://assets/menu/abertura.ogv"
+const STUDIO_LOGO_PATH := "res://assets/menu/logo_asas_do_medo.png"
 const MENU_SCENE := "res://scenes/menu/main_menu.tscn"
 const COFFIN := preload("res://scripts/ui/menu_grave_marker.gd")
 const CREDITS := [
@@ -28,7 +29,63 @@ var stalled_seconds := 0.0
 var last_position := -1.0
 
 func _ready() -> void:
-    if DisplayServer.get_name() == "headless" or not ResourceLoader.exists(VIDEO_PATH):
+    if DisplayServer.get_name() == "headless":
+        _go_to_menu.call_deferred()
+        return
+    if ResourceLoader.exists(STUDIO_LOGO_PATH):
+        var logo_texture := load(STUDIO_LOGO_PATH) as Texture2D
+        if logo_texture != null:
+            await _show_studio_logo(logo_texture)
+    if closing or not is_inside_tree():
+        return
+    _prepare_video()
+
+func _show_studio_logo(logo_texture: Texture2D) -> void:
+    var splash := ColorRect.new()
+    splash.name = "StudioLogoSplash"
+    splash.color = Color.BLACK
+    splash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(splash)
+    splash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+    var logo := TextureRect.new()
+    logo.name = "AsasDoMedoGamesLogo"
+    logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    logo.texture = logo_texture
+    splash.add_child(logo)
+    logo.set_anchors_preset(Control.PRESET_CENTER)
+    logo.offset_left = -390.0
+    logo.offset_right = 390.0
+    logo.offset_top = -165.0
+    logo.offset_bottom = 95.0
+
+    var presents := _credit_label(22, Color("#d9d0ca"))
+    presents.text = "A P R E S E N T A"
+    presents.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    splash.add_child(presents)
+    presents.set_anchors_preset(Control.PRESET_CENTER)
+    presents.offset_left = -300.0
+    presents.offset_right = 300.0
+    presents.offset_top = 110.0
+    presents.offset_bottom = 152.0
+    logo.modulate.a = 0.0
+    presents.modulate.a = 0.0
+
+    var fade := create_tween()
+    fade.set_parallel(true)
+    fade.tween_property(logo, "modulate:a", 1.0, 1.0)
+    fade.tween_property(presents, "modulate:a", 1.0, 0.8).set_delay(0.35)
+    fade.chain().tween_interval(1.8)
+    fade.chain().tween_property(logo, "modulate:a", 0.0, 0.9)
+    fade.parallel().tween_property(presents, "modulate:a", 0.0, 0.9)
+    await fade.finished
+    splash.queue_free()
+
+func _prepare_video() -> void:
+    if not ResourceLoader.exists(VIDEO_PATH):
         _go_to_menu.call_deferred()
         return
     var source := load(VIDEO_PATH) as VideoStream
