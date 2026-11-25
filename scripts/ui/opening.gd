@@ -20,8 +20,6 @@ var video: VideoStreamPlayer
 var credit_box: VBoxContainer
 var credit_role: Label
 var credit_name: Label
-var start_button: Button
-var start_marker: Control
 var skip_button: Button
 var closing := false
 var started := false
@@ -109,14 +107,9 @@ func _prepare_video() -> void:
     _build_credits()
     skip_button = _coffin_button("PULAR ABERTURA  ›", Vector2(0.0, 0.0), true)
     skip_button.pressed.connect(_finish)
-    if OS.has_feature("web"):
-        # A gesture unlocks audio in browsers without playing the film silently.
-        start_button = _coffin_button("ASSISTIR ABERTURA  ›", Vector2(0.0, 0.0), false)
-        start_marker = start_button.get_parent() as Control
-        start_button.pressed.connect(_start_video)
-        start_button.grab_focus()
-    else:
-        _start_video()
+    # Start automatically on every platform. Browser audio may remain
+    # locked until the player's first interaction, but no play prompt is shown.
+    _start_video()
 
 func _coffin_button(caption: String, _unused: Vector2, corner: bool) -> Button:
     var marker := COFFIN.new() as Control
@@ -177,8 +170,6 @@ func _start_video() -> void:
     if started or closing:
         return
     started = true
-    if is_instance_valid(start_marker):
-        start_marker.hide()
     video.play()
     skip_button.grab_focus()
 
