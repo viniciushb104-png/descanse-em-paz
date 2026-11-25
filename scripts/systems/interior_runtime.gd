@@ -213,12 +213,23 @@ func show_board() -> void:
     if item.is_empty():
         game()._show("Livro de ocorrencias", "Todos os 20 casos foram concluidos. Agora cada pasta registra o que foi aprendido, nao so o que foi cobrado.",[{"text":"Fechar","action":"close"}])
         return
+    var office_note := ""
+    if room == "office":
+        match int(item["id"]):
+            4:
+                office_note = "\n\nBaltazar: Posso atravessar um arquivo, mas não posso alterar um cadastro sem conferir a legitimidade. Vamos agir com cautela."
+            11:
+                office_note = "\n\nBaltazar: Até quem flutua precisa lembrar que um cemitério está sobre o solo. Consulte as referências ambientais e oriente a estudante."
+            17:
+                office_note = "\n\nBaltazar: Ser transparente não significa tornar os dados dos clientes públicos. Vamos preservar a confidencialidade."
+            _:
+                office_note = "\n\nBaltazar: Cada pasta tem uma história, chefe. Vamos cuidar dela com respeito."
     var tier: int = DIALOGUES.tier(case_index)
     var tier_name: String = ["","Acolhimento","Contexto","Investigacao","Responsabilidade"][tier]
     game()._show("Pasta %02d/%02d - %s" % [case_index+1,CASES.total(),tier_name],
         str(item["client"])+" - "+str(item["profile"])+".\nLocal: "+str(CATALOG.ROOMS[item["room"]]["title"])+
         "\nSituacao: "+str(item["context"])+
-        "\n\nEtapa da conversa: %d/%d. O humor pode acolher, mas nao substitui informacao ou documentos." % [dialogue_step,DIALOGUES.beat_keys(case_index).size()],
+        "\n\nEtapa da conversa: %d/%d. O humor pode acolher, mas nao substitui informacao ou documentos." % [dialogue_step,DIALOGUES.beat_keys(case_index).size()]+office_note,
         [{"text":"Fechar","action":"close"}])
 
 func show_case() -> void:

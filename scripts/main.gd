@@ -271,15 +271,15 @@ func _interact(id: String) -> void:
                 _show("Seu Osvaldo", "O cemiterio nao se administra sozinho! Olhe o estado dos caminhos, os registros e o treinamento da equipe. E nao pise nas flores!", [{"text": "Ate mais", "action": "close"}])
         "office":
             if stage == 1:
-                _show("Baltazar | Documentação", "Uma familia chegou com apenas a Declaracao de Obito. Qual deve ser a conduta do administrador?", [{"text": "Conferir os requisitos e orientar a familia", "action": "docs_ok"}, {"text": "Ignorar o problema e prosseguir", "action": "docs_bad"}, {"text": "Voltar", "action": "close"}])
+                _show("Baltazar | Documentação", "Chefe, eu atravesso paredes, mas não atravesso exigências legais! Uma família chegou apenas com a Declaração de Óbito. Como devemos orientá-la?", [{"text": "Conferir os requisitos e orientar a familia", "action": "docs_ok"}, {"text": "Ignorar o problema e prosseguir", "action": "docs_bad"}, {"text": "Voltar", "action": "close"}])
             elif stage == 6:
-                _show("Baltazar | Cartório e certidão de óbito", "Dra. Penelope informou que o hospital forneceu a Declaracao de Obito. Como conduzir o processo?", [{"text":"Orientar o registro civil e conferir certidao", "action":"cartorio_certo"}, {"text":"Tratar a DO como certidao pronta", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+                _show("Baltazar | Cartório e certidão de óbito", "A Dra. Penélope entregou a Declaração de Óbito. Declaração e certidão não são a mesma coisa, assim como receita e lucro. Já assombrei muita planilha por essa confusão! Qual é o próximo passo?", [{"text":"Orientar o registro civil e conferir certidao", "action":"cartorio_certo"}, {"text":"Tratar a DO como certidao pronta", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             elif stage == 11:
-                _show("Baltazar | Orçamento transparente", "Exemplo ficticio: servico R$ 1.200, custos diretos R$ 800. O que entregar a familia?", [{"text":"Detalhar custos e obter concordancia", "action":"orcamento_certo"}, {"text":"Cobrar extras sem explicar", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
+                _show("Baltazar | Orçamento transparente", "Sou transparente por natureza; nosso orçamento também deve ser. Exemplo fictício: serviço R$ 1.200, custos diretos R$ 800. O que devemos entregar à família?", [{"text":"Detalhar custos e obter concordancia", "action":"orcamento_certo"}, {"text":"Cobrar extras sem explicar", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             elif stage == 3:
-                _show("Baltazar | Registro financeiro", "Documentos conferidos e jazigo reservado. Valores ficticios: receita R$ 720, custo operacional direto R$ 250. Registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
+                _show("Baltazar | Registro financeiro", "Documentos conferidos, jazigo reservado. Finalmente uma pasta sem pendências! Valores fictícios: receita R$ 720, custo operacional direto R$ 250. Vamos registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
             else:
-                _show("Baltazar, o contador fantasma", "Bem-vindo ao escritorio! Saldo em caixa: R$ %d. Nem a morte me livrou das planilhas! Vamos conferir pagamentos, registros, contratos e custos." % money, [{"text":"Organizar as contas","action":"activity_start_finance"},{"text":"Consultar Arquivo Legal","action":"outside_biblioteca"},{"text":"Ver fila de atendimentos","action":"case_board"},{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
+                _show("Baltazar, o contador fantasma", "Bem-vindo, chefe! Saldo em caixa: R$ %d. Em vida eu fechava balanços; agora nem fechar os olhos eu consigo. Cuido das finanças, contratos e documentos. As famílias merecem respeito, e os números, conferência. Em que posso ajudar?" % money, [{"text":"Organizar as contas","action":"activity_start_finance"},{"text":"Consultar Arquivo Legal","action":"outside_biblioteca"},{"text":"Ver fila de atendimentos","action":"case_board"},{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
         "plot":
             if stage == 2 and not reserved_plot:
                 _show("Quadra B, jazigo B-13", "O cadastro ficticio indica que este jazigo esta disponivel. Em casos reais, conferem-se tambem titularidade, direitos de uso e regras locais.", [{"text": "Reservar jazigo", "action": "reserve"}, {"text": "Voltar", "action": "close"}])
@@ -319,9 +319,9 @@ func _interact(id: String) -> void:
             else:
                 _show("Posto de Fiscalizacao", "O cemiterio tem impactos ambientais; setores tecnicos exigem gerenciamento de residuos. Regras locais variam.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Consultar normas", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
         "biblioteca":
-            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Bem-vindo ao Arquivo Legal do escritorio! Escolha a estante.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}, {"text":"Fechar", "action":"close"}])
+            _show("Arquivo Legal de Santa Mortalha", "Baltazar: Organizei o Arquivo Legal por assunto. A única coisa que pode ficar sem corpo aqui sou eu; documento precisa de identificação! Escolha a estante.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}, {"text":"Fechar", "action":"close"}])
         "ghost":
-            _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text":"Organizar as contas","action":"activity_start_finance"},{"text": "Cuidarei das contas", "action": "close"}])
+            _show("Baltazar, o contador fantasma", "Achou que eu só trabalhava lá dentro? Sou fantasma, economizo com portas! Caixa positivo não significa lucro: ainda temos salários, materiais, impostos, manutenção e reservas. Morri esperando uma nota fiscal e continuo conferindo todas.", [{"text":"Organizar as contas","action":"activity_start_finance"},{"text": "Cuidarei das contas", "action": "close"}])
 
 func _on_choice(action: String) -> void:
     if action == "activities":
@@ -393,11 +393,11 @@ func _on_choice(action: String) -> void:
         "docs_ok":
             stage = 2
             compliance = mini(100, compliance + 7)
-            _show("Procedimento responsavel", "Boa escolha! A Declaracao de Obito apoia o registro do obito; o sepultamento exige a documentacao legal aplicavel, com excecoes previstas na lei. Confira a Lei 6.015/1973 e normas locais.", [{"text": "Localizar jazigo", "action": "close"}])
+            _show("Procedimento responsavel", "Baltazar: Muito bem, chefe. A Declaração de Óbito apoia o registro do óbito; o sepultamento exige a documentação legal aplicável, com as exceções previstas em lei. Confira a Lei 6.015/1973 e as normas locais. Uma pendência a menos para assombrar minha mesa.", [{"text": "Localizar jazigo", "action": "close"}])
         "docs_bad":
             compliance = maxi(0, compliance - 10)
             reputation = maxi(0, reputation - 5)
-            _show("Nao conformidade!", "Ignorar a documentacao nao e opcao. Voce perdeu reputacao e conformidade. Volte ao balcao e faca a conferencia.", [{"text": "Tentar de novo", "action": "close"}])
+            _show("Nao conformidade!", "Baltazar: Nem um fantasma tem licença para passar por cima das regras. Você perdeu reputação e conformidade. Volte ao balcão e confira a documentação; a família merece segurança.", [{"text": "Tentar de novo", "action": "close"}])
         "reserve":
             reserved_plot = true
             stage = 3
@@ -405,13 +405,13 @@ func _on_choice(action: String) -> void:
             _show("Reserva registrada", "Jazigo B-13 reservado. Agora retorne ao escritorio e registre o atendimento.", [{"text": "Continuar", "action": "close"}])
         "register":
             if not reserved_plot:
-                _show("Cadastro incompleto", "Reserve o jazigo antes de registrar o atendimento.", [{"text": "Fechar", "action": "close"}])
+                _show("Cadastro incompleto", "Baltazar: Até meu livro-caixa precisa de endereço! Reserve o jazigo antes de registrar o atendimento.", [{"text": "Fechar", "action": "close"}])
                 return
             money += 720 - 250
             reputation = mini(100, reputation + 10)
             stage = 4
             burial_queue.ensure_initial_order(stage, reserved_plot, day)
-            _show("Registro concluido", "Receita: +R$ 720. Custo direto: -R$ 250. Margem didatica: R$ 470 antes das despesas fixas.\n\nA ordem de sepultamento B-13 foi agendada: procure Seu Osvaldo no cemiterio para preparar o jazigo.", [{"text": "Continuar expediente", "action": "close"}])
+            _show("Registro concluido", "Baltazar: Receita +R$ 720; custo direto -R$ 250. Margem didática: R$ 470 antes das despesas fixas. Ainda não é lucro líquido, chefe! Até minha calculadora sabe disso.\n\nA ordem de sepultamento B-13 foi agendada: procure Seu Osvaldo no cemiterio para preparar o jazigo.", [{"text": "Continuar expediente", "action": "close"}])
         "maintain":
             if money < 160:
                 _show("Saldo insuficiente", "Planeje o caixa antes de gastar.", [{"text": "Fechar", "action": "close"}])
@@ -422,11 +422,11 @@ func _on_choice(action: String) -> void:
             stage = 5
             _show("Parabens, administrador!", "Voce concluiu a primeira missao! Conferiu documentos, reservou um jazigo, registrou receitas e custos e autorizou manutencao. Santa Mortalha ainda tem muito trabalho!", [{"text": "Explorar", "action": "close"}])
         "arquivo_p1":
-            _show("Estante do Cartorio", "As duas perguntas que a familia mais precisa compreender:", [{"text":"Declaracao e certidao", "action":"legal_registro"}, {"text":"Requisitos de cremacao", "action":"legal_cremacao"}, {"text":"Voltar", "action":"close"}])
+            _show("Estante do Cartorio", "Baltazar: Nesta estante estão duas questões importantes para orientar as famílias. A papelada é grande, mas a explicação não precisa ser.", [{"text":"Declaracao e certidao", "action":"legal_registro"}, {"text":"Requisitos de cremacao", "action":"legal_cremacao"}, {"text":"Voltar", "action":"close"}])
         "arquivo_p2":
-            _show("Estante da Vigilancia", "Saude e ambiente exigem cuidados muito alem de uma boa lapide.", [{"text":"Residuos e biosseguranca", "action":"legal_residuos"}, {"text":"Licenciamento ambiental", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
+            _show("Estante da Vigilancia", "Baltazar: Saúde e ambiente exigem cuidados. Eu não respiro, mas nossos funcionários respiram! Consulte as referências.", [{"text":"Residuos e biosseguranca", "action":"legal_residuos"}, {"text":"Licenciamento ambiental", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
         "arquivo_p3":
-            _show("Estante de Operacoes", "Conferir as regras antes de acionar a frota ou a sala tecnica.", [{"text":"Transporte e translado", "action":"legal_transporte"}, {"text":"Conservacao e preparo", "action":"legal_preparo"}, {"text":"Voltar", "action":"close"}])
+            _show("Estante de Operacoes", "Baltazar: Antes de acionar a frota ou a sala técnica, confira as regras. Eu posso flutuar; os serviços precisam de planejamento.", [{"text":"Transporte e translado", "action":"legal_transporte"}, {"text":"Conservacao e preparo", "action":"legal_preparo"}, {"text":"Voltar", "action":"close"}])
         "distrito_erro":
             compliance = maxi(0, compliance - 8)
             reputation = maxi(0, reputation - 3)
@@ -442,7 +442,7 @@ func _on_choice(action: String) -> void:
                 return
             stage = 7
             compliance = mini(100, compliance+4)
-            _show("Licao: registro civil", "Boa escolha! A Lei 6.015/1973, art. 77, trata da documentacao para sepultamento, com as excecoes previstas em lei. Agora a frota precisa de cuidados.", [{"text":"Visitar garagem", "action":"close"}])
+            _show("Licao: registro civil", "Baltazar: A pasta ficou em ordem! A Lei 6.015/1973, art. 77, trata da documentação para sepultamento, com as exceções previstas em lei. Agora a frota precisa de cuidados. Eu flutuo, mas o carro precisa de revisão.", [{"text":"Visitar garagem", "action":"close"}])
         "garagem_certo":
             if stage != 7:
                 return
@@ -486,7 +486,7 @@ func _on_choice(action: String) -> void:
             money += 400
             reputation = mini(100,reputation+10)
             compliance = mini(100,compliance+4)
-            _show("Distrito em funcionamento!", "Orcamento ficticio detalhado: receita R$ 1.200 e custo direto R$ 800, margem R$ 400 antes dos custos fixos. A familia aceitou o servico sem adicionais impostos. Missao concluida!", [{"text":"Continuar explorando", "action":"close"}])
+            _show("Distrito em funcionamento!", "Baltazar: Orçamento fictício detalhado: receita R$ 1.200 e custo direto R$ 800, margem R$ 400 antes dos custos fixos. A família aceitou o serviço sem adicionais impostos. Missão concluída! Transparência nas contas: finalmente uma qualidade que não é só minha.", [{"text":"Continuar explorando", "action":"close"}])
         "learn":
             _show("Nota educativa", "Simulacao inspirada em procedimentos brasileiros. Normas variam por municipio, tipo de cemiterio e servico. Nao use esta demo como manual juridico ou sanitario.", [{"text": "Fechar", "action": "close"}])
     _save_game()
