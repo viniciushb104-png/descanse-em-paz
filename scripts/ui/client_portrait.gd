@@ -7,6 +7,7 @@ var actor_name: String = ""
 var profile: String = "calmo"
 var identity: Dictionary = {}
 var portrait_texture: Texture2D = null
+var amalia_clean_cache: Dictionary = {}
 var current_expression: String = ""
 var embedded_frame: bool = false
 var time_passed: float = 0.0
@@ -27,8 +28,48 @@ func set_actor(speaker: String, mood: String = "", expression: String = "") -> v
         var path: String = str(identity.get("portrait",""))
         if not path.is_empty() and ResourceLoader.exists(path):
             portrait_texture = load(path) as Texture2D
+    if id == "amalia" and portrait_texture != null:
+        # Remove somente o fundo uniforme conectado as bordas.
+        # A arte da personagem, inclusive cabelo escuro e renda, fica intacta.
+        if not amalia_clean_cache.has(current_expression):
+            amalia_clean_cache[current_expression] = _clean_amalia_background(portrait_texture)
+        portrait_texture = amalia_clean_cache[current_expression] as Texture2D
     time_passed = 0.0
     queue_redraw()
+
+func _clean_amalia_background(source: Texture2D) -> Texture2D:
+    var img: Image = source.get_image()
+    if img == null or img.is_empty():
+        return source
+    img.convert(Image.FORMAT_RGBA8)
+    var w := img.get_width()
+    var h := img.get_height()
+    var bg := img.get_pixel(0,0)
+    if bg.a < 0.08:
+        return source
+    # Fundo conectado a extremidade, evitando apagar detalhes internos.
+    var checked := PackedByteArray()
+    checked.resize(w*h)
+    var queue: Array[Vector2i] = [Vector2i(0,0)]
+    var cursor := 0
+    while cursor < queue.size():
+        var p: Vector2i = queue[cursor]
+        cursor += 1
+        if p.x < 0 or p.y < 0 or p.x >= w or p.y >= h:
+            continue
+        var index := p.y*w+p.x
+        if checked[index] == 1:
+            continue
+        checked[index] = 1
+        var pixel := img.get_pixel(p.x,p.y)
+        if absf(pixel.r-bg.r)>0.09 or absf(pixel.g-bg.g)>0.09 or absf(pixel.b-bg.b)>0.09:
+            continue
+        img.set_pixel(p.x,p.y,Color(pixel.r,pixel.g,pixel.b,0.0))
+        queue.append(Vector2i(p.x+1,p.y))
+        queue.append(Vector2i(p.x-1,p.y))
+        queue.append(Vector2i(p.x,p.y+1))
+        queue.append(Vector2i(p.x,p.y-1))
+    return ImageTexture.create_from_image(img)
 
 func _process(delta: float) -> void:
     if visible:
