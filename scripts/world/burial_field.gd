@@ -6,7 +6,9 @@ const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
 const CHAPEL_ART_PATH := "res://assets/sprites/capela_do_ultimo_adeus.png"
 const CHAPEL_BASE := Vector2(780,-200)
-const CHAPEL_SCALE := 1.35
+const CHAPEL_SCALE := 1.45
+# Limita o corpo solido para conservar a passagem entre os jazigos.
+const CHAPEL_MAX_BODY_WIDTH := 262.5
 const CHAPEL_MAX_SIZE := Vector2(230,160) * CHAPEL_SCALE
 var chapel_art: Texture2D
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
@@ -237,7 +239,8 @@ func chapel_body_rect() -> Rect2:
     # Margem lateral conserva corredores entre a capela e os jazigos N-04/N-13.
     var inset := minf(24.0,width*0.10)
     var roof_margin := minf(25.0,height*0.16)
-    return Rect2(CHAPEL_BASE.x-width/2.0+inset,CHAPEL_BASE.y-height+roof_margin,width-2.0*inset,height-roof_margin)
+    var body_width := minf(width-2.0*inset,CHAPEL_MAX_BODY_WIDTH)
+    return Rect2(CHAPEL_BASE.x-body_width/2.0,CHAPEL_BASE.y-height+roof_margin,body_width,height-roof_margin)
 
 func _paint_north() -> void:
     if chapel_art != null:

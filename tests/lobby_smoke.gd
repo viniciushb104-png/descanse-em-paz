@@ -33,7 +33,7 @@ func _run() -> void:
     if field.chapel_art != null:
         var old_height := minf(160.0,230.0*float(field.chapel_art.get_height())/maxf(1.0,float(field.chapel_art.get_width())))
         var body: Rect2 = field.chapel_body_rect()
-        if not is_equal_approx(field._chapel_height(),old_height*1.35) or not is_equal_approx(body.end.y,-200.0):
+        if not is_equal_approx(field._chapel_height(),old_height*1.45) or not is_equal_approx(body.end.y,-200.0) or body.size.x > 262.5:
             push_error("Escala ou base da capela incorreta")
             quit(182)
             return
