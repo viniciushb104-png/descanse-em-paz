@@ -29,6 +29,12 @@ func _run() -> void:
             push_error("Sinalizacao ou decoracao bloqueou "+str(station))
             quit(173)
             return
+    var ground = preload("res://scripts/world/ground_tiles.gd")
+    for point in [Vector2(768,720),Vector2(768,800),Vector2(768,320),Vector2(768,192)]:
+        if ground.material_at_world(point) != ground.STONE or not game.is_walkable(point):
+            push_error("Alameda central ou praca interrompida: "+str(point))
+            quit(178)
+            return
     game.clock_minutes = 1080
     if decor.current_darkness() < 0.99:
         push_error("Iluminacao noturna nao acompanha o relogio")

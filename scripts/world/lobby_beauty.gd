@@ -20,11 +20,10 @@ const LANTERN_FLAMES := [
 ]
 # Posições no gramado; placas nao interceptam entradas nem capturam toque.
 const SIGNS := [
-    {"at": Vector2(522, 639), "name":"ESCRITORIO", "side":-1},
-    {"at": Vector2(874, 392), "name":"CAPELA", "side":0},
-    {"at": Vector2(1090, 587), "name":"OFICINA", "side":1},
-    {"at": Vector2(1017, 903), "name":"QUADRA B", "side":1},
-    {"at": Vector2(1264, 932), "name":"DISTRITO", "side":1}
+    {"at": Vector2(490, 535), "name":"ESCRITORIO", "side":-1},
+    {"at": Vector2(860, 385), "name":"CAPELA", "side":0},
+    {"at": Vector2(1355, 535), "name":"OFICINA", "side":1},
+    {"at": Vector2(1410, 690), "name":"DISTRITO", "side":1}
 ]
 const FLOWER_SPOTS := [
     Vector2(632, 691), Vector2(935, 672), Vector2(604, 828),
@@ -52,12 +51,10 @@ func current_darkness() -> float:
     return clampf((minutes - 875.0) / 205.0, 0.0, 1.0)
 
 func _draw() -> void:
-    _plaza_paving()
-    _border_mosaics()
-    _flowerbeds()
     _signposts()
     _lantern_glow()
-    _fireflies()
+    if current_darkness() > 0.15:
+        _fireflies()
 
 func _plaza_paving() -> void:
     # Rotunda octogonal acessivel, ornamento SOB o protagonista e Osvaldo.

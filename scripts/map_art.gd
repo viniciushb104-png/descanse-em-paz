@@ -80,7 +80,7 @@ static func paint_decoration(ctx: Node2D) -> void:
         stamp(ctx, "lantern", p.x, p.y, 29, 73)
     for p in [Vector2(173, 839), Vector2(1040, 859), Vector2(1320, 834)]:
         stamp(ctx, "pumpkin", p.x, p.y, 40, 46)
-    for p in [Vector2(570, 467), Vector2(984, 352), Vector2(995, 690), Vector2(192, 827)]:
+    for p in [Vector2(600, 445), Vector2(985, 342), Vector2(930, 862), Vector2(192, 827)]:
         stamp(ctx, "flowerbed", p.x, p.y, 66, 46)
     for p in [Vector2(80, 452), Vector2(475, 480), Vector2(1342, 624)]:
         stamp(ctx, "hedge", p.x, p.y, 62, 57)

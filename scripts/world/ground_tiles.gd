@@ -30,6 +30,8 @@ const PATHS = [
     Rect2i(4,59,40,2),
     Rect2i(4,66,40,2), # alameda central
     Rect2i(5,17,39,3),  # eixo leste/oeste
+    Rect2i(20,20,8,7),  # praca central ligada ao mesmo calcamento
+    Rect2i(22,0,4,13),  # alameda norte alinhada ao eixo central
     Rect2i(12,12,4,5),  # escritorio
     Rect2i(38,11,4,6),  # oficina
     Rect2i(32,19,6,3),  # quadra B
@@ -43,20 +45,19 @@ const PATHS = [
     Rect2i(78,20,4,15), # passeio leste
     Rect2i(78,34,11,3), # acesso fiscalizacao
     Rect2i(49,19,3,3), # arquivo
-    Rect2i(22,0,5,14), # capela ao norte
+    Rect2i(22,0,4,14), # capela ao norte
     Rect2i(76,17,20,4), # extensao para o comercio
     Rect2i(80,12,4,6), # entrada da casa funeraria
     Rect2i(89,12,4,6) # entrada da fornecedora
 ]
 const SOIL = [
-    Rect2i(26,12,2,3),
-    Rect2i(28,14,4,2),
+    Rect2i(27,12,11,4), # quadra de tumulos ao norte da alameda
     Rect2i(3,22,4,3),
     Rect2i(42,12,2,3),
     Rect2i(31,23,4,2),
     Rect2i(51,27,3,4),
     Rect2i(71,30,3,3),
-    Rect2i(27,12,20,4), Rect2i(27,20,17,7),
+    Rect2i(29,20,15,7), # quadra funeraria leste, separada da praca
     Rect2i(7,47,33,5), Rect2i(7,54,33,5), Rect2i(7,61,33,5)
 ]
 
