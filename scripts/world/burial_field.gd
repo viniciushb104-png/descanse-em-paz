@@ -6,6 +6,8 @@ const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const CHAPEL = preload("res://assets/roadside/mausoleum.webp")
 const CHAPEL_ART_PATH := "res://assets/sprites/capela_do_ultimo_adeus.png"
 const CHAPEL_BASE := Vector2(780,-200)
+const CHAPEL_SCALE := 1.35
+const CHAPEL_MAX_SIZE := Vector2(230,160) * CHAPEL_SCALE
 var chapel_art: Texture2D
 const GRAVES = [preload("res://assets/props/covas/Cova_01.png"),preload("res://assets/props/covas/Cova_02.png"),preload("res://assets/props/covas/Cova_03.png"),preload("res://assets/props/covas/Cova_04.png")]
 const TOMB = preload("res://assets/props/tumulos/Tumulo_01.png")
@@ -117,6 +119,8 @@ func near(pos: Vector2) -> Dictionary:
 func blocked(pos: Vector2) -> bool:
     if pos.y<0.0 and pos.x<65.0:
         return true
+    if chapel_body_rect().has_point(pos):
+        return true
     for rect in collision_rects:
         if rect.has_point(pos):
             return true
@@ -222,7 +226,18 @@ static func north_old_positions() -> Array[Vector2]:
 func _chapel_height() -> float:
     if chapel_art == null:
         return 160.0
-    return minf(160.0,230.0 * float(chapel_art.get_height()) / maxf(1.0,float(chapel_art.get_width())))
+    return minf(CHAPEL_MAX_SIZE.y,CHAPEL_MAX_SIZE.x * float(chapel_art.get_height()) / maxf(1.0,float(chapel_art.get_width())))
+
+func chapel_body_rect() -> Rect2:
+    if chapel_art == null:
+        return Rect2(665,-335,230,135)
+    var height := _chapel_height()
+    var width := height * float(chapel_art.get_width()) / maxf(1.0,float(chapel_art.get_height()))
+    # Ornamentos laterais e telhado nao ocupam todo o retangulo da textura.
+    # Margem lateral conserva corredores entre a capela e os jazigos N-04/N-13.
+    var inset := minf(24.0,width*0.10)
+    var roof_margin := minf(25.0,height*0.16)
+    return Rect2(CHAPEL_BASE.x-width/2.0+inset,CHAPEL_BASE.y-height+roof_margin,width-2.0*inset,height-roof_margin)
 
 func _paint_north() -> void:
     if chapel_art != null:

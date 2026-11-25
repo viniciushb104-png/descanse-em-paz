@@ -997,7 +997,7 @@ func is_walkable(world_position: Vector2) -> bool:
         return false
     if world_position.x<1536.0 and world_position.y<92.0 and (world_position.x<650.0 or world_position.x>925.0) and world_position.y>=-100.0:
         return false
-    if Rect2(665,-335,230,135).has_point(world_position):
+    if not is_instance_valid(burial_field) and Rect2(665,-335,230,135).has_point(world_position):
         return false
     if Rect2(196, 150, 418, 280).has_point(world_position):
         return false

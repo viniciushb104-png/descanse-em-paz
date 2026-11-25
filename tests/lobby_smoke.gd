@@ -29,6 +29,23 @@ func _run() -> void:
             push_error("Sinalizacao ou decoracao bloqueou "+str(station))
             quit(173)
             return
+    var field: Node = game.get_node("BurialField")
+    if field.chapel_art != null:
+        var old_height := minf(160.0,230.0*float(field.chapel_art.get_height())/maxf(1.0,float(field.chapel_art.get_width())))
+        var body: Rect2 = field.chapel_body_rect()
+        if not is_equal_approx(field._chapel_height(),old_height*1.35) or not is_equal_approx(body.end.y,-200.0):
+            push_error("Escala ou base da capela incorreta")
+            quit(182)
+            return
+        if game.can_player_stand(Vector2(780,-175)) == false or game.is_walkable(Vector2(780,-250)):
+            push_error("Entrada ou colisao da capela invalida")
+            quit(183)
+            return
+        for side in [Vector2(638,-365),Vector2(924,-365)]:
+            if not game.can_player_stand(side):
+                push_error("Corredor lateral da capela bloqueado: "+str(side))
+                quit(184)
+                return
     var ground = preload("res://scripts/world/ground_tiles.gd")
     for point in [Vector2(768,720),Vector2(768,800),Vector2(768,320),Vector2(768,192)]:
         if ground.material_at_world(point) != ground.STONE or not game.is_walkable(point):
