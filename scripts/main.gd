@@ -649,12 +649,20 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
         # A arte antiga fica oculta apenas nesses dois casos.
         var integrated_frame: bool = bool(dialog_portrait.get("embedded_frame"))
         dialog_portrait_frame_art.visible = not integrated_frame
+        # Madame Amalia: a moldura ilustrada pode cobrir o centro do busto.
+        # Desenhar o retrato acima dela garante o rosto legivel, sem interferir
+        # nos botoes e nas outras identidades.
+        dialog_portrait.z_index = 3 if identity == "amalia" else 1
         if integrated_frame:
             dialog_portrait.position = Vector2(34,78)
             dialog_portrait.size = Vector2(204,204)
         else:
             dialog_portrait.position = Vector2(79,108)
             dialog_portrait.size = Vector2(117,119)
+            if identity == "amalia":
+                # Maior e centrado na janela; PNG transparente preserva o recorte.
+                dialog_portrait.position = Vector2(68,95)
+                dialog_portrait.size = Vector2(139,145)
         dialog_title.position = Vector2(344,25)
         dialog_title.size = Vector2(236,32)
         dialog_title.add_theme_font_size_override("font_size",19)
@@ -668,6 +676,7 @@ func _apply_dialogue_identity(actor: Dictionary, speaker: String, mood: String =
         choices_scroll.size = Vector2(561,123)
         options_box.custom_minimum_size.x = 531.0
     elif has_actor:
+        dialog_portrait.z_index = 1
         dialog_portrait.position = Vector2(34,85)
         dialog_portrait.size = Vector2(118,132)
         dialog_title.position = Vector2(194,21)
