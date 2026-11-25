@@ -125,7 +125,7 @@ const CASES = [
   {
     "id": 11,
     "profile": "curioso",
-    "room": "biblioteca",
+    "room": "office",
     "client": "Sra. Agatha",
     "context": "Uma estudante pergunta por que cemiterios precisam observar o terreno.",
     "best": "Explicar licenciamento ambiental e encaminhar a fonte oficial.",

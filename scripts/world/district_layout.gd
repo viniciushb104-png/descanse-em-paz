@@ -19,7 +19,6 @@ const STATIONS = [
     {"id":"preparo","name":"Sala de conservacao","p":Vector2(1794,1035)},
     {"id":"crematorio","name":"Crematorio Cinzas & Cia","p":Vector2(2192,1039)},
     {"id":"fiscalizacao","name":"Posto de fiscalizacao","p":Vector2(2840,1085)},
-    {"id":"biblioteca","name":"Arquivo Legal","p":Vector2(1604,658)},
     {"id":"carro","name":"Carro funerario","p":Vector2(2080,566)},
     {"id":"funeraria","name":"Casa Funeraria Umbra","p":Vector2(2607,449)},
     {"id":"fornecedor","name":"Emporio das Ultimas Coisas","p":Vector2(2906,449)}

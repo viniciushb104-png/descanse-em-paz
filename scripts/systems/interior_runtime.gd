@@ -45,9 +45,14 @@ func save_state(cfg: ConfigFile) -> void:
 
 func load_state(cfg: ConfigFile) -> void:
     room = str(cfg.get_value("save","current_room",""))
+    var legacy_archive := room == "biblioteca"
+    if legacy_archive:
+        room = "office"
     if not CATALOG.ROOMS.has(room):
         room = ""
     return_point = cfg.get_value("save","return_point",Vector2(748,714))
+    if legacy_archive:
+        return_point = Vector2(425,476)
     if room=="fiscalizacao" and return_point.distance_to(Vector2(2208,1155))<120.0:
         return_point = Vector2(2840,1085)
     if room=="garagem" and return_point.distance_to(Vector2(1818,1116))<120.0:
@@ -188,7 +193,9 @@ func interact(id: String) -> void:
         "board":
             show_board()
         "catalog":
-            if room == "fornecedor":
+            if room == "office":
+                game()._interact("biblioteca")
+            elif room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
                 game()._show("Catalogo Umbra","Caixoes: %d em estoque. Urnas cinerarias: %d. Escolhas opcionais devem ser explicadas e nunca impostas." % [int(inventory["caixao"]),int(inventory["urna"])],[{"text":"Montar homenagem floral","action":"activity_start_flowers"},{"text":"Consultar normas de consumo","action":"legal_valores"},{"text":"Fechar","action":"close"}])
@@ -199,7 +206,6 @@ func interact(id: String) -> void:
                     "crematorio": lesson="cremacao"
                     "garagem": lesson="transporte"
                     "fiscalizacao": lesson="ambiente"
-                    "biblioteca": lesson="residuos"
                 game()._show("Balcao de orientacao",str(CATALOG.ROOMS[room]["description"]),[{"text":"Consultar referencia","action":"legal_"+lesson},{"text":"Fechar","action":"close"}])
 
 func show_board() -> void:

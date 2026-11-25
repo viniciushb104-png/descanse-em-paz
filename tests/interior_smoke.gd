@@ -27,8 +27,8 @@ func _run() -> void:
     root.add_child(game)
     await process_frame
     var r: Node = game.get_node("RoomsRuntime")
-    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=11:
-        push_error("20 casos ou 11 interiores ausentes")
+    if CASES.total()!=20 or ROOM_CATALOG.ROOMS.size()!=10:
+        push_error("20 casos ou 10 interiores ausentes")
         quit(91)
         return
     game._close()
@@ -139,6 +139,17 @@ func _run() -> void:
             push_error("Sprite com textura ausente")
             quit(105)
             return
+    if ROOM_CATALOG.ROOMS.has("biblioteca") or CASES.active(10)["room"] != "office" or not office_art.has_node("Arquivo"):
+        push_error("Arquivo Legal nao transferido ao escritorio")
+        quit(107)
+        return
+    game.player.global_position = Vector2(970,450)
+    game._try_interact()
+    if not game.dialogue_open or game.dialog_title.text != "Arquivo Legal de Santa Mortalha":
+        push_error("Arquivo Legal inacessivel no escritorio")
+        quit(108)
+        return
+    game._close()
     var transition: Node = game.get_node("DoorTransition")
     var door: TextureRect = transition.get_node_or_null("GothicCurtain/AnimatedGothicDoor")
     if door == null or door.texture == null:

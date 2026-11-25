@@ -56,7 +56,7 @@ const OBJECTIVES := [
     "Visite o crematorio e confira os requisitos legais.",
     "Procure o posto de fiscalizacao ambiental.",
     "Volte ao escritorio e prepare um orcamento transparente.",
-    "Distrito dos Eternos concluido! Explore e consulte o Arquivo Legal."
+    "Distrito dos Eternos concluido! Explore e consulte o Arquivo Legal no escritorio."
 ]
 @onready var player: CharacterBody2D = $Player
 var stage: int = 0
@@ -208,7 +208,7 @@ func _open_journal() -> void:
         work_note = "\n\nORDEM DE SEPULTAMENTO: %s\nServico liberado! Procure Seu Osvaldo no cemitério e interaja para preparar o jazigo. O trabalho pode ser retomado depois." % str(order.get("plot", "B-13"))
     elif burial_queue.is_done(BURIAL_QUEUE.INITIAL_ORDER):
         work_note = "\n\nJazigo B-13: servico concluido e registrado."
-    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n" + mission + "\n\nAtendimentos concluidos: %d/20." % rooms.case_index + work_note + "\n\nConsulte os atendentes e o Arquivo Legal. Os valores sao ficticios.", [{"text":"Atividades de Santa Mortalha","action":"activities"},{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
+    _show("DIARIO DE SANTA MORTALHA", "Objetivo atual:\n" + mission + "\n\nAtendimentos concluidos: %d/20." % rooms.case_index + work_note + "\n\nConsulte os atendentes e o Arquivo Legal no escritorio. Os valores sao ficticios.", [{"text":"Atividades de Santa Mortalha","action":"activities"},{"text":"Galeria de retratos (teste)","action":"portrait_gallery"},{"text":"Fechar diario","action":"close"}])
 func _portrait_gallery() -> void:
     _show("GALERIA DE RETRATOS","Teste visual das expressoes. O progresso e o dinheiro nao serao alterados.",[
         {"text":"Baltazar — contador fantasma","action":"portrait_select_baltazar"},
@@ -311,7 +311,7 @@ func _interact(id: String) -> void:
             else:
                 _show("Posto de Fiscalizacao", "O cemiterio tem impactos ambientais; setores tecnicos exigem gerenciamento de residuos. Regras locais variam.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Consultar normas", "action":"legal_ambiente"}, {"text":"Voltar", "action":"close"}])
         "biblioteca":
-            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Escolha a estante!", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}])
+            _show("Arquivo Legal de Santa Mortalha", "Mais assustadoras que os nossos fantasmas: as pilhas de regulamentacoes. Bem-vindo ao Arquivo Legal do escritorio! Escolha a estante.", [{"text":"Conferir documentos na mesa","action":"activity_start_archive"},{"text":"Documentos e cremacao", "action":"arquivo_p1"}, {"text":"Residuos e ambiente", "action":"arquivo_p2"}, {"text":"Frota e conservacao", "action":"arquivo_p3"}, {"text":"Fechar", "action":"close"}])
         "ghost":
             _show("Baltazar, o contador fantasma", "Caixa positivo NAO significa lucro, meu jovem! Ainda existem salarios, materiais, impostos, manutencao e reservas. Morri esperando uma nota fiscal!", [{"text":"Organizar as contas","action":"activity_start_finance"},{"text": "Cuidarei das contas", "action": "close"}])
 
@@ -528,7 +528,10 @@ func _load_game() -> void:
     rooms.load_state(cfg)
     burial_queue.load_state(cfg)
     var saved_map_version: int = int(cfg.get_value("save", "map_version", 0))
-    if saved_map_version != MAP_SAVE_VERSION:
+    if str(cfg.get_value("save", "current_room", "")) == "biblioteca":
+        player.global_position = rooms.safe_spawn()
+        rescue_notice = "O Arquivo Legal mudou para o escritorio. Seu progresso foi mantido."
+    elif saved_map_version != MAP_SAVE_VERSION:
         # Preserva a missao, os indicadores e o caixa, mas nao uma posicao
         # que poderia estar presa dentro de um novo edificio.
         player.global_position = SPAWN

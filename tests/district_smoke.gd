@@ -22,11 +22,15 @@ func _run() -> void:
         push_error("Camera nao segue o protagonista")
         quit(83)
         return
-    if DISTRICT.STATIONS.size() != 9:
+    if DISTRICT.STATIONS.size() != 8:
         push_error("Setores incompletos")
         quit(84)
         return
     for station in DISTRICT.STATIONS:
+        if station["id"] == "biblioteca":
+            push_error("Arquivo Legal ainda esta no exterior")
+            quit(99)
+            return
         if not game.is_walkable(station["p"]):
             push_error("Interacao inacessivel: " + str(station["id"]))
             quit(85)

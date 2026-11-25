@@ -34,7 +34,6 @@ func _draw() -> void:
     _building(Vector2(2785,153),Vector2(255,258),"EMPORIO DE URNAS",Color("#9b866f"),Color("#634854"),false)
     _text(Vector2(2518,449),"ATENDIMENTO",18,GOLD)
     _text(Vector2(2812,449),"SUPRIMENTOS",18,GOLD)
-    _sign(Rect2(1551,695,139,69),"ARQUIVO","LEGAL")
     _building(Vector2(2700,850),Vector2(280,190),"FISCALIZACAO",Color("#938895"),Color("#52435e"),false)
     _sign(Rect2(2720,1098,240,54),"POSTO DE","FISCALIZACAO")
     _text(Vector2(1556,530),"DISTRITO DOS ETERNOS",24,GOLD)
