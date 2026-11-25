@@ -82,7 +82,10 @@ func _draw() -> void:
         _decor(style)
         draw_rect(Rect2(215,270,184,35),Color("#654656"))
         draw_rect(Rect2(871,298,190,39),Color("#674b52"))
-    _npc(Vector2(294,326),Color("#d9b5a0"),Color("#403245"),"ATENDENTE")
+    if room == "funeraria":
+        _madame_amalia(Vector2(294,373))
+    else:
+        _npc(Vector2(294,326),Color("#d9b5a0"),Color("#403245"),"ATENDENTE")
     var coat := Color("#584051")
     match customer_profile:
         "sofredor": coat=Color("#5d647a")
@@ -106,6 +109,46 @@ func _npc(p: Vector2,skin: Color,coat: Color,label: String) -> void:
     draw_circle(p+Vector2(-6,-2),2,INK)
     draw_circle(p+Vector2(6,-2),2,INK)
     _text(p+Vector2(-37,-34),label,15,PAPER)
+
+## Sprite independente da Madame Amalia: mesmo ponto de interacao do catalogo.
+## Os PNGs sao opcionais para preservar a abertura do jogo durante a instalacao.
+const AMALIA_DIR := "res://assets/sprites/madame_amalia/"
+var amalia_textures: Dictionary = {}
+var amalia_elapsed: float = 0.0
+
+func _madame_amalia(feet: Vector2) -> void:
+    var direction := "front"
+    var player: Node2D = get_parent().get_node_or_null("Player") as Node2D
+    if player != null:
+        var offset: Vector2 = player.global_position - feet
+        if offset.length() < 165.0:
+            if absf(offset.x) > absf(offset.y) * 1.2:
+                direction = "right" if offset.x > 0.0 else "left"
+            elif offset.y < -18.0:
+                direction = "back"
+            else:
+                direction = "talk" if offset.length() < 95.0 else "front"
+    elif fmod(amalia_elapsed, 5.0) > 4.65:
+        direction = "front_blink"
+    if direction == "front" and fmod(amalia_elapsed, 5.0) > 4.65:
+        direction = "front_blink"
+    var texture: Texture2D = _amalia_texture(direction)
+    if texture == null:
+        texture = _amalia_texture("front")
+    if texture != null:
+        # Origem nos pes da personagem; preserva a area de interacao (294,373).
+        var height := 104.0
+        var width := height * float(texture.get_width()) / maxf(1.0, float(texture.get_height()))
+        draw_texture_rect(texture, Rect2(feet.x-width*0.5,feet.y-height, width,height), false)
+        _text(Vector2(feet.x-82.0,feet.y-height-12.0),"MADAME AMALIA",15,GOLD)
+    else:
+        _npc(feet-Vector2(0,47),Color("#e4b1aa"),Color("#74364f"),"MADAME AMALIA")
+
+func _amalia_texture(pose: String) -> Texture2D:
+    if not amalia_textures.has(pose):
+        var path := AMALIA_DIR + pose + ".png"
+        amalia_textures[pose] = load(path) if ResourceLoader.exists(path) else null
+    return amalia_textures[pose] as Texture2D
 
 func _decor(style: String) -> void:
     match style:
@@ -238,6 +281,9 @@ func _chapel_npc(id: String, p: Vector2, label: String) -> void:
             draw_circle(p+Vector2(13,27)+Vector2.from_angle(float(i)*1.26)*7,5,Color("#c38fce"))
     _text(p+Vector2(-40,-38),label,15,PAPER)
 
-func _process(_delta: float) -> void:
-    if room=="chapel":
+func _process(delta: float) -> void:
+    if room == "funeraria":
+        amalia_elapsed += delta
+        queue_redraw()
+    elif room == "chapel":
         queue_redraw()
