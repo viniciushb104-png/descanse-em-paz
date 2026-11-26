@@ -12,6 +12,7 @@ const BURIAL_CASES := [1,5,16]
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const COFFIN_ART = preload("res://scripts/world/chapel_coffin_art.gd")
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
+const MAGAZINE = preload("res://scripts/systems/funeral_magazine_data.gd")
 const FUNERAL_LORE = preload("res://scripts/systems/funeral_lore.gd")
 var coffin_stock: Dictionary = {"serenidade":2}
 var coffin_selection: Dictionary = {}
@@ -407,7 +408,7 @@ func _reset_dialogue() -> void:
 
 func stock_menu() -> void:
     game()._show("Gervasio Caixote - Emporio","Estoque: %d caixoes, %d urnas cinerarias. Valores ficticios de suprimentos. Comprar exige conferir procedencia, condicoes e nota fiscal." % [int(inventory["caixao"]),int(inventory["urna"])],
-        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar caixões por modelo","action":"coffin_shop"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
+        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar caixões por modelo","action":"coffin_shop"},{"text":"Folhear revista de compras","action":"magazine_shop"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
 
 func purchase(kind: String) -> void:
     if not inside() or room != "fornecedor" or not inventory.has(kind):
@@ -465,6 +466,12 @@ func coffin_view() -> void:
     if room != "funeraria":
         return
     sync_coffin_stock()
+    game().open_magazine(MAGAZINE.pages(coffin_stock),"Madame Amália • Consulte modelos e serviços", "browse")
+
+func coffin_text_view() -> void:
+    if room != "funeraria":
+        return
+    sync_coffin_stock()
     var lines: Array[String] = []
     for id in COFFINS.MODELS:
         var model: Dictionary = COFFINS.MODELS[id]
@@ -502,6 +509,7 @@ func coffin_case_menu() -> void:
     opts.append({"text":"Voltar depois / repor no Empório","action":"close"})
     var note := "\nSem estoque: "+", ".join(available) if not available.is_empty() else ""
     var memory: Dictionary = FUNERAL_LORE.story("case_%d" % case_id)
+    opts.push_front({"text":"Abrir revista ilustrada","action":"magazine_offer"})
     game()._show_character(str(item["client"]),str(memory.get("family","Vamos comparar os modelos."))+"\n\nLimite fictício para o caixão: R$ %d. Apresente opções disponíveis e adequadas. A família confirma a escolha." % COFFINS.budget(case_id)+note,str(item["profile"]),opts,"sereno")
 
 func coffin_memory() -> void:
@@ -682,6 +690,18 @@ func handle_choice(action: String) -> bool:
         select_coffin(action.trim_prefix("coffin_select_"))
         return true
     match action:
+        "magazine_offer":
+            if coffin_case_ready():
+                sync_coffin_stock()
+                var item: Dictionary = CASES.active(case_index)
+                var id := int(item["id"])
+                game().open_magazine(MAGAZINE.pages(coffin_stock,id,"offer"),str(item["client"])+" • Limite R$ %d" % COFFINS.budget(id),"offer",2)
+            return true
+        "magazine_shop":
+            if room=="fornecedor":
+                sync_coffin_stock()
+                game().open_magazine(MAGAZINE.pages(coffin_stock,0,"shop",int(game().money)),"Gervásio • Caixa R$ %d" % int(game().money),"shop",2)
+            return true
         "coffin_shop":
             coffin_shop()
             return true

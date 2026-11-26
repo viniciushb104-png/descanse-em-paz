@@ -21,6 +21,17 @@ func _initialize() -> void:
         push_error("Encaixe modular ou interacao invalida")
         quit(6)
         return
+    var magazine = preload("res://scripts/systems/funeral_magazine_data.gd")
+    var pages: Array = magazine.pages({"serenidade":1},5,"offer")
+    if pages.size()!=32 or str(pages[2]["action"])!="coffin_select_serenidade" or not str(pages[3]["action"]).is_empty() or not str(pages[27].get("action","")).is_empty():
+        push_error("Revista ou filtro de orçamento inválido")
+        quit(7)
+        return
+    for page in pages:
+        if not ResourceLoader.exists(str(page["art"]),"Texture2D"):
+            push_error("Arte da revista ausente: "+str(page["art"]))
+            quit(8)
+            return
     var state := WAKE.new_state()
     var wanted: Array = WAKE.profile("case_5")["values"]
     for i in range(WAKE.KEYS.size()):

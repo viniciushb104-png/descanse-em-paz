@@ -5,6 +5,9 @@ extends Node2D
 const ACTIVITY_CATALOG = preload("res://scripts/systems/activity_catalog.gd")
 const ACTIVITY_GAME = preload("res://scripts/minigames/district_activity.gd")
 var activity_layer: CanvasLayer
+const FUNERAL_MAGAZINE = preload("res://scripts/ui/funeral_magazine.gd")
+var magazine_layer: CanvasLayer
+var magazine_view: Control
 var activity_paid: Dictionary = {}
 var expansion_done: Dictionary = {}
 var ghost_phase := 0
@@ -140,6 +143,11 @@ func _process(delta: float) -> void:
     _refresh_ui()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+    if is_instance_valid(magazine_view):
+        if event is InputEventKey and event.pressed and not event.echo:
+            magazine_view.keyboard(event.keycode)
+            get_viewport().set_input_as_handled()
+        return
     if is_instance_valid(activity_layer) or is_instance_valid(driving_layer) or is_instance_valid(burial_layer):
         return
     if not (event is InputEventKey):
@@ -576,11 +584,39 @@ func _rescue_player() -> void:
     _save_game()
     _refresh_ui()
 
+func _dismiss_magazine() -> void:
+    if is_instance_valid(magazine_layer):
+        remove_child(magazine_layer)
+        magazine_layer.queue_free()
+    magazine_layer = null
+    magazine_view = null
+
+func open_magazine(pages: Array, header: String, mode: String, first: int = 0) -> void:
+    _close()
+    dialogue_open = true
+    player.virtual_direction = Vector2.ZERO
+    player.velocity = Vector2.ZERO
+    magazine_layer = CanvasLayer.new()
+    magazine_layer.layer = 90
+    add_child(magazine_layer)
+    magazine_view = FUNERAL_MAGAZINE.new()
+    magazine_view.setup(pages,header,mode,first)
+    magazine_layer.add_child(magazine_view)
+    magazine_view.action_requested.connect(_magazine_action)
+    magazine_view.close_requested.connect(_close)
+    _refresh_ui()
+
+func _magazine_action(action: String) -> void:
+    _close()
+    _on_choice(action)
+
 func _close() -> void:
+    _dismiss_magazine()
     dialogue_open = false
     dialog_panel.visible = false
 
 func _show(heading: String, body: String, choices: Array) -> void:
+    _dismiss_magazine()
     dialogue_open = true
     dialog_panel.visible = true
     dialog_title.text = heading
