@@ -3,6 +3,7 @@ signal action_requested(action: String)
 signal close_requested
 const SKIN = preload("res://scripts/ui/funeral_magazine_skin.gd")
 var back_visible := false
+var urn_book := false
 var pages: Array = []
 var context := ""
 var mode := "browse"
@@ -19,6 +20,7 @@ var section: Label
 
 func setup(data: Array, header: String, kind: String, first: int) -> void:
     pages = data
+    urn_book = not pages.is_empty() and str(pages[0].get("book",""))=="urns"
     context = header
     mode = kind
     index = clampi(first,0,maxi(0,pages.size()-1))
@@ -40,14 +42,15 @@ func _ready() -> void:
     margin.add_child(root)
     var top := HBoxContainer.new()
     root.add_child(top)
-    var brand := _label("A ETERNIDADE EM DETALHES",25)
+    var brand := _label("MEMÓRIAS QUE PERMANECEM" if urn_book else "A ETERNIDADE EM DETALHES",25)
     brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     top.add_child(brand)
     top.add_child(_button("Contracapa",_toggle_back,"back"))
     top.add_child(_button("Fechar",func(): close_requested.emit()))
     var tabs := HBoxContainer.new()
     root.add_child(tabs)
-    for data in [["Capa",0,"cover"],["Caixões",2,"coffins_tab"],["Urnas",14,"urns_tab"],["Serviços",26,"services_tab"],["Orçamento",31,"quote_tab"]]:
+    var sections := [["Capa",0,"cover"],["Urnas",2,"urns_tab"],["Serviços",14,"services_tab"],["Orçamento",15,"quote_tab"]] if urn_book else [["Capa",0,"cover"],["Caixões",2,"coffins_tab"],["Serviços",14,"services_tab"],["Orçamento",19,"quote_tab"]]
+    for data in sections:
         tabs.add_child(_button(str(data[0]),go.bind(int(data[1])),str(data[2])))
     var context_label := _label(context,17)
     context_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -115,7 +118,7 @@ func _ready() -> void:
     info.add_child(notice)
     select_button = _button("Apresentar à família",_select)
     info.add_child(select_button)
-    if mode=="offer":
+    if mode=="offer" and not urn_book:
         info.add_child(_button("Ouvir a história da família",func(): action_requested.emit("coffin_memory")))
     var foot := HBoxContainer.new()
     root.add_child(foot)
@@ -168,10 +171,10 @@ func go(next: int) -> void:
     section.text = str(item["section"]).to_upper()
     details.text = str(item["body"])
     var path := str(item["art"])
-    art.texture = SKIN.texture("cover") if index==0 else (load(path) as Texture2D if ResourceLoader.exists(path,"Texture2D") else null)
+    art.texture = SKIN.texture("cover") if index==0 and not urn_book else (load(path) as Texture2D if ResourceLoader.exists(path,"Texture2D") else null)
     var reason := str(item.get("reason",""))
     notice.text = reason+("\n" if not reason.is_empty() else "")+("Ilustração provisória." if bool(item.get("preview",false)) else "")
-    select_button.visible = mode!="browse" and section.text=="CAIXÕES"
+    select_button.visible = mode!="browse" and section.text in ["CAIXÕES","URNAS"]
     select_button.disabled = str(item.get("action","")).is_empty()
     select_button.text = "Comprar unidade" if mode=="shop" else "Apresentar à família"
     previous.disabled = index==0
@@ -183,10 +186,10 @@ func _toggle_back() -> void:
         go(index)
         return
     back_visible = true
-    heading.text = "Casa Funerária Umbra"
+    heading.text = "Empório das Últimas Coisas" if urn_book else "Casa Funerária Umbra"
     section.text = "CONTRACAPA"
     details.text = "Santa Mortalha\nToda memória merece respeito.\nCatálogo de produtos e serviços funerários. Valores fictícios."
-    art.texture = SKIN.texture("back")
+    art.texture = load(str(pages[0]["art"])) as Texture2D if urn_book else SKIN.texture("back")
     notice.text = ""
     select_button.visible = false
     previous.disabled = false

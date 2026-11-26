@@ -1,20 +1,7 @@
 extends RefCounted
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const ART := "res://assets/ui/funeral_magazine/"
-const URNS := [
-    {"id":"essencia","name":"Essência","description":"Madeira natural, linhas simples","price":180},
-    {"id":"lirio_eterno","name":"Lírio Eterno","description":"Porcelana clara com lírios","price":240},
-    {"id":"nocturne","name":"Nocturne","description":"Preto com detalhes prateados","price":280},
-    {"id":"memoria_da_lua","name":"Memória da Lua","description":"Motivo lunar","price":260},
-    {"id":"abobora_eterna","name":"Abóbora Eterna","description":"Cerâmica em forma de abóbora","price":320},
-    {"id":"jardim_de_estrelas","name":"Jardim de Estrelas","description":"Violeta e constelações","price":380},
-    {"id":"silencio","name":"Silêncio","description":"Cerâmica cinza discreta","price":200},
-    {"id":"aurora","name":"Aurora","description":"Tons rosados e dourados","price":420},
-    {"id":"jardim","name":"Jardim da Saudade","description":"Folhas ornamentais","price":460},
-    {"id":"vesper","name":"Vesper","description":"Vidrado violeta","price":480},
-    {"id":"reliquia","name":"Relíquia","description":"Metal de acabamento clássico","price":550},
-    {"id":"legado","name":"Legado","description":"Acabamento artesanal","price":650}
-]
+const URN_CATALOG = preload("res://scripts/systems/urn_catalog.gd")
 static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "browse", cash: int = 0) -> Array:
     var out: Array = [{"title":"A Eternidade em Detalhes","section":"Capa","body":"Casa Funerária Umbra • Santa Mortalha\nToda memória merece respeito.","art":ART+"cover.svg"}]
     out.append({"title":"Uma escolha, muitas memórias","section":"Apresentação","body":"Madame Amália: O catálogo ajuda a escolher, não a impor. Preços fictícios; a família decide com calma.","art":ART+"intro.svg"})
@@ -43,12 +30,39 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
             else:
                 page["reason"]="Caixa insuficiente."
         out.append(page)
-    for item in URNS:
-        out.append({"title":item["name"],"section":"Urnas","body":str(item["description"])+"\nPreço proposto: R$ %d\nPrévia da coleção; contratação ainda não disponível." % int(item["price"]),"art":ART+"urn_"+str(item["id"])+".svg","preview":true})
     out.append({"title":"Sepultamento","section":"Serviços","body":"Documentação, escolha de caixão, despedida e sepultamento autorizado. Consulte os atendentes.","art":ART+"burial.svg"})
-    out.append({"title":"Cremação","section":"Serviços","body":"Serviço condicionado aos documentos, autorizações e condições legais aplicáveis. Operação futura; não contratável nesta edição.","art":ART+"cremation.svg"})
+    out.append({"title":"Cremação","section":"Serviços","body":"Quando a família manifesta preferência pela cremação, Madame Amália encaminha ao Empório para consultar a revista de urnas de Violeta. A execução depende de documentação e autorização aplicáveis.","art":ART+"cremation.svg"})
     out.append({"title":"Cerimônias","section":"Serviços","body":"Anselmo organiza flores, iluminação, música, cadeiras e homenagem conforme a família.","art":ART+"ceremony.svg"})
     out.append({"title":"Flores e ornamentação","section":"Serviços","body":"Arranjos escolhidos pela família. Nenhum adicional é imposto.","art":ART+"flowers.svg"})
     out.append({"title":"Serviços opcionais","section":"Serviços","body":"Valores e condições devem ser discriminados antes do aceite.","art":ART+"optional.svg"})
     out.append({"title":"Orçamento personalizado","section":"Serviços","body":"Baltazar: Sou transparente, mas a receita não pode ser invisível! Confirme itens, valores e autorização antes de registrar.","art":ART+"quote.svg"})
+    return out
+
+static func urn_pages(stock: Dictionary = {}, mode: String = "browse", cash: int = 0) -> Array:
+    var out: Array = [{"title":"Memórias que Permanecem","section":"Capa","body":"Empório das Últimas Coisas • Santa Mortalha\nColeção de urnas cinerárias.","art":ART+"urn_cover.svg","book":"urns"}]
+    out.append({"title":"Sra. Violeta","section":"Apresentação","body":"Conheci este Empório como cliente. Agora ajudo Gervásio a apresentar urnas com respeito, sem transformar lembranças em competição de luxo. Minha abóbora favorita não dispensa documento algum!","art":ART+"urn_abobora_eterna.svg","book":"urns","preview":true})
+    for model in URN_CATALOG.URNS:
+        var id: String = model["id"]
+        var count := int(stock.get(id,0))
+        var price := URN_CATALOG.cost(id) if mode=="shop" else int(model["price"])
+        var page := {"title":model["name"],"section":"Urnas","body":str(model["description"])+"\nEstoque: %d unidade(s).\n%s R$ %d" % [count,"Aquisição:" if mode=="shop" else "Venda:",price],"art":ART+"urn_"+id+".svg","book":"urns","preview":true,"action":"","reason":""}
+        var final_art := "res://assets/sprites/urns/"+id+"/pagina.png"
+        if ResourceLoader.exists(final_art,"Texture2D"):
+            page["art"] = final_art
+            page["preview"] = false
+        if mode=="shop":
+            if cash>=price:
+                page["action"]="urn_buy_"+id
+            else:
+                page["reason"]="Caixa insuficiente."
+        elif mode=="offer":
+            if int(model["price"])>URN_CATALOG.FAMILY_BUDGET:
+                page["reason"]="Acima do orçamento familiar."
+            elif count<=0:
+                page["reason"]="Sem estoque. Consulte Gervásio."
+            else:
+                page["action"]="urn_select_"+id
+        out.append(page)
+    out.append({"title":"Da escolha à entrega","section":"Serviços","body":"A urna não autoriza uma cremação. Baltazar confere os registros e Cinério recebe apenas ordens adequadas. O minigame operacional será acrescentado em etapa futura.","art":ART+"cremation.svg","book":"urns"})
+    out.append({"title":"Orçamento e memória","section":"Serviços","body":"A família confirma o modelo, o preço e os serviços em separado. Nenhum adicional é obrigatório.","art":ART+"quote.svg","book":"urns"})
     return out

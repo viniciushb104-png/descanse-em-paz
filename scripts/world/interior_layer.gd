@@ -106,6 +106,12 @@ func _draw() -> void:
         "economico": coat=Color("#6c725c")
         "confuso": coat=Color("#5d7a7a")
     _npc(Vector2(818,325),Color("#b9a5b8"),coat,customer_name)
+    if room=="fornecedor":
+        var runtime: Node = get_parent().get_node("RoomsRuntime")
+        if int(runtime.case_index)>=3:
+            _npc(Vector2(570,283),Color("#d9b5b8"),Color("#76508b"),"VIOLETA")
+        else:
+            _text(Vector2(505,310),"URNAS",17,GOLD)
     draw_rect(Rect2(180,182,72,44),Color("#322635"))
     draw_rect(Rect2(188,187,56,31),Color("#baa27e"))
     _text(Vector2(176,174),"CASOS",15,PAPER)

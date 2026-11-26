@@ -20,3 +20,10 @@ Prioridade aprovada: concluir a revista antes de retomar a produção de caixõe
 
 ## Regras
 Preservar os 20 casos, condições de progressão e recompensas existentes; não confundir familiares vivos com falecidos; nenhum luxo aumenta reputação. Sprites 2D pixel art gótica, transparentes, individuais; preços fictícios; interface por toque e teclado. Não considerar commits publicados/testados sem verificar CI.
+
+## Desdobramento aprovado — revistas separadas
+- A Eternidade em Detalhes: 20 páginas (capa 1, Amália 2, caixões 3–14, serviços 15–20). Retomar página 02 da Amália (arte criada, upload ainda pendente) e depois página 03 Serenidade. Não alterar os sprites aberto/tampa já integrados.
+- Memórias que Permanecem: revista independente do Empório, 16 páginas: capa, Violeta, 12 urnas, orientação e orçamento. Preços fictícios, aquisição unitária, estoque persistente por modelo; ilustrações provisórias. O estoque legado e a compra de duas urnas continuam.
+- Violeta permanece cliente do caso 03; após concluí-lo, passa a colaborar no Empório (sprite provisório). Gervásio mantém suas funções.
+- Jornada opcional adicional: família de Celeste declara interesse em cremação com Amália, escolhe urna com Violeta, Baltazar registra a proposta e Cinério faz triagem. Estado salvo separadamente; sem execução, cobrança ou reserva definitiva nesta etapa. Preservar casos 10 e 19 que exigem bloqueio documental, assim como todos os 20 casos, sepultamentos e pontuações originais. A futura ordem operacional exige autorização explícita e minigame próprio.
+- Próximos: conferir revistas e encaminhamento no jogo, integrar Página 02 aprovada, completar coleção de caixões (página/aberto/tampa por modelo); depois arte definitiva das urnas, Violeta e crematório.

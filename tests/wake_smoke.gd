@@ -28,11 +28,17 @@ func _initialize() -> void:
         return
     var magazine = preload("res://scripts/systems/funeral_magazine_data.gd")
     var pages: Array = magazine.pages({"serenidade":1},5,"offer")
-    if pages.size()!=32 or str(pages[2]["action"])!="coffin_select_serenidade" or not str(pages[3]["action"]).is_empty() or not str(pages[27].get("action","")).is_empty():
+    if pages.size()!=20 or str(pages[2]["action"])!="coffin_select_serenidade" or not str(pages[3]["action"]).is_empty() or not str(pages[15].get("action","")).is_empty():
         push_error("Revista ou filtro de orçamento inválido")
         quit(7)
         return
-    for page in pages:
+    var urns = preload("res://scripts/systems/urn_catalog.gd")
+    var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
+    if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:
+        push_error("Catálogo de urnas ou orçamento inválido")
+        quit(10)
+        return
+    for page in pages+urn_pages:
         if not ResourceLoader.exists(str(page["art"]),"Texture2D"):
             push_error("Arte da revista ausente: "+str(page["art"]))
             quit(8)

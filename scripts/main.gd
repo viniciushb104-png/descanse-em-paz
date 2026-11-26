@@ -287,7 +287,7 @@ func _interact(id: String) -> void:
             elif stage == 3:
                 _show("Baltazar | Registro financeiro", "Documentos conferidos, jazigo reservado. Finalmente uma pasta sem pendências! Valores fictícios: receita R$ 720, custo operacional direto R$ 250. Vamos registrar o atendimento?", [{"text": "Registrar e emitir comprovante", "action": "register"}, {"text": "Voltar", "action": "close"}])
             else:
-                _show("Baltazar, o contador fantasma", "Bem-vindo, chefe! Saldo em caixa: R$ %d. Em vida eu fechava balanços; agora nem fechar os olhos eu consigo. Cuido das finanças, contratos e documentos. As famílias merecem respeito, e os números, conferência. Em que posso ajudar?" % money, [{"text":"Organizar as contas","action":"activity_start_finance"},{"text":"Consultar Arquivo Legal","action":"outside_biblioteca"},{"text":"Livro dos caixões","action":"coffin_ledger"},{"text":"Ver fila de atendimentos","action":"case_board"},{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
+                _show("Baltazar, o contador fantasma", "Bem-vindo, chefe! Saldo em caixa: R$ %d. Em vida eu fechava balanços; agora nem fechar os olhos eu consigo. Cuido das finanças, contratos e documentos. As famílias merecem respeito, e os números, conferência. Em que posso ajudar?" % money, [{"text":"Organizar as contas","action":"activity_start_finance"},{"text":"Consultar Arquivo Legal","action":"outside_biblioteca"},{"text":"Livro dos caixões","action":"coffin_ledger"},{"text":"Encaminhamentos de cremação","action":"cremation_office"},{"text":"Ver fila de atendimentos","action":"case_board"},{"text": "Ver aviso educativo", "action": "learn"}, {"text": "Fechar", "action": "close"}])
         "plot":
             if stage == 2 and not reserved_plot:
                 _show("Quadra B, jazigo B-13", "O cadastro ficticio indica que este jazigo esta disponivel. Em casos reais, conferem-se tambem titularidade, direitos de uso e regras locais.", [{"text": "Reservar jazigo", "action": "reserve"}, {"text": "Voltar", "action": "close"}])
@@ -320,7 +320,7 @@ func _interact(id: String) -> void:
             if stage == 9:
                 _show("Seu Cinerio Brasa", "Cremar nao e simplesmente apertar um botao! A Lei 6.015/1973 estabelece requisitos, inclusive vontade e atestado medico especifico.", [{"text":"Validar condicoes legais", "action":"crematorio_certo"}, {"text":"Crema sem verificacao", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])
             else:
-                _show("Crematorio Cinzas & Cia", "Nosso fornalha esta desligada enquanto a documentacao nao esta em ordem. Uma longa fila de papeis espera por voce.", [{"text":"Estudar lei de cremacao", "action":"legal_cremacao"}, {"text":"Voltar", "action":"close"}])
+                _show("Crematorio Cinzas & Cia", "Nosso fornalha esta desligada enquanto a documentacao nao esta em ordem. Uma longa fila de papeis espera por voce.", [{"text":"Estudar lei de cremacao", "action":"legal_cremacao"}, {"text":"Triagem de encaminhamentos","action":"cremation_triage"}, {"text":"Voltar", "action":"close"}])
         "fiscalizacao":
             if stage == 10:
                 _show("Marcela Meia-Noite, Fiscal", "Licenciamento ambiental do cemiterio e gerenciamento de residuos nao sao aderecos goticos. Vamos conferir o plano e as exigencias!", [{"text":"Regularizar plano (R$ 140)", "action":"ambiente_certo"}, {"text":"Ignorar o licenciamento", "action":"distrito_erro"}, {"text":"Voltar", "action":"close"}])

@@ -13,6 +13,10 @@ const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
 const COFFIN_ART = preload("res://scripts/world/chapel_coffin_art.gd")
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const MAGAZINE = preload("res://scripts/systems/funeral_magazine_data.gd")
+const URNS = preload("res://scripts/systems/urn_catalog.gd")
+var urn_stock: Dictionary = {"essencia":1}
+# Encaminhamento paralelo, independente dos 20 casos e da fila de sepultamento.
+var cremation_referral: Dictionary = {}
 const FUNERAL_LORE = preload("res://scripts/systems/funeral_lore.gd")
 var coffin_stock: Dictionary = {"serenidade":2}
 var coffin_selection: Dictionary = {}
@@ -43,6 +47,9 @@ func save_state(cfg: ConfigFile) -> void:
     sync_coffin_stock()
     cfg.set_value("save","stock",inventory)
     cfg.set_value("save","coffin_stock",coffin_stock)
+    sync_urn_stock()
+    cfg.set_value("save","urn_stock",urn_stock)
+    cfg.set_value("save","cremation_referral",cremation_referral)
     cfg.set_value("save","coffin_selection",coffin_selection)
     cfg.set_value("save","case_dialogue_step",dialogue_step)
     cfg.set_value("save","case_dialogue_grades",dialogue_grades)
@@ -74,6 +81,11 @@ func load_state(cfg: ConfigFile) -> void:
     var stored_models: Variant = cfg.get_value("save","coffin_stock",{})
     coffin_stock = stored_models if stored_models is Dictionary else {}
     sync_coffin_stock()
+    var stored_urns: Variant = cfg.get_value("save","urn_stock",{})
+    urn_stock = stored_urns if stored_urns is Dictionary else {}
+    sync_urn_stock()
+    var saved_referral: Variant = cfg.get_value("save","cremation_referral",{})
+    cremation_referral = saved_referral if saved_referral is Dictionary else {}
     var stored_selection: Variant = cfg.get_value("save","coffin_selection",{})
     coffin_selection = stored_selection if stored_selection is Dictionary else {}
     var max_steps: int = DIALOGUES.beat_keys(case_index).size()
@@ -201,9 +213,11 @@ func interact(id: String) -> void:
             if room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Fechar","action":"close"}],"ironico")
+                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Atendimento sobre cremação","action":"cremation_referral_menu"},{"text":"Fechar","action":"close"}],"ironico")
             else:
                 game()._interact(room)
+        "violeta":
+            violet_menu()
         "client":
             show_case()
         "board":
@@ -408,7 +422,7 @@ func _reset_dialogue() -> void:
 
 func stock_menu() -> void:
     game()._show("Gervasio Caixote - Emporio","Estoque: %d caixoes, %d urnas cinerarias. Valores ficticios de suprimentos. Comprar exige conferir procedencia, condicoes e nota fiscal." % [int(inventory["caixao"]),int(inventory["urna"])],
-        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar caixões por modelo","action":"coffin_shop"},{"text":"Folhear revista de compras","action":"magazine_shop"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Voltar","action":"close"}])
+        [{"text":"Organizar depósito","action":"activity_start_stock"},{"text":"Comprar caixões por modelo","action":"coffin_shop"},{"text":"Folhear revista de compras","action":"magazine_shop"},{"text":"Comprar 2 urnas: R$ 160","action":"stock_urna"},{"text":"Revista de urnas / Violeta","action":"violeta_menu"},{"text":"Voltar","action":"close"}])
 
 func purchase(kind: String) -> void:
     if not inside() or room != "fornecedor" or not inventory.has(kind):
@@ -424,6 +438,123 @@ func purchase(kind: String) -> void:
     inventory[kind] = int(inventory[kind])+2
     game()._save_game()
     stock_menu()
+
+func sync_urn_stock() -> void:
+    urn_stock = URNS.normalize(urn_stock,int(inventory.get("urna",0)))
+
+func open_urn_magazine(mode: String = "browse") -> void:
+    if room!="fornecedor":
+        return
+    if mode=="offer" and str(cremation_referral.get("status",""))!="referred":
+        return
+    sync_urn_stock()
+    var title := "Violeta • Catálogo de urnas" if case_index>=3 else "Gervásio • Catálogo de urnas"
+    if mode=="offer":
+        title = "Família de Celeste • Limite para urna R$ %d" % URNS.FAMILY_BUDGET
+    elif mode=="shop":
+        title = "Empório • Caixa R$ %d" % int(game().money)
+    game().open_magazine(MAGAZINE.urn_pages(urn_stock,mode,int(game().money)),title,mode,0 if mode=="browse" else 2)
+
+func buy_urn(id: String) -> void:
+    if room!="fornecedor" or URNS.item(id).is_empty():
+        return
+    var price := URNS.cost(id)
+    if game().money<price:
+        game()._show("Saldo insuficiente","Gervásio: Até as urnas precisam de um orçamento!",[{"text":"Voltar à revista","action":"urn_shop"}])
+        return
+    sync_urn_stock()
+    game().money -= price
+    urn_stock[id] = int(urn_stock[id])+1
+    inventory["urna"] = int(inventory["urna"])+1
+    game()._save_game()
+    game()._refresh_ui()
+    open_urn_magazine("shop")
+
+func referral_menu() -> void:
+    if room!="funeraria":
+        return
+    if case_index<3:
+        game()._show("Madame Amália Umbra","A Violeta ainda está conhecendo o Empório. Termine o atendimento dela no caso 03; depois teremos uma nova consulta sobre cremação.",[{"text":"Fechar","action":"close"}])
+        return
+    if not cremation_referral.is_empty():
+        game()._show("Madame Amália Umbra","O encaminhamento da família de Celeste já está registrado. "+referral_hint(),[{"text":"Fechar","action":"close"}])
+        return
+    game()._show("Família de Celeste","Celeste conversava conosco sobre a vontade de ser cremada. Queremos saber quais são as opções, sem contratar nada antes de conferir os documentos.",[{"text":"Família escolhe conhecer a cremação","action":"cremation_refer"},{"text":"Respeitar o tempo da família","action":"close"}])
+
+func referral_hint() -> String:
+    match str(cremation_referral.get("status","")):
+        "referred": return "Procure Violeta no Empório para escolher a urna."
+        "quoted": return "Leve a proposta ao escritório de Baltazar."
+        "reviewed": return "Procure Cinério no crematório para triagem."
+        "waiting": return "Encaminhamento registrado; operação aguarda o futuro minigame e autorização."
+    return ""
+
+func refer_cremation() -> void:
+    if room!="funeraria" or case_index<3 or not cremation_referral.is_empty():
+        return
+    cremation_referral = {"customer":"Família de Celeste","status":"referred"}
+    game()._save_game()
+    game()._show("Madame Amália Umbra","Encaminhei a família ao Empório. A Violeta conhece urnas como Baltazar conhece planilhas: com entusiasmo preocupante. A escolha não autoriza a cremação.",[{"text":"Ir ao Empório","action":"leave_room"},{"text":"Depois","action":"close"}])
+
+func violet_menu() -> void:
+    if room!="fornecedor":
+        return
+    var title := "Sra. Violeta" if case_index>=3 else "Gervásio Caixote"
+    var words := "Voltei ao Empório depois do meu atendimento. Agora ajudo a escolher urnas! Uma abóbora pode guardar memórias, mas nunca substituir documentos." if case_index>=3 else "Violeta ainda é nossa cliente. Por enquanto eu apresento a coleção."
+    var opts: Array = [{"text":"Folhear revista de urnas","action":"urn_browse"},{"text":"Comprar urnas por modelo","action":"urn_shop"}]
+    if str(cremation_referral.get("status",""))=="referred":
+        opts.push_front({"text":"Atender família de Celeste","action":"urn_offer"})
+    elif str(cremation_referral.get("status",""))=="quoted":
+        opts.push_front({"text":"Rever proposta da família","action":"urn_revise"})
+    opts.append({"text":"Fechar","action":"close"})
+    game()._show(title,words,opts)
+
+func select_urn(id: String) -> void:
+    if room!="fornecedor" or str(cremation_referral.get("status",""))!="referred":
+        return
+    sync_urn_stock()
+    if not URNS.can_offer(id,urn_stock):
+        open_urn_magazine("offer")
+        return
+    var model := URNS.item(id)
+    game()._show("Família de Celeste","Gostamos da urna "+str(model["name"])+". O valor de R$ %d cabe no nosso orçamento. Entendemos que esta proposta não é autorização de cremação." % int(model["price"]),[{"text":"Confirmar proposta de urna","action":"urn_confirm_"+id},{"text":"Rever modelos","action":"urn_offer"},{"text":"Depois","action":"close"}])
+
+func confirm_urn(id: String) -> void:
+    if room!="fornecedor" or str(cremation_referral.get("status",""))!="referred":
+        return
+    sync_urn_stock()
+    if not URNS.can_offer(id,urn_stock):
+        open_urn_magazine("offer")
+        return
+    var model := URNS.item(id)
+    cremation_referral["urn"] = id
+    cremation_referral["name"] = model["name"]
+    cremation_referral["price"] = model["price"]
+    cremation_referral["status"] = "quoted"
+    game()._save_game()
+    game()._show("Sra. Violeta","Proposta anotada, sem cobrança nem reserva definitiva. Leve-a ao Baltazar; a urna será separada quando o serviço autorizado estiver pronto para execução.",[{"text":"Ir ao escritório","action":"leave_room"},{"text":"Depois","action":"close"}])
+
+func cremation_office() -> void:
+    if room!="office":
+        return
+    if str(cremation_referral.get("status",""))!="quoted":
+        game()._show("Baltazar | Cremação","Nenhuma proposta nova para conferência. "+referral_hint(),[{"text":"Fechar","action":"close"}])
+        return
+    sync_urn_stock()
+    if not URNS.can_offer(str(cremation_referral.get("urn","")),urn_stock):
+        cremation_referral["status"] = "referred"
+        game()._save_game()
+        game()._show("Baltazar | Cremação","O estoque mudou. Volte à Violeta para revisar a proposta.",[{"text":"Fechar","action":"close"}])
+        return
+    game()._show("Baltazar | Cremação","Urna "+str(cremation_referral["name"])+" | R$ %d. Isso é proposta, não licença! Vamos encaminhar o pedido para a triagem de documentos, sem declarar autorização que ainda não existe." % int(cremation_referral["price"]),[{"text":"Registrar encaminhamento para triagem","action":"cremation_review"},{"text":"Depois","action":"close"}])
+
+func cremation_triage() -> void:
+    if room!="crematorio":
+        return
+    if str(cremation_referral.get("status",""))!="reviewed":
+        game()._show("Seu Cinério Brasa","Nenhuma proposta nova para triagem. "+referral_hint(),[{"text":"Fechar","action":"close"}])
+        return
+    game()._show("Seu Cinério Brasa","Recebi a proposta da família de Celeste. Antes de qualquer serviço, precisamos da documentação e da autorização aplicáveis. Minha fornalha tem paciência; a lei não aceita atalhos.",[{"text":"Registrar pedido e aguardar autorização","action":"cremation_wait"},{"text":"Consultar referência","action":"legal_cremacao"},{"text":"Depois","action":"close"}])
 
 func sync_coffin_stock() -> void:
     coffin_stock = COFFINS.normalize(coffin_stock,int(inventory.get("caixao",0)))
@@ -683,6 +814,58 @@ func reject_case() -> void:
     show_case()
 
 func handle_choice(action: String) -> bool:
+    if action.begins_with("urn_buy_"):
+        buy_urn(action.trim_prefix("urn_buy_"))
+        return true
+    if action.begins_with("urn_select_"):
+        select_urn(action.trim_prefix("urn_select_"))
+        return true
+    if action.begins_with("urn_confirm_"):
+        confirm_urn(action.trim_prefix("urn_confirm_"))
+        return true
+    match action:
+        "violeta_menu":
+            violet_menu()
+            return true
+        "urn_browse":
+            open_urn_magazine()
+            return true
+        "urn_shop":
+            open_urn_magazine("shop")
+            return true
+        "urn_offer":
+            open_urn_magazine("offer")
+            return true
+        "urn_revise":
+            if room=="fornecedor" and str(cremation_referral.get("status",""))=="quoted":
+                cremation_referral["status"]="referred"
+                game()._save_game()
+                open_urn_magazine("offer")
+            return true
+        "cremation_referral_menu":
+            referral_menu()
+            return true
+        "cremation_refer":
+            refer_cremation()
+            return true
+        "cremation_office":
+            cremation_office()
+            return true
+        "cremation_review":
+            if room=="office" and str(cremation_referral.get("status",""))=="quoted":
+                cremation_referral["status"]="reviewed"
+                game()._save_game()
+                game()._show("Baltazar","Encaminhamento registrado. Cinério fará a triagem; nenhuma autorização foi emitida.",[{"text":"Ir ao crematório","action":"leave_room"}])
+            return true
+        "cremation_triage":
+            cremation_triage()
+            return true
+        "cremation_wait":
+            if room=="crematorio" and str(cremation_referral.get("status",""))=="reviewed":
+                cremation_referral["status"]="waiting"
+                game()._save_game()
+                game()._show("Seu Cinério Brasa","Pedido registrado. A execução ficará bloqueada até a futura etapa de autorização e operação. Nenhum valor foi cobrado.",[{"text":"Voltar ao expediente","action":"close"}])
+            return true
     if action.begins_with("coffin_buy_"):
         buy_coffin(action.trim_prefix("coffin_buy_"))
         return true
