@@ -4,19 +4,21 @@ const ART := "res://assets/ui/funeral_magazine/"
 const URN_CATALOG = preload("res://scripts/systems/urn_catalog.gd")
 const SERENIDADE_PREVIEW := "res://assets/sprites/coffins/serenidade/pagina_preview.webp"
 const AMALIA_FULL := ART+"pagina_02_amalia.jpg"
+const SPREAD_DIR := ART+"duplas/"
 const AMALIA_PREVIEW := ART+"pagina_02_amalia_preview.webp"
 const AMALIA_TEXT := "Consultora de despedidas, memória e bom senso\n\nBem-vindo à Casa Funerária Umbra. Sou Madame Amália, sua anfitriã entre orçamentos, homenagens e escolhas delicadas. Em Santa Mortalha, cada família merece escuta, transparência e respeito.\n\nO QUE VOCÊ APRENDE COMIGO\n• Ouvir a família antes de oferecer produtos.\n• Respeitar orçamento, vontade e contexto.\n• Explicar diferenças entre sepultamento, cremação e cerimônia.\n• Apresentar opções com ética, clareza e acolhimento.\n\nNA LORE DO JOGO\nAmália é o coração comercial da funerária. Ela apresenta o catálogo, orienta as escolhas da família e ajuda o jogador a transformar decisões difíceis em despedidas dignas.\n\nFRASE DA AMÁLIA\nLuxo sem sentido? Nem pensar. Até no além, bom atendimento vale mais que ostentação.\n\nDICA PROFISSIONAL\nNo ramo funerário, acolhimento, organização e transparência são tão importantes quanto o produto oferecido."
 static func amalia_page() -> Dictionary:
     var full := ResourceLoader.exists(AMALIA_FULL,"Texture2D")
-    return {"title":"Madame Amália Umbra","section":"Apresentação","body":AMALIA_TEXT,"art":AMALIA_FULL if full else AMALIA_PREVIEW,"preview":not full,"editorial":true}
+    return {"title":"Madame Amália Umbra","section":"Apresentação","body":AMALIA_TEXT,"art":AMALIA_FULL if full else AMALIA_PREVIEW,"preview":not full,"editorial":true,"spread":SPREAD_DIR+"amalia_dupla.webp"}
 static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "browse", cash: int = 0) -> Array:
-    var out: Array = [{"title":"A Eternidade em Detalhes","section":"Capa","body":"Casa Funerária Umbra • Santa Mortalha\nToda memória merece respeito.","art":ART+"cover.svg"}]
+    var out: Array = [{"title":"A Eternidade em Detalhes","section":"Capa","body":"Casa Funerária Umbra • Santa Mortalha\nToda memória merece respeito.","art":ART+"cover.svg","spread":SPREAD_DIR+"capa_dupla.webp"}]
     out.append(amalia_page())
     for id in COFFINS.MODELS:
         var item: Dictionary = COFFINS.MODELS[id]
         var count := int(stock.get(id,0))
         var price := int(item["cost"] if mode=="shop" else item["price"])
         var page := {"title":item["name"],"section":"Caixões","body":str(item["description"])+"\nEstoque: %d unidade(s).\n%s R$ %d" % [count,"Aquisição:" if mode=="shop" else "Venda:",price],"art":ART+"coffin_"+str(id)+".svg","preview":true,"action":"","reason":""}
+        page["transaction_line"] = "%s R$ %d  •  Estoque: %d" % ["Aquisição:" if mode=="shop" else "Venda:",price,count]
         var catalog_art := "res://assets/sprites/coffins/"+str(id)+"/pagina.png"
         # O encarte impresso do Serenidade tem preço de venda fixo na arte;
         # não o mostrar na compra de fornecedor nem quando o preço mudar.
@@ -28,6 +30,7 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["art"]=catalog_art if full else SERENIDADE_PREVIEW
                 page["preview"]=not full
                 page["editorial"]=true
+                page["spread"]=SPREAD_DIR+"serenidade_dupla.webp"
             else:
                 page["art"]="res://assets/sprites/coffins/serenidade/aberto.png"
                 page["preview"]=false
@@ -35,6 +38,8 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
             page["art"]=catalog_art
             page["preview"]=false
             page["editorial"]=true
+            if mode!="shop":
+                page["spread"]=SPREAD_DIR+str(id)+"_dupla.webp"
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."
@@ -64,6 +69,7 @@ static func urn_pages(stock: Dictionary = {}, mode: String = "browse", cash: int
         var count := int(stock.get(id,0))
         var price := URN_CATALOG.cost(id) if mode=="shop" else int(model["price"])
         var page := {"title":model["name"],"section":"Urnas","body":str(model["description"])+"\nEstoque: %d unidade(s).\n%s R$ %d" % [count,"Aquisição:" if mode=="shop" else "Venda:",price],"art":ART+"urn_"+id+".svg","book":"urns","preview":true,"action":"","reason":""}
+        page["transaction_line"] = "%s R$ %d  •  Estoque: %d" % ["Aquisição:" if mode=="shop" else "Venda:",price,count]
         var final_art := "res://assets/sprites/urns/"+id+"/pagina.png"
         if ResourceLoader.exists(final_art,"Texture2D"):
             page["art"] = final_art

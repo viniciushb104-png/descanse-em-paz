@@ -75,6 +75,10 @@ func _run() -> void:
             # Conferir a pagina editorial e todos os produtos, nao apenas a capa.
             for page_index in range(game.magazine_view.pages.size()):
                 game.magazine_view.go(page_index)
+                if not is_instance_valid(game.magazine_view.spread) or not is_instance_valid(game.magazine_view.paper) or game.magazine_view.spread.visible==game.magazine_view.paper.visible:
+                    push_error("Camadas da revista sobrepostas: "+key)
+                    quit(117)
+                    return
                 if game.magazine_view.select_button.visible:
                     push_error("Consulta livre permite compra: "+key+" pagina "+str(page_index+1))
                     quit(115)
