@@ -74,6 +74,29 @@ func _initialize() -> void:
         push_error("Descanso Eterno: catálogo, estoque ou orçamento inválido")
         quit(18)
         return
+    for model in [{"id":"lirio_branco","page":5,"cost":380,"price":650},{"id":"rosa_da_saudade","page":6,"cost":450,"price":790}]:
+        var model_id: String = str(model["id"])
+        var page_index: int = int(model["page"])
+        var opened: Texture2D = art.model_texture(model_id,"aberto")
+        var lid: Texture2D = art.model_texture(model_id,"tampa")
+        if opened==null or lid==null or opened.get_image().get_pixel(0,0).a!=0.0 or lid.get_image().get_pixel(0,0).a!=0.0:
+            push_error("Sprites transparentes ausentes: "+model_id)
+            quit(19)
+            return
+        if art.model_id({"coffin":{"model":model_id}})!=model_id or not art.OPEN_RECT.encloses(art.fit(opened,art.OPEN_RECT)):
+            push_error("Seleção ou encaixe inválido: "+model_id)
+            quit(20)
+            return
+        var stock: Dictionary = {}
+        stock[model_id] = 1
+        var eligible: Array = magazine.pages(stock,16,"offer")
+        var blocked: Array = magazine.pages(stock,1,"offer")
+        var supplier: Array = magazine.pages(stock,0,"shop",int(model["cost"]))
+        var no_stock: Array = magazine.pages({},16,"offer")
+        if str(eligible[page_index].get("action",""))!="coffin_select_"+model_id or not ResourceLoader.exists(str(eligible[page_index].get("spread","")),"Texture2D") or not str(blocked[page_index].get("action","")).is_empty() or not str(no_stock[page_index].get("action","")).is_empty() or str(supplier[page_index].get("action",""))!="coffin_buy_"+model_id or not str(supplier[page_index].get("spread","")).is_empty() or not str(eligible[page_index]["body"]).contains("Venda: R$ %d" % int(model["price"])):
+            push_error("Catálogo, preço ou orçamento inválido: "+model_id)
+            quit(21)
+            return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:

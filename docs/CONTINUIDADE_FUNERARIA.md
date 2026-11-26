@@ -61,3 +61,6 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 
 ## Página 05 — Descanso Eterno
 - Três assets em alta resolução confirmados em fc0fd7ef: aberto.png (225567 bytes), tampa.png (182734 bytes), descanso_eterno_dupla.webp (579382 bytes). Página dupla no catálogo, base e tampa selecionadas pelo contrato no velório; preço de aquisição R$ 320 e venda R$ 560 preservados. Adicionado texto pedagógico nativo e teste de arte, transparência, encaixe, compra e orçamento (caso 16 elegível, caso 1 bloqueado). CI e visual ainda a validar. Coleção: 3 de 12 modelos, 9 de 36 assets principais. Próximo: Página 06 — Lírio Branco, três imagens individuais.
+
+## Páginas 06 e 07 — Lírio Branco e Rosa da Saudade
+- Seis assets confirmados. Página 07 enviada inicialmente na pasta de sprites; transferida para duplas/ com o mesmo blob, sem recompressão. Ambas usam o carregador por modelo no velório, preços dinâmicos e estoque existente. Aquisição/venda: Lírio Branco 380/650, Rosa da Saudade 450/790. Textos pedagógicos nativos e testes de transparência, encaixe, estoque, oferta, orçamento e fornecedor adicionados. CI e visual pendentes. Coleção: 5/12 modelos, 15/36 assets principais. Próximo: Página 08 — Memórias, página dupla sem preço impresso, aberto e tampa individuais.
