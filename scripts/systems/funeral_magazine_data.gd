@@ -40,7 +40,7 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["preview"]=false
                 page["editorial"]=true
             var open_art := "res://assets/sprites/coffins/"+str(id)+"/aberto.png"
-            if mode=="shop" and ResourceLoader.exists(open_art,"Texture2D"):
+            if ResourceLoader.exists(open_art,"Texture2D") and (mode=="shop" or not ResourceLoader.exists(catalog_art,"Texture2D")):
                 page["art"]=open_art
                 page["preview"]=false
                 page["editorial"]=false

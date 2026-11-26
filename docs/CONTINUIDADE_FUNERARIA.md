@@ -53,3 +53,6 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 
 ## Página 04 — Último Suspiro
 - Três arquivos artísticos preparados: `ultimo_suspiro_dupla.webp` (1258×726, horizontal), `aberto.png` e `tampa.png` (320×520, RGBA com transparência). Upload dos três pendente. Página em `assets/ui/funeral_magazine/duplas/`; sprites em `assets/sprites/coffins/ultimo_suspiro/`. O carregador da capela já seleciona pelo contrato. Preço de venda impresso R$ 420; não exibir encarte no fornecedor nem se o preço mudar. Custo R$ 240. Próximo após upload e teste: Página 05 Descanso Eterno, três assets individuais.
+
+## Último Suspiro — integração dos sprites
+- Instalados `aberto.png` e `tampa.png`, derivados das artes aprovadas, PNG indexado transparente (56×112 e 55×112). Versões compactas para escala da capela; originais 320×520 podem substituir os mesmos arquivos. Teste exige ambos, transparência e vínculo pelo modelo. A página 04 apresenta o sprite correspondente até a chegada de `ultimo_suspiro_dupla.webp` em alta resolução; não reduzir a arte editorial. Custo R$ 240 e venda R$ 420 preservados. Aguardar CI e conferir visual antes de considerar concluído.

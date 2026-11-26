@@ -21,6 +21,16 @@ func _initialize() -> void:
         push_error("Encaixe modular ou interacao invalida")
         quit(6)
         return
+    var ultimo_open: Texture2D = art.model_texture("ultimo_suspiro","aberto")
+    var ultimo_lid: Texture2D = art.model_texture("ultimo_suspiro","tampa")
+    if ultimo_open==null or ultimo_lid==null or ultimo_open.get_image().get_pixel(0,0).a!=0.0 or ultimo_lid.get_image().get_pixel(0,0).a!=0.0:
+        push_error("Último Suspiro: sprites transparentes ausentes")
+        quit(13)
+        return
+    if art.model_id({"coffin":{"model":"ultimo_suspiro"}})!="ultimo_suspiro" or not art.OPEN_RECT.encloses(art.fit(ultimo_open,art.OPEN_RECT)):
+        push_error("Último Suspiro: seleção ou encaixe inválido")
+        quit(14)
+        return
     var skin = preload("res://scripts/ui/funeral_magazine_skin.gd")
     if skin.REGIONS.size()!=19 or skin.texture("book")==null or skin.texture("cover")==null or skin.texture("back")==null:
         push_error("Prancha modular da revista ausente")
