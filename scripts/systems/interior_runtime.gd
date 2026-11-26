@@ -213,7 +213,7 @@ func interact(id: String) -> void:
             if room == "fornecedor":
                 stock_menu()
             elif room == "funeraria":
-                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Atendimento sobre cremação","action":"cremation_referral_menu"},{"text":"Fechar","action":"close"}],"ironico")
+                game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Conheça Madame Amália na revista","action":"magazine_amalia"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Atendimento sobre cremação","action":"cremation_referral_menu"},{"text":"Fechar","action":"close"}],"ironico")
             else:
                 game()._interact(room)
         "violeta":
@@ -873,6 +873,11 @@ func handle_choice(action: String) -> bool:
         select_coffin(action.trim_prefix("coffin_select_"))
         return true
     match action:
+        "magazine_amalia":
+            if room=="funeraria":
+                sync_coffin_stock()
+                game().open_magazine(MAGAZINE.pages(coffin_stock),"Madame Amália • Atendimento com respeito","browse",1)
+            return true
         "magazine_offer":
             if coffin_case_ready():
                 sync_coffin_stock()

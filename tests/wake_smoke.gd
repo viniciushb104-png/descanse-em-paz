@@ -32,6 +32,10 @@ func _initialize() -> void:
         push_error("Revista ou filtro de orçamento inválido")
         quit(7)
         return
+    if not bool(pages[1].get("editorial",false)) or not str(pages[1]["body"]).contains("Luxo sem sentido") or not str(pages[1].get("action","")).is_empty():
+        push_error("Página editorial de Amália inválida")
+        quit(11)
+        return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:

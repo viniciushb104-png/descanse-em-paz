@@ -27,3 +27,8 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 - Violeta permanece cliente do caso 03; após concluí-lo, passa a colaborar no Empório (sprite provisório). Gervásio mantém suas funções.
 - Jornada opcional adicional: família de Celeste declara interesse em cremação com Amália, escolhe urna com Violeta, Baltazar registra a proposta e Cinério faz triagem. Estado salvo separadamente; sem execução, cobrança ou reserva definitiva nesta etapa. Preservar casos 10 e 19 que exigem bloqueio documental, assim como todos os 20 casos, sepultamentos e pontuações originais. A futura ordem operacional exige autorização explícita e minigame próprio.
 - Próximos: conferir revistas e encaminhamento no jogo, integrar Página 02 aprovada, completar coleção de caixões (página/aberto/tampa por modelo); depois arte definitiva das urnas, Violeta e crematório.
+
+## Página 02 — Madame Amália
+- Texto integral da página aprovada (apresentação, pedagogia, lore, frase e dica profissional) integrado como editorial, sem compra ou alteração de missões. Aba Amália e acesso direto pelo NPC; botão de leitura ampliada rolável.
+- Prévia da arte original instalada em `assets/ui/funeral_magazine/pagina_02_amalia_preview.webp` (90×120, resolução reduzida). A versão definitiva de alta resolução deve ser enviada como `assets/ui/funeral_magazine/pagina_02_amalia.jpg`; será reconhecida automaticamente. Não considerar a arte final instalada até confirmar o arquivo.
+- Próximo asset: Página 03 — Serenidade. Base e tampa já integradas; manter o padrão dos três assets por modelo. Revisar visual após compilação.

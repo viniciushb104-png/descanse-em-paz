@@ -2,9 +2,15 @@ extends RefCounted
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const ART := "res://assets/ui/funeral_magazine/"
 const URN_CATALOG = preload("res://scripts/systems/urn_catalog.gd")
+const AMALIA_FULL := ART+"pagina_02_amalia.jpg"
+const AMALIA_PREVIEW := ART+"pagina_02_amalia_preview.webp"
+const AMALIA_TEXT := "Consultora de despedidas, memória e bom senso\n\nBem-vindo à Casa Funerária Umbra. Sou Madame Amália, sua anfitriã entre orçamentos, homenagens e escolhas delicadas. Em Santa Mortalha, cada família merece escuta, transparência e respeito.\n\nO QUE VOCÊ APRENDE COMIGO\n• Ouvir a família antes de oferecer produtos.\n• Respeitar orçamento, vontade e contexto.\n• Explicar diferenças entre sepultamento, cremação e cerimônia.\n• Apresentar opções com ética, clareza e acolhimento.\n\nNA LORE DO JOGO\nAmália é o coração comercial da funerária. Ela apresenta o catálogo, orienta as escolhas da família e ajuda o jogador a transformar decisões difíceis em despedidas dignas.\n\nFRASE DA AMÁLIA\nLuxo sem sentido? Nem pensar. Até no além, bom atendimento vale mais que ostentação.\n\nDICA PROFISSIONAL\nNo ramo funerário, acolhimento, organização e transparência são tão importantes quanto o produto oferecido."
+static func amalia_page() -> Dictionary:
+    var full := ResourceLoader.exists(AMALIA_FULL,"Texture2D")
+    return {"title":"Madame Amália Umbra","section":"Apresentação","body":AMALIA_TEXT,"art":AMALIA_FULL if full else AMALIA_PREVIEW,"preview":not full,"editorial":true}
 static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "browse", cash: int = 0) -> Array:
     var out: Array = [{"title":"A Eternidade em Detalhes","section":"Capa","body":"Casa Funerária Umbra • Santa Mortalha\nToda memória merece respeito.","art":ART+"cover.svg"}]
-    out.append({"title":"Uma escolha, muitas memórias","section":"Apresentação","body":"Madame Amália: O catálogo ajuda a escolher, não a impor. Preços fictícios; a família decide com calma.","art":ART+"intro.svg"})
+    out.append(amalia_page())
     for id in COFFINS.MODELS:
         var item: Dictionary = COFFINS.MODELS[id]
         var count := int(stock.get(id,0))
