@@ -39,11 +39,19 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["art"]=catalog_art
                 page["preview"]=false
                 page["editorial"]=true
-            if mode!="shop":
+            var open_art := "res://assets/sprites/coffins/"+str(id)+"/aberto.png"
+            if mode=="shop" and ResourceLoader.exists(open_art,"Texture2D"):
+                page["art"]=open_art
+                page["preview"]=false
+                page["editorial"]=false
+            # A página 04 também tem o preço de venda impresso: nunca confundir com aquisição.
+            if mode!="shop" and (str(id)!="ultimo_suspiro" or price==420):
                 page["spread"]=SPREAD_DIR+str(id)+"_dupla.webp"
                 if ResourceLoader.exists(str(page["spread"]),"Texture2D"):
                     page["editorial"]=true
                     page["preview"]=false
+            if str(id)=="ultimo_suspiro":
+                page["body"] += "\n\nColeção Clássica — madeira clara, forração marfim acolchoada, alças douradas e cruz discreta na tampa.\n\nDica profissional: apresente os materiais e o acabamento com clareza, respeitando as preferências e o orçamento da família. O valor indicado é do caixão, não do funeral completo."
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."
