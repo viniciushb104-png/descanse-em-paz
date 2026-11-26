@@ -75,9 +75,7 @@ func _initialize() -> void:
         quit(18)
         return
     var verified_models: Array = [{"id":"lirio_branco","page":5,"cost":380,"price":650},{"id":"rosa_da_saudade","page":6,"cost":450,"price":790},{"id":"memorias","page":7,"cost":520,"price":900}]
-    # Permitir os uploads artísticos em commits separados, sem quebrar a versão publicada.
-    if ResourceLoader.exists("res://assets/sprites/coffins/vesper/aberto.png","Texture2D") and ResourceLoader.exists("res://assets/sprites/coffins/vesper/tampa.png","Texture2D") and ResourceLoader.exists("res://assets/ui/funeral_magazine/duplas/vesper_dupla.webp","Texture2D"):
-        verified_models.append({"id":"vesper","page":8,"cost":600,"price":1050})
+    verified_models.append({"id":"vesper","page":8,"cost":600,"price":1050})
     for model in verified_models:
         var model_id: String = str(model["id"])
         var page_index: int = int(model["page"])

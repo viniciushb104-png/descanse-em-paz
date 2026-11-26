@@ -1,3 +1,3 @@
 # Vesper — Página 09
 
-Enviar `aberto.png` e `tampa.png` nesta pasta. Enviar `vesper_dupla.webp` em `assets/ui/funeral_magazine/duplas/`. Modelo `vesper`, aquisição R$ 600, venda R$ 1050. Página horizontal sem preço impresso; sprites transparentes em vista vertical. Carregamento automático por modelo contratado. Upload pendente.
+Os três assets foram confirmados no commit 9ad6a38d: `aberto.png`, `tampa.png` e `assets/ui/funeral_magazine/duplas/vesper_dupla.webp`. Modelo `vesper`, aquisição R$ 600, venda R$ 1050. Carregamento automático pelo contrato; teste de regressão obrigatório. Compilação e conferência visual da integração pendentes.
