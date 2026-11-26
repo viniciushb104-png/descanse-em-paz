@@ -10,6 +10,7 @@ var case_index: int = 0
 var pending_burial_id := ""
 const BURIAL_CASES := [1,5,16]
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
+const COFFIN_ART = preload("res://scripts/world/chapel_coffin_art.gd")
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const FUNERAL_LORE = preload("res://scripts/systems/funeral_lore.gd")
 var coffin_stock: Dictionary = {"serenidade":2}
@@ -132,7 +133,9 @@ func nearest(pos: Vector2) -> Dictionary:
     return found
 
 func walkable(pos: Vector2) -> bool:
-    # Limites permitem acessar a porta e atravessar o corredor ate o atendente.
+    # Bases solidas do caixao e da tampa; entrada e demais salas preservadas.
+    if room=="chapel" and (COFFIN_ART.SOLID_RECT.has_point(pos) or COFFIN_ART.LID_BASE.has_point(pos)):
+        return false
     return pos.x >= 65.0 and pos.x <= 1088.0 and pos.y >= 164.0 and pos.y <= 575.0
 
 func safe_spawn() -> Vector2:

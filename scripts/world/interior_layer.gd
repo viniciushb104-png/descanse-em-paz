@@ -1,5 +1,6 @@
 extends Node2D
 const WAKE = preload("res://scripts/systems/wake_ceremony.gd")
+const COFFIN_ART = preload("res://scripts/world/chapel_coffin_art.gd")
 const CATALOG = preload("res://scripts/world/interior_catalog.gd")
 const OFFICE = preload("res://scenes/interiors/office.tscn")
 const MAP_ART = preload("res://scripts/map_art.gd")
@@ -202,11 +203,8 @@ func _paint_chapel() -> void:
     for x in [200.0,520.0,840.0]:
         draw_rect(Rect2(x,45,90,100),Color("#302739"))
         draw_rect(Rect2(x+8,55,74,82),Color("#8b679b"))
-    var coffin := PackedVector2Array([Vector2(548,255),Vector2(602,255),Vector2(630,286),Vector2(606,366),Vector2(544,366),Vector2(520,286)])
-    draw_colored_polygon(coffin,Color("#583c35"))
-    var outline := coffin.duplicate()
-    outline.append(coffin[0])
-    draw_polyline(outline,GOLD,3.0)
+    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    COFFIN_ART.paint(self,order)
     var flower_colors := [Color("#eee4cd"),Color("#bb5368"),Color("#e9ca73"),Color("#a781cc")]
     var flower: int = int(choices.get("flowers",-1))
     for p in [Vector2(275,245),Vector2(460,310),Vector2(690,310)]:
