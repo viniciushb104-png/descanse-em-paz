@@ -1,7 +1,8 @@
 extends Control
 signal action_requested(action: String)
 signal close_requested
-const FRAME = preload("res://assets/ui/funeral_magazine/frame.svg")
+const SKIN = preload("res://scripts/ui/funeral_magazine_skin.gd")
+var back_visible := false
 var pages: Array = []
 var context := ""
 var mode := "browse"
@@ -42,26 +43,43 @@ func _ready() -> void:
     var brand := _label("A ETERNIDADE EM DETALHES",25)
     brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     top.add_child(brand)
+    top.add_child(_button("Contracapa",_toggle_back,"back"))
     top.add_child(_button("Fechar",func(): close_requested.emit()))
     var tabs := HBoxContainer.new()
     root.add_child(tabs)
-    for data in [["Capa",0],["Caixões",2],["Urnas",14],["Serviços",26]]:
-        tabs.add_child(_button(str(data[0]),go.bind(int(data[1]))))
+    for data in [["Capa",0,"cover"],["Caixões",2,"coffins_tab"],["Urnas",14,"urns_tab"],["Serviços",26,"services_tab"],["Orçamento",31,"quote_tab"]]:
+        tabs.add_child(_button(str(data[0]),go.bind(int(data[1])),str(data[2])))
     var context_label := _label(context,17)
     context_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     root.add_child(context_label)
+    var book := Control.new()
+    book.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    root.add_child(book)
+    var paper := TextureRect.new()
+    paper.texture = SKIN.texture("book")
+    paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    paper.stretch_mode = TextureRect.STRETCH_SCALE
+    paper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    book.add_child(paper)
+    paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     var body := HBoxContainer.new()
-    body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    body.add_theme_constant_override("separation",14)
-    root.add_child(body)
-    var visual := Panel.new()
+    body.add_theme_constant_override("separation",54)
+    book.add_child(body)
+    body.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    body.offset_left = 58
+    body.offset_right = -58
+    body.offset_top = 37
+    body.offset_bottom = -38
+    var visual := Control.new()
     visual.custom_minimum_size = Vector2(260,200)
     visual.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     body.add_child(visual)
     var frame := TextureRect.new()
-    frame.texture = FRAME
+    frame.texture = SKIN.texture("frame")
+    frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    frame.stretch_mode = TextureRect.STRETCH_SCALE
+    frame.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
     visual.add_child(frame)
     frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -79,20 +97,20 @@ func _ready() -> void:
     var info := VBoxContainer.new()
     info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     body.add_child(info)
-    section = _label("",17)
+    section = _label("",17,true)
     info.add_child(section)
-    heading = _label("",28)
+    heading = _label("",28,true)
     heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     info.add_child(heading)
     var scroll := ScrollContainer.new()
     scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
     scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
     info.add_child(scroll)
-    details = _label("",20)
+    details = _label("",20,true)
     details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     scroll.add_child(details)
-    notice = _label("",16)
+    notice = _label("",16,true)
     notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     info.add_child(notice)
     select_button = _button("Apresentar à família",_select)
@@ -101,8 +119,8 @@ func _ready() -> void:
         info.add_child(_button("Ouvir a história da família",func(): action_requested.emit("coffin_memory")))
     var foot := HBoxContainer.new()
     root.add_child(foot)
-    previous = _button("Anterior",func(): go(index-1))
-    following = _button("Próxima",func(): go(index+1))
+    previous = _button("Anterior",func(): go(index-1),"left")
+    following = _button("Próxima",func(): go(index+1),"right")
     counter = _label("",18)
     counter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     counter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -111,20 +129,24 @@ func _ready() -> void:
     foot.add_child(following)
     go(index)
 
-func _label(value: String, font_size: int) -> Label:
+func _label(value: String, font_size: int, ink: bool = false) -> Label:
     var node := Label.new()
     node.text = value
     node.add_theme_font_size_override("font_size",font_size)
-    node.add_theme_color_override("font_color",Color("#ead8b7"))
+    node.add_theme_color_override("font_color",Color("#422b39") if ink else Color("#ead8b7"))
     return node
 
-func _button(value: String, handler: Callable) -> Button:
+func _button(value: String, handler: Callable, sprite: String = "") -> Button:
     var node := Button.new()
     node.text = value
     node.custom_minimum_size = Vector2(0,44)
     node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     node.add_theme_font_size_override("font_size",18)
     node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    if not sprite.is_empty():
+        node.icon = SKIN.texture(sprite)
+        node.add_theme_constant_override("icon_max_width",26)
+        node.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     var style := StyleBoxFlat.new()
     style.bg_color = Color("#493351")
     style.border_color = Color("#b89a66")
@@ -137,6 +159,7 @@ func _button(value: String, handler: Callable) -> Button:
 func go(next: int) -> void:
     if pages.is_empty():
         return
+    back_visible = false
     index = clampi(next,0,pages.size()-1)
     if not is_instance_valid(heading):
         return
@@ -145,7 +168,7 @@ func go(next: int) -> void:
     section.text = str(item["section"]).to_upper()
     details.text = str(item["body"])
     var path := str(item["art"])
-    art.texture = load(path) as Texture2D if ResourceLoader.exists(path,"Texture2D") else null
+    art.texture = SKIN.texture("cover") if index==0 else (load(path) as Texture2D if ResourceLoader.exists(path,"Texture2D") else null)
     var reason := str(item.get("reason",""))
     notice.text = reason+("\n" if not reason.is_empty() else "")+("Ilustração provisória." if bool(item.get("preview",false)) else "")
     select_button.visible = mode!="browse" and section.text=="CAIXÕES"
@@ -155,7 +178,24 @@ func go(next: int) -> void:
     following.disabled = index==pages.size()-1
     counter.text = "%02d / %02d" % [index+1,pages.size()]
 
+func _toggle_back() -> void:
+    if back_visible:
+        go(index)
+        return
+    back_visible = true
+    heading.text = "Casa Funerária Umbra"
+    section.text = "CONTRACAPA"
+    details.text = "Santa Mortalha\nToda memória merece respeito.\nCatálogo de produtos e serviços funerários. Valores fictícios."
+    art.texture = SKIN.texture("back")
+    notice.text = ""
+    select_button.visible = false
+    previous.disabled = false
+    following.disabled = false
+    counter.text = "Contracapa"
+
 func _select() -> void:
+    if back_visible:
+        return
     var action := str(pages[index].get("action",""))
     if not action.is_empty():
         action_requested.emit(action)

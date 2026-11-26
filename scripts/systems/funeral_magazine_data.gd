@@ -23,7 +23,11 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
         var count := int(stock.get(id,0))
         var price := int(item["cost"] if mode=="shop" else item["price"])
         var page := {"title":item["name"],"section":"Caixões","body":str(item["description"])+"\nEstoque: %d unidade(s).\n%s R$ %d" % [count,"Aquisição:" if mode=="shop" else "Venda:",price],"art":ART+"coffin_"+str(id)+".svg","preview":true,"action":"","reason":""}
-        if id=="serenidade":
+        var catalog_art := "res://assets/sprites/coffins/"+str(id)+"/pagina.png"
+        if ResourceLoader.exists(catalog_art,"Texture2D"):
+            page["art"]=catalog_art
+            page["preview"]=false
+        elif id=="serenidade":
             page["art"]="res://assets/sprites/coffins/serenidade/aberto.png"
             page["preview"]=false
         if mode=="offer":

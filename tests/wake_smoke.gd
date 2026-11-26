@@ -21,6 +21,11 @@ func _initialize() -> void:
         push_error("Encaixe modular ou interacao invalida")
         quit(6)
         return
+    var skin = preload("res://scripts/ui/funeral_magazine_skin.gd")
+    if skin.REGIONS.size()!=19 or skin.texture("book")==null or skin.texture("cover")==null or skin.texture("back")==null:
+        push_error("Prancha modular da revista ausente")
+        quit(9)
+        return
     var magazine = preload("res://scripts/systems/funeral_magazine_data.gd")
     var pages: Array = magazine.pages({"serenidade":1},5,"offer")
     if pages.size()!=32 or str(pages[2]["action"])!="coffin_select_serenidade" or not str(pages[3]["action"]).is_empty() or not str(pages[27].get("action","")).is_empty():

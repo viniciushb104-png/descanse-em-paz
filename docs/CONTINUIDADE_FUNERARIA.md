@@ -7,11 +7,12 @@ Prioridade aprovada: concluir a revista antes de retomar a produção de caixõe
 - Lote 01.1: lore de Ernesto Vale (B-13), Artur (caso 1), Rosa (caso 5), Augusto (caso 16).
 - Lote 02: Serenidade aberto e tampa já integrados em assets/sprites/coffins/serenidade/. Render modular em scripts/world/chapel_coffin_art.gd. Faltam borda_frontal.png, fechado.png e Ernesto em assets/sprites/funeral_people/ernesto_vale.png. Retomar após revista.
 - Lote 02.1: revista A Eternidade em Detalhes, 32 páginas, navegação e propostas pelo sistema de caixa/estoque existente; compra de caixões via Empório. Ilustrações SVG provisórias em assets/ui/funeral_magazine; Serenidade usa a arte aprovada. Urnas e cremação são prévias, não contratos.
-- Próximo: Lote 02.2 — substituir as ilustrações de interface por arte definitiva (capa, páginas, ornamentos, marcadores, botões, contracapa), testar revista e preservar texto nativo/acessibilidade.
+- Lote 02.2: prancha aprovada recortada em 19 componentes. Atlas compacto instalado, capa, livro aberto, moldura, abas e setas ligados à interface; contracapa navegável. Textos e preços nativos. Recortes em resolução maior podem ser instalados em `assets/ui/funeral_magazine/definitivos/` com os nomes de `funeral_magazine_skin.gd` sem alterar código. Teste visual e resolução final pendentes.
+- Nova regra de produção aprovada: cada caixão terá página comercial (`pagina.png`, ilustração sem preço/texto fixo), base aberta (`aberto.png`), tampa (`tampa.png`), e, quando necessário, borda frontal (`borda_frontal.png`) e fechado (`fechado.png`), todos no mesmo diretório de modelo. A revista carrega a página definitiva automaticamente, sem alterar dados de preço/estoque. Próximo: página do Serenidade, cuja base e tampa já existem.
 
 ## Depois da revista
 1. Retomar Lote 02 (borda, fechado, Ernesto, teste de encaixe).
-2. Caixões 02–12, em lotes pequenos com assets individuais.
+2. Caixões 02–12, um conjunto por modelo: página comercial, aberto e tampa; borda/fechado conforme necessário. Manter perspectiva e encaixe do Serenidade.
 3. Artur, Rosa e Augusto; ornamentação, visitantes e capela.
 4. Urnas 12 modelos: arte, preços validados, estoque e contratação real nos casos adequados.
 5. Crematório: interior, Cinério, ordens autorizadas e minigame abstrato de documentação, identificação, segurança, rastreabilidade e entrega; sem parâmetros técnicos reais nem imagens gráficas. Casos de documentação insuficiente permanecem bloqueados.
