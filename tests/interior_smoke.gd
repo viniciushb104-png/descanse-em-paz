@@ -72,14 +72,16 @@ func _run() -> void:
                 push_error("Revista de consulta invalida: "+key)
                 quit(114)
                 return
-            game.magazine_view.go(1)
-            if game.magazine_view.select_button.visible:
-                push_error("Consulta livre permite compra")
-                quit(115)
-                return
+            # Conferir a pagina editorial e todos os produtos, nao apenas a capa.
+            for page_index in range(game.magazine_view.pages.size()):
+                game.magazine_view.go(page_index)
+                if game.magazine_view.select_button.visible:
+                    push_error("Consulta livre permite compra: "+key+" pagina "+str(page_index+1))
+                    quit(115)
+                    return
             game._close()
         if game.money!=cash or r.case_index!=old_case or r.inventory!=old_stock or r.coffin_stock!=old_coffins or r.urn_stock!=old_urns:
-            push_error("Leitura livre alterou economia ou campanha: "+key)
+            push_error("Leitura livre alterou economia ou campanha: "+key+" | caixa="+str(game.money!=cash)+" | caso="+str(r.case_index!=old_case)+" | estoque="+str(r.inventory!=old_stock)+" | caixoes="+str(r.coffin_stock!=old_coffins)+" | urnas="+str(r.urn_stock!=old_urns))
             quit(116)
             return
         r.leave()

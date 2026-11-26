@@ -20,7 +20,7 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
         var catalog_art := "res://assets/sprites/coffins/"+str(id)+"/pagina.png"
         # O encarte impresso do Serenidade tem preço de venda fixo na arte;
         # não o mostrar na compra de fornecedor nem quando o preço mudar.
-        var show_serenidade_page := id=="serenidade" and mode!="shop" and price==300
+        var show_serenidade_page: bool = str(id)=="serenidade" and mode!="shop" and price==300
         if id=="serenidade":
             page["body"] += "\n\nColeção Clássica — tradição, respeito e dignidade para o último adeus.\nMadeira marrom, forração marfim, alças douradas e cruz clássica na tampa.\n\nMadame Amália: Uma escolha clássica, como um bom chá: simples, elegante e sempre bem-vinda.\n\nDica profissional: apresente opções compatíveis com a vontade e o orçamento da família. O preço acima é do caixão, não de todos os serviços do funeral. Valores fictícios."
             if show_serenidade_page:
