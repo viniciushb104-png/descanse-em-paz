@@ -45,6 +45,43 @@ func _run() -> void:
         push_error("Transicao de portas ausente")
         quit(90)
         return
+    # Leitura livre nas tres salas antes de qualquer atendimento.
+    var cash: int = game.money
+    var old_stock: Dictionary = r.inventory.duplicate(true)
+    var old_coffins: Dictionary = r.coffin_stock.duplicate(true)
+    var old_urns: Dictionary = r.urn_stock.duplicate(true)
+    var old_case: int = r.case_index
+    for key in ["office","fornecedor","funeraria"]:
+        r.enter(key)
+        game._close()
+        var point := ROOM_CATALOG.magazine_point(key)
+        if not game.get_node("InteriorLayer").has_node("MesaDeRevistas") or not game.can_player_stand(point) or game.is_walkable(ROOM_CATALOG.magazine_table(key).get_center()) or str(r.nearest(point).get("id",""))!="magazine_table":
+            push_error("Mesa de leitura inacessivel: "+key)
+            quit(112)
+            return
+        game.player.global_position = point
+        game._try_interact()
+        if not game.dialogue_open or game.dialog_title.text!="Mesa de revistas":
+            push_error("Interacao da mesa indisponivel: "+key)
+            quit(113)
+            return
+        for action in ["magazine_read_coffins","magazine_read_urns"]:
+            game._on_choice(action)
+            if not is_instance_valid(game.magazine_view) or game.magazine_view.mode!="browse" or game.magazine_view.pages.size()!=(20 if action=="magazine_read_coffins" else 16):
+                push_error("Revista de consulta invalida: "+key)
+                quit(114)
+                return
+            game.magazine_view.go(1)
+            if game.magazine_view.select_button.visible:
+                push_error("Consulta livre permite compra")
+                quit(115)
+                return
+            game._close()
+        r.leave()
+    if game.money!=cash or r.case_index!=old_case or r.inventory!=old_stock or r.coffin_stock!=old_coffins or r.urn_stock!=old_urns:
+        push_error("Leitura livre alterou economia ou campanha")
+        quit(116)
+        return
     r.enter("funeraria")
     game._close()
     if not r.inside() or game.get_node("GroundLayer").visible or not game.get_node("InteriorLayer").visible:

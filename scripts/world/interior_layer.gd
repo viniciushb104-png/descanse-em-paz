@@ -13,6 +13,8 @@ const GOLD := Color("#d8b882")
 const PAPER := Color("#eadfd0")
 var room: String = ""
 var room_art: Node2D = null
+const MAGAZINE_TABLE = preload("res://scripts/world/magazine_table.gd")
+var reading_table: Node2D
 var customer_name: String = "VISITANTE"
 var customer_profile: String = "calmo"
 
@@ -24,6 +26,10 @@ func set_customer(name: String, profile: String) -> void:
 func set_room(key: String) -> void:
     room = key
     visible = not key.is_empty()
+    if is_instance_valid(reading_table):
+        remove_child(reading_table)
+        reading_table.queue_free()
+        reading_table = null
     if is_instance_valid(office_baltazar):
         remove_child(office_baltazar)
         office_baltazar.queue_free()
@@ -42,6 +48,12 @@ func set_room(key: String) -> void:
         add_child(room_art)
     if key == "office":
         _create_office_baltazar()
+    var table := CATALOG.magazine_table(key)
+    if table.has_area():
+        reading_table = MAGAZINE_TABLE.new()
+        reading_table.name = "MesaDeRevistas"
+        reading_table.position = table.position
+        add_child(reading_table)
     queue_redraw()
 
 func _draw() -> void:

@@ -146,6 +146,8 @@ func nearest(pos: Vector2) -> Dictionary:
     return found
 
 func walkable(pos: Vector2) -> bool:
+    if CATALOG.magazine_table(room).has_point(pos):
+        return false
     # Bases solidas do caixao e da tampa; entrada e demais salas preservadas.
     if room=="chapel" and (COFFIN_ART.SOLID_RECT.has_point(pos) or COFFIN_ART.LID_BASE.has_point(pos)):
         return false
@@ -216,6 +218,8 @@ func interact(id: String) -> void:
                 game()._show_character("Madame Amália Umbra","O cliente decide, nós orientamos. O único empurrão permitido aqui é no carrinho de arquivos.","diretora",[{"text":"Ver fila de atendimentos","action":"case_board"},{"text":"Direitos do consumidor","action":"legal_valores"},{"text":"Conheça Madame Amália na revista","action":"magazine_amalia"},{"text":"Como escolher um caixão?","action":"coffin_advice"},{"text":"Atendimento sobre cremação","action":"cremation_referral_menu"},{"text":"Fechar","action":"close"}],"ironico")
             else:
                 game()._interact(room)
+        "magazine_table":
+            magazine_table_menu()
         "violeta":
             violet_menu()
         "client":
@@ -593,6 +597,26 @@ func buy_coffin(model: String) -> void:
     game()._refresh_ui()
     coffin_shop()
 
+func magazine_table_menu() -> void:
+    if not CATALOG.magazine_table(room).has_area():
+        return
+    game()._show("Mesa de revistas","Exemplares de consulta livre. Folheie os catálogos quando quiser; nenhuma compra, contratação ou missão será iniciada.",[
+        {"text":"A Eternidade em Detalhes — caixões","action":"magazine_read_coffins"},
+        {"text":"Memórias que Permanecem — urnas","action":"magazine_read_urns"},
+        {"text":"Voltar","action":"close"}
+    ])
+
+func read_magazine(urns: bool) -> void:
+    if not CATALOG.magazine_table(room).has_area():
+        return
+    # Consultar exemplares nao muda nem mesmo os mapas de estoque.
+    if urns:
+        var stock: Dictionary = URNS.normalize(urn_stock,int(inventory.get("urna",0)))
+        game().open_magazine(MAGAZINE.urn_pages(stock),"Mesa de revistas • Leitura livre","browse")
+    else:
+        var stock: Dictionary = COFFINS.normalize(coffin_stock,int(inventory.get("caixao",0)))
+        game().open_magazine(MAGAZINE.pages(stock),"Mesa de revistas • Leitura livre","browse")
+
 func coffin_view() -> void:
     if room != "funeraria":
         return
@@ -824,6 +848,12 @@ func handle_choice(action: String) -> bool:
         confirm_urn(action.trim_prefix("urn_confirm_"))
         return true
     match action:
+        "magazine_read_coffins":
+            read_magazine(false)
+            return true
+        "magazine_read_urns":
+            read_magazine(true)
+            return true
         "violeta_menu":
             violet_menu()
             return true

@@ -14,6 +14,17 @@ const ROOMS = {
  "chapel":{"title":"CAPELA DO ULTIMO ADEUS","agent":"Anselmo Velario","description":"Um lugar de memoria e despedida.","theme":"chapel"},
  "fornecedor":{"title":"EMPORIO DAS ULTIMAS COISAS","agent":"Gervasio Caixote","description":"Caixoes, urnas cinerarias e notas de estoque.","theme":"supply"}
 }
+# Mesa independente dos balcoes e das missoes; sempre disponivel.
+static func magazine_table(key: String) -> Rect2:
+    match key:
+        "office": return Rect2(346,198,120,62)
+        "funeraria","fornecedor": return Rect2(640,416,120,62)
+    return Rect2()
+
+static func magazine_point(key: String) -> Vector2:
+    var table := magazine_table(key)
+    return Vector2(table.get_center().x,table.end.y+18)
+
 static func points(key: String) -> Array:
     if not ROOMS.has(key):
         return []
@@ -28,4 +39,6 @@ static func points(key: String) -> Array:
     ]
     if key=="fornecedor":
         result.append({"id":"violeta","name":"Balcão de urnas","p":Vector2(570,330)})
+    if magazine_table(key).has_area():
+        result.append({"id":"magazine_table","name":"Mesa de revistas — leitura livre","p":magazine_point(key)})
     return result

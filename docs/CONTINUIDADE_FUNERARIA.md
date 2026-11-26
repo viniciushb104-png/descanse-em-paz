@@ -32,3 +32,8 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 - Texto integral da página aprovada (apresentação, pedagogia, lore, frase e dica profissional) integrado como editorial, sem compra ou alteração de missões. Aba Amália e acesso direto pelo NPC; botão de leitura ampliada rolável.
 - Prévia da arte original instalada em `assets/ui/funeral_magazine/pagina_02_amalia_preview.webp` (90×120, resolução reduzida). A versão definitiva de alta resolução deve ser enviada como `assets/ui/funeral_magazine/pagina_02_amalia.jpg`; será reconhecida automaticamente. Não considerar a arte final instalada até confirmar o arquivo.
 - Próximo asset: Página 03 — Serenidade. Base e tampa já integradas; manter o padrão dos três assets por modelo. Revisar visual após compilação.
+
+## Mesas de revistas — consulta livre
+- Escritório, Casa Funerária Umbra e Empório: móvel de madeira com os dois exemplares, interação E/toque independente de cliente e estágio. Posições e colisões em interior_catalog.gd; arte reutilizável em magazine_table.gd.
+- Ambas as revistas abrem em modo browse, sem compra, proposta, alteração de estoque ou progressão; todos os 20/16 conteúdos podem ser inspecionados desde o início. Atendimentos comerciais originais continuam nos NPCs.
+- Teste em interior_smoke.gd cobre acesso antes da campanha, abertura das duas revistas, bloqueio de compra e ausência de alterações econômicas. Próximo: Página 03 Serenidade; verificar visual das mesas e da página 02.
