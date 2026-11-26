@@ -58,6 +58,10 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["body"] += "\n\nColeção Clássica — acabamento branco marfim, ornamentos dourados e forração acetinada.\n\nDica profissional: confirme as preferências culturais e religiosas da família; as cores e os símbolos não têm o mesmo significado para todas as pessoas."
             if str(id)=="rosa_da_saudade":
                 page["body"] += "\n\nColeção Clássica — madeira em tom vinho, rosas ornamentais, alças douradas e forração em veludo rubro.\n\nMadame Amália: Algumas lembranças continuam a florescer. Mas nenhuma flor precisa vir com uma dívida.\n\nDica profissional: apresente os ornamentos como opções estéticas, sem associar o preço à intensidade do afeto."
+            if str(id)=="memorias":
+                page["body"] += "\n\nColeção Clássica — madeira escura, entalhes florais artesanais e forração em cetim champanhe.\n\nMadame Amália: Há histórias que nem o tempo consegue arquivar. E olha que Baltazar já tentou!\n\nDica profissional: ofereça a personalização como escolha, nunca como obrigação."
+            if str(id)=="vesper":
+                page["body"] += "\n\nColeção Clássica — madeira violeta, entalhes florais góticos, alças em latão envelhecido e cetim lavanda perolado.\n\nMadame Amália: Um toque de violeta para quem aprecia a beleza serena das antigas tradições.\n\nDica profissional: explique os ornamentos com sensibilidade e respeite os valores e as preferências da família. O valor é do caixão, não do funeral completo."
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."

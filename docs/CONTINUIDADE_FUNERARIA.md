@@ -64,3 +64,7 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 
 ## Páginas 06 e 07 — Lírio Branco e Rosa da Saudade
 - Seis assets confirmados. Página 07 enviada inicialmente na pasta de sprites; transferida para duplas/ com o mesmo blob, sem recompressão. Ambas usam o carregador por modelo no velório, preços dinâmicos e estoque existente. Aquisição/venda: Lírio Branco 380/650, Rosa da Saudade 450/790. Textos pedagógicos nativos e testes de transparência, encaixe, estoque, oferta, orçamento e fornecedor adicionados. CI e visual pendentes. Coleção: 5/12 modelos, 15/36 assets principais. Próximo: Página 08 — Memórias, página dupla sem preço impresso, aberto e tampa individuais.
+
+## Páginas 08 e 09 — Memórias e Vesper
+- Memórias: três arquivos confirmados no commit 5f5ee799 (CI Godot e publicação bem-sucedidos). Texto pedagógico e testes específicos acrescentados nesta etapa; aquisição/venda 520/900. Coleção confirmada no repositório: 6/12 modelos, 18/36 assets.
+- Vesper: três artes individuais produzidas; página WebP 1672×941 sem preços impressos, aberto/tampa PNG RGBA 320×520 com transparência confirmada. Madeira violeta, alças douradas, cetim lavanda e entalhes florais. Aquisição/venda 600/1050. Pasta criada e texto nativo integrado. Upload pendente: página em duplas/; sprites em coffins/vesper/. Teste específico se ativa automaticamente quando os três arquivos forem importados. Não alterar orçamento nem campanha. Após confirmação dos arquivos e CI, próxima Página 10 — Jardim Celestial.
