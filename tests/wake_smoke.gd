@@ -51,6 +51,12 @@ func _initialize() -> void:
         push_error("Página 03 ou separação de preços inválida")
         quit(12)
         return
+    var offer_ultimo: Array = magazine.pages({"ultimo_suspiro":1},1,"offer")
+    var shop_ultimo: Array = magazine.pages({"ultimo_suspiro":1},0,"shop",240)
+    if str(offer_ultimo[3].get("action",""))!="coffin_select_ultimo_suspiro" or not ResourceLoader.exists(str(offer_ultimo[3].get("spread","")),"Texture2D") or str(shop_ultimo[3].get("action",""))!="coffin_buy_ultimo_suspiro" or not str(shop_ultimo[3].get("spread","")).is_empty():
+        push_error("Último Suspiro: página comercial ou preços inválidos")
+        quit(15)
+        return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:

@@ -56,3 +56,5 @@ Preservar os 20 casos, condições de progressão e recompensas existentes; não
 
 ## Último Suspiro — integração dos sprites
 - Instalados `aberto.png` e `tampa.png`, derivados das artes aprovadas, PNG indexado transparente (56×112 e 55×112). Versões compactas para escala da capela; originais 320×520 podem substituir os mesmos arquivos. Teste exige ambos, transparência e vínculo pelo modelo. A página 04 apresenta o sprite correspondente até a chegada de `ultimo_suspiro_dupla.webp` em alta resolução; não reduzir a arte editorial. Custo R$ 240 e venda R$ 420 preservados. Aguardar CI e conferir visual antes de considerar concluído.
+
+- Confirmação posterior: página `ultimo_suspiro_dupla.webp` em alta resolução (489508 bytes) chegou ao GitHub no commit 5d0ddf6a, preservada na integração seguinte. Os três assets estão no repositório. Teste cobre também seleção no caso 1 e separação do preço de aquisição. CI e aparência em jogo ainda a validar.
