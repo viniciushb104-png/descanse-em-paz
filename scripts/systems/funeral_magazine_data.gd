@@ -2,6 +2,7 @@ extends RefCounted
 const COFFINS = preload("res://scripts/systems/coffin_catalog.gd")
 const ART := "res://assets/ui/funeral_magazine/"
 const URN_CATALOG = preload("res://scripts/systems/urn_catalog.gd")
+const SERENIDADE_PREVIEW := "res://assets/sprites/coffins/serenidade/pagina_preview.webp"
 const AMALIA_FULL := ART+"pagina_02_amalia.jpg"
 const AMALIA_PREVIEW := ART+"pagina_02_amalia_preview.webp"
 const AMALIA_TEXT := "Consultora de despedidas, memória e bom senso\n\nBem-vindo à Casa Funerária Umbra. Sou Madame Amália, sua anfitriã entre orçamentos, homenagens e escolhas delicadas. Em Santa Mortalha, cada família merece escuta, transparência e respeito.\n\nO QUE VOCÊ APRENDE COMIGO\n• Ouvir a família antes de oferecer produtos.\n• Respeitar orçamento, vontade e contexto.\n• Explicar diferenças entre sepultamento, cremação e cerimônia.\n• Apresentar opções com ética, clareza e acolhimento.\n\nNA LORE DO JOGO\nAmália é o coração comercial da funerária. Ela apresenta o catálogo, orienta as escolhas da família e ajuda o jogador a transformar decisões difíceis em despedidas dignas.\n\nFRASE DA AMÁLIA\nLuxo sem sentido? Nem pensar. Até no além, bom atendimento vale mais que ostentação.\n\nDICA PROFISSIONAL\nNo ramo funerário, acolhimento, organização e transparência são tão importantes quanto o produto oferecido."
@@ -17,12 +18,23 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
         var price := int(item["cost"] if mode=="shop" else item["price"])
         var page := {"title":item["name"],"section":"Caixões","body":str(item["description"])+"\nEstoque: %d unidade(s).\n%s R$ %d" % [count,"Aquisição:" if mode=="shop" else "Venda:",price],"art":ART+"coffin_"+str(id)+".svg","preview":true,"action":"","reason":""}
         var catalog_art := "res://assets/sprites/coffins/"+str(id)+"/pagina.png"
-        if ResourceLoader.exists(catalog_art,"Texture2D"):
+        # O encarte impresso do Serenidade tem preço de venda fixo na arte;
+        # não o mostrar na compra de fornecedor nem quando o preço mudar.
+        var show_serenidade_page := id=="serenidade" and mode!="shop" and price==300
+        if id=="serenidade":
+            page["body"] += "\n\nColeção Clássica — tradição, respeito e dignidade para o último adeus.\nMadeira marrom, forração marfim, alças douradas e cruz clássica na tampa.\n\nMadame Amália: Uma escolha clássica, como um bom chá: simples, elegante e sempre bem-vinda.\n\nDica profissional: apresente opções compatíveis com a vontade e o orçamento da família. O preço acima é do caixão, não de todos os serviços do funeral. Valores fictícios."
+            if show_serenidade_page:
+                var full := ResourceLoader.exists(catalog_art,"Texture2D")
+                page["art"]=catalog_art if full else SERENIDADE_PREVIEW
+                page["preview"]=not full
+                page["editorial"]=true
+            else:
+                page["art"]="res://assets/sprites/coffins/serenidade/aberto.png"
+                page["preview"]=false
+        elif ResourceLoader.exists(catalog_art,"Texture2D"):
             page["art"]=catalog_art
             page["preview"]=false
-        elif id=="serenidade":
-            page["art"]="res://assets/sprites/coffins/serenidade/aberto.png"
-            page["preview"]=false
+            page["editorial"]=true
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."

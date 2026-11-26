@@ -220,7 +220,7 @@ func _open_editorial() -> void:
         margin.add_theme_constant_override("margin_"+side,16)
     var column := VBoxContainer.new()
     margin.add_child(column)
-    var header := _label("PÁGINA 02 — MADAME AMÁLIA UMBRA",25)
+    var header := _label("PÁGINA %02d — %s" % [index+1,str(pages[index]["title"]).to_upper()],25)
     column.add_child(header)
     var scroll := ScrollContainer.new()
     scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL

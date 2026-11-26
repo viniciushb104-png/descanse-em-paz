@@ -36,6 +36,11 @@ func _initialize() -> void:
         push_error("Página editorial de Amália inválida")
         quit(11)
         return
+    var shop: Array = magazine.pages({"serenidade":1},0,"shop",180)
+    if not bool(pages[2].get("editorial",false)) or not str(pages[2]["body"]).contains("Venda: R$ 300") or not str(shop[2]["body"]).contains("Aquisição: R$ 180") or bool(shop[2].get("editorial",false)) or str(shop[2]["action"])!="coffin_buy_serenidade":
+        push_error("Página 03 ou separação de preços inválida")
+        quit(12)
+        return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:
