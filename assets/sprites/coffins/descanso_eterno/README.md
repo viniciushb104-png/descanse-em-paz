@@ -1,3 +1,3 @@
 # Descanso Eterno — Página 05
 
-Enviar `aberto.png` e `tampa.png` transparentes nesta pasta. A arte comercial `descanso_eterno_dupla.webp` fica em `assets/ui/funeral_magazine/duplas/`. Modelo contratado: `descanso_eterno`. Aquisição R$ 320; venda R$ 560 (valores fictícios). Upload e teste pendentes.
+Os três arquivos foram confirmados no repositório: `aberto.png`, `tampa.png` e `assets/ui/funeral_magazine/duplas/descanso_eterno_dupla.webp`. O carregador seleciona o modelo contratado `descanso_eterno`. Aquisição R$ 320; venda R$ 560 (valores fictícios). CI e conferência visual pendentes.

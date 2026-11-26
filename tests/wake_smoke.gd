@@ -57,6 +57,23 @@ func _initialize() -> void:
         push_error("Último Suspiro: página comercial ou preços inválidos")
         quit(15)
         return
+    var descanso_open: Texture2D = art.model_texture("descanso_eterno","aberto")
+    var descanso_lid: Texture2D = art.model_texture("descanso_eterno","tampa")
+    if descanso_open==null or descanso_lid==null or descanso_open.get_image().get_pixel(0,0).a!=0.0 or descanso_lid.get_image().get_pixel(0,0).a!=0.0:
+        push_error("Descanso Eterno: sprites transparentes ausentes")
+        quit(16)
+        return
+    if art.model_id({"coffin":{"model":"descanso_eterno"}})!="descanso_eterno" or not art.OPEN_RECT.encloses(art.fit(descanso_open,art.OPEN_RECT)):
+        push_error("Descanso Eterno: seleção ou encaixe inválido")
+        quit(17)
+        return
+    var offer_descanso: Array = magazine.pages({"descanso_eterno":1},16,"offer")
+    var blocked_descanso: Array = magazine.pages({"descanso_eterno":1},1,"offer")
+    var shop_descanso: Array = magazine.pages({"descanso_eterno":1},0,"shop",320)
+    if str(offer_descanso[4].get("action",""))!="coffin_select_descanso_eterno" or not ResourceLoader.exists(str(offer_descanso[4].get("spread","")),"Texture2D") or not str(blocked_descanso[4].get("action","")).is_empty() or str(shop_descanso[4].get("action",""))!="coffin_buy_descanso_eterno" or not str(shop_descanso[4].get("spread","")).is_empty():
+        push_error("Descanso Eterno: catálogo, estoque ou orçamento inválido")
+        quit(18)
+        return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:
