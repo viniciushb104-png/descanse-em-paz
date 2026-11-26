@@ -34,12 +34,16 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
             else:
                 page["art"]="res://assets/sprites/coffins/serenidade/aberto.png"
                 page["preview"]=false
-        elif ResourceLoader.exists(catalog_art,"Texture2D"):
-            page["art"]=catalog_art
-            page["preview"]=false
-            page["editorial"]=true
+        else:
+            if ResourceLoader.exists(catalog_art,"Texture2D"):
+                page["art"]=catalog_art
+                page["preview"]=false
+                page["editorial"]=true
             if mode!="shop":
                 page["spread"]=SPREAD_DIR+str(id)+"_dupla.webp"
+                if ResourceLoader.exists(str(page["spread"]),"Texture2D"):
+                    page["editorial"]=true
+                    page["preview"]=false
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."

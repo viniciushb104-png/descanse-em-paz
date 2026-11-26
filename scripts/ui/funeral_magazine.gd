@@ -264,7 +264,7 @@ func go(next: int) -> void:
     art.texture = _asset(path)
     var full_spread := _asset(str(item.get("spread","")))
     if full_spread==null and index==0:
-        full_spread = _asset(path)
+        full_spread = _asset(ASSET_DIR+"duplas/capa_fechada.webp",path) if not urn_book else _asset(path)
     elif full_spread==null and bool(item.get("editorial",false)) and not bool(item.get("preview",true)):
         full_spread = _asset(path)
     spread.texture = full_spread
@@ -298,7 +298,7 @@ func _toggle_back() -> void:
     section.text = "CONTRACAPA"
     details.text = "Santa Mortalha\nToda memória merece respeito.\nCatálogo de produtos e serviços funerários. Valores fictícios."
     art.texture = null
-    spread.texture = _asset(ASSET_DIR+"duplas/capa_fechada.webp",ASSET_DIR+"cover.svg") if not urn_book else _asset(str(pages[0]["art"]))
+    spread.texture = _asset(ASSET_DIR+"duplas/contracapa.webp",ASSET_DIR+"contracapa_fallback.svg")
     spread.visible = true
     paper.visible = false
     body.visible = false
