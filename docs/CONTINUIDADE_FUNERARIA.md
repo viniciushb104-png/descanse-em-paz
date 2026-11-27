@@ -94,3 +94,6 @@ Este bloco substitui os estados históricos de pendência acima, sem apagar o hi
 7. Validar campanha, economia, estoque, saves legados, teclado/toque, publicação e qualidade visual. Não marcar uma etapa como testada só porque o commit foi enviado.
 
 Próxima produção imediata: Página 11 — Nocturne. Não avançar para outra frente antes de completar os quatro modelos, salvo orientação do autor.
+
+## Página 11 — Nocturne
+- Três artes produzidas e preparadas para upload: página dupla WebP 1672×941 com texto português, sem preços impressos; aberto/tampa PNG RGBA 320×520, transparência conferida sobre fundo escuro. Preto, prata envelhecida, veludo violeta. Aquisição 800, venda 1400. Próximo após upload: verificar arquivos e CI, depois Página 12 Réquiem. Não alterar os orçamentos existentes.
