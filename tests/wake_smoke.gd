@@ -101,7 +101,7 @@ func _initialize() -> void:
             return
     # Modelos acima do orçamento máximo atual: arte, consulta e fornecedor funcionam,
     # mas a contratação pelos casos existentes deve permanecer bloqueada.
-    for model in [{"id":"jardim_celestial","page":9,"cost":700,"price":1200},{"id":"nocturne","page":10,"cost":800,"price":1400}]:
+    for model in [{"id":"jardim_celestial","page":9,"cost":700,"price":1200},{"id":"nocturne","page":10,"cost":800,"price":1400},{"id":"requiem","page":11,"cost":950,"price":1650}]:
         var premium_id: String = str(model["id"])
         var premium_page: int = int(model["page"])
         var opened_tex: Texture2D = art.model_texture(premium_id,"aberto")

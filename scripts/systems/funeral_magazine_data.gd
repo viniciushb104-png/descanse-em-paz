@@ -68,6 +68,8 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["body"] += "\n\nMadeira preta, ornamentos prateados e veludo violeta escuro.\n\nDica profissional: respeite as preferências estéticas e religiosas da família, sem impor símbolos."
             if str(id)=="requiem":
                 page["body"] += "\n\nMadeira escura, entalhes barrocos, bronze envelhecido e forração vinho. Ornamentos inspirados na música sacra.\n\nMadame Amália: Até as despedidas têm sua própria melodia.\n\nDica profissional: a música e os símbolos da cerimônia devem refletir as preferências da família."
+            if str(id)=="eternum":
+                page["body"] += "\n\nMadeira negra, ornamentação barroca dourada e forração em cetim marfim acolchoado.\n\nMadame Amália: O dourado é uma questão de gosto. A dignidade, meu caro, não é um adicional na fatura!\n\nDica profissional: apresente as diferenças de acabamento sem associar o preço do caixão ao valor da vida homenageada."
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."
