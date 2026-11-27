@@ -99,6 +99,26 @@ func _initialize() -> void:
             push_error("Catálogo, preço ou orçamento inválido: "+model_id)
             quit(21)
             return
+    # Modelos acima do orçamento máximo atual: arte, consulta e fornecedor funcionam,
+    # mas a contratação pelos casos existentes deve permanecer bloqueada.
+    for model in [{"id":"jardim_celestial","page":9,"cost":700,"price":1200},{"id":"nocturne","page":10,"cost":800,"price":1400}]:
+        var premium_id: String = str(model["id"])
+        var premium_page: int = int(model["page"])
+        var opened_tex: Texture2D = art.model_texture(premium_id,"aberto")
+        var lid_tex: Texture2D = art.model_texture(premium_id,"tampa")
+        if opened_tex==null or lid_tex==null or opened_tex.get_image().get_pixel(0,0).a!=0.0 or lid_tex.get_image().get_pixel(0,0).a!=0.0 or not art.OPEN_RECT.encloses(art.fit(opened_tex,art.OPEN_RECT)):
+            push_error("Arte premium ausente ou encaixe inválido: "+premium_id)
+            quit(22)
+            return
+        var premium_stock: Dictionary = {}
+        premium_stock[premium_id]=1
+        var preview_pages: Array = magazine.pages(premium_stock)
+        var restricted: Array = magazine.pages(premium_stock,16,"offer")
+        var purchase_pages: Array = magazine.pages(premium_stock,0,"shop",int(model["cost"]))
+        if not ResourceLoader.exists(str(preview_pages[premium_page].get("spread","")),"Texture2D") or not str(restricted[premium_page].get("action","")).is_empty() or str(purchase_pages[premium_page].get("action",""))!="coffin_buy_"+premium_id or not str(purchase_pages[premium_page].get("spread","")).is_empty() or not str(preview_pages[premium_page]["body"]).contains("Venda: R$ %d" % int(model["price"])):
+            push_error("Catálogo premium inválido: "+premium_id)
+            quit(23)
+            return
     var urns = preload("res://scripts/systems/urn_catalog.gd")
     var urn_pages: Array = magazine.urn_pages({"essencia":1,"legado":1},"offer")
     if urn_pages.size()!=16 or urn_pages[2].get("action","")!="urn_select_essencia" or not str(urn_pages[13].get("action","")).is_empty() or urns.normalize({},3).get("essencia")!=3:

@@ -97,3 +97,7 @@ Próxima produção imediata: Página 11 — Nocturne. Não avançar para outra 
 
 ## Página 11 — Nocturne
 - Três artes produzidas e preparadas para upload: página dupla WebP 1672×941 com texto português, sem preços impressos; aberto/tampa PNG RGBA 320×520, transparência conferida sobre fundo escuro. Preto, prata envelhecida, veludo violeta. Aquisição 800, venda 1400. Próximo após upload: verificar arquivos e CI, depois Página 12 Réquiem. Não alterar os orçamentos existentes.
+
+## Página 12 — Réquiem
+- Nocturne: três arquivos confirmados no commit 90961fb6; 9/12 modelos e 27/36 assets instalados. CI Godot ainda em andamento quando consultado. Textos nativos do Jardim Celestial, Nocturne e Réquiem adicionados. Testes específicos dos dois primeiros incluem bloqueio de contratação pelos orçamentos atuais, sem alterá-los.
+- Réquiem: página dupla WebP 1672×941 em português sem preços impressos e dois sprites PNG RGBA 320×520, conferidos visualmente sobre fundo escuro. Madeira mogno, bronze dourado, ornamentos sacros e musicais, veludo vinho. Custo 950, venda 1650. Pasta preparada; upload pendente. Produção 30/36 assets. Próxima página 13 — Eternum após confirmação do upload.

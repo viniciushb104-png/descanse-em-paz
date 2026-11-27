@@ -62,6 +62,12 @@ static func pages(stock: Dictionary = {}, case_id: int = 0, mode: String = "brow
                 page["body"] += "\n\nColeção Clássica — madeira escura, entalhes florais artesanais e forração em cetim champanhe.\n\nMadame Amália: Há histórias que nem o tempo consegue arquivar. E olha que Baltazar já tentou!\n\nDica profissional: ofereça a personalização como escolha, nunca como obrigação."
             if str(id)=="vesper":
                 page["body"] += "\n\nColeção Clássica — madeira violeta, entalhes florais góticos, alças em latão envelhecido e cetim lavanda perolado.\n\nMadame Amália: Um toque de violeta para quem aprecia a beleza serena das antigas tradições.\n\nDica profissional: explique os ornamentos com sensibilidade e respeite os valores e as preferências da família. O valor é do caixão, não do funeral completo."
+            if str(id)=="jardim_celestial":
+                page["body"] += "\n\nMadeira verde-musgo, heras ornamentais, detalhes em bronze dourado e cetim verde-sálvia.\n\nMadame Amália: Até as mais belas flores precisam descansar. Mas Baltazar insiste que as contas não tiram férias!\n\nDica profissional: ofereça os ornamentos conforme os desejos da família, sem atribuir qualidades ambientais ao acabamento."
+            if str(id)=="nocturne":
+                page["body"] += "\n\nMadeira preta, ornamentos prateados e veludo violeta escuro.\n\nDica profissional: respeite as preferências estéticas e religiosas da família, sem impor símbolos."
+            if str(id)=="requiem":
+                page["body"] += "\n\nMadeira escura, entalhes barrocos, bronze envelhecido e forração vinho. Ornamentos inspirados na música sacra.\n\nMadame Amália: Até as despedidas têm sua própria melodia.\n\nDica profissional: a música e os símbolos da cerimônia devem refletir as preferências da família."
         if mode=="offer":
             if not COFFINS.permitted(case_id,str(id)):
                 page["reason"]="Acima do orçamento familiar."

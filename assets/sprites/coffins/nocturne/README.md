@@ -1,3 +1,3 @@
 # Nocturne — Página 11
 
-Enviar `aberto.png` e `tampa.png` nesta pasta. Enviar `nocturne_dupla.webp` em `assets/ui/funeral_magazine/duplas/`. Modelo nocturne, custo R$ 800, venda R$ 1400. Upload e validação pendentes.
+Três assets confirmados no commit 90961fb6, nos caminhos esperados. Aquisição R$ 800, venda R$ 1400. Testes de arte e catálogo adicionados; contratação pelos casos atuais permanece bloqueada pelo orçamento. CI pendente.
